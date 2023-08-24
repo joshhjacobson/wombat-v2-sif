@@ -11,3 +11,16 @@
 docs
 documentation
 utils
+
+# Temporary
+data/downloaded_20211217.tgz
+data/fossil-mipv10
+data/GEOS_Chem
+data/GFED4.1s_Aleya_hemco_080321
+data/lauder_co2_2014_2021.50_ooofti_lhr.csv
+data/obspack_co2_1_OCO2MIP_v3.2_2021-05-20
+data/OCO2_b10c_10sec_GOOD_r5.nc4
+data/sib4-hourly
+data/spco2_MPI-SOM_FFN_v2020.nc
+
+sib4-monthly-2018.nc4

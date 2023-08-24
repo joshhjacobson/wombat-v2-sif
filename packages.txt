@@ -1,0 +1,9 @@
+Rscript -e "install.packages(c(
+    'devtools', 'codetools', 'argparse', 'argparser', 'lifecycle',  
+    'fst', 'patchwork', 'matrixStats', 'scoringRules', 'RcppEigen', 
+    'readr', 'ggplot2', 'dplyr', 'tidyr', 'purrr', 'tibble', 
+    'sf', 'stars', 'terra', 'raster', 'ncdf4', 'rnaturalearth', 'rnaturalearthdata', 'rgeos'
+    ))"
+
+
+Rscript -e "devtools::install('fastsparse'); devtools::install('wombatbasis')"

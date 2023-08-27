@@ -1,9 +1,12 @@
 Rscript -e "install.packages(c(
-    'devtools', 'codetools', 'argparse', 'argparser', 'lifecycle',  
-    'fst', 'patchwork', 'matrixStats', 'scoringRules', 'RcppEigen', 
-    'readr', 'ggplot2', 'dplyr', 'tidyr', 'purrr', 'tibble', 
+    'devtools', 'codetools', 'argparse', 'argparser', 'lifecycle', 'Rglpk',
+    'pbmcapply',
+    'matrixStats', 'WoodburyMatrix', 'slam', 'tensor', 'RcppEigen', 
+    'readr', 'dplyr', 'tidyr', 'purrr', 'tibble', 'ggplot2', 'ggrepel', 'igraph',
+    'fst', 'patchwork', 'coda',
     'sf', 'stars', 'terra', 'raster', 'ncdf4', 'rnaturalearth', 'rnaturalearthdata', 'rgeos'
-    ))"
+    'GpGp', 'spdep', 'scoringRules',
+))"
 
 
-Rscript -e "devtools::install('fastsparse'); devtools::install('wombatbasis')"
+Rscript -e "devtools::install_github('mbertolacci/fastsparse'); devtools::install_github('mbertolacci/wombatbasis')"

@@ -5,7 +5,7 @@ Rscript -e "install.packages(c(
     'readr', 'dplyr', 'tidyr', 'purrr', 'tibble', 'ggplot2', 'ggrepel', 'igraph',
     'fst', 'patchwork', 'coda',
     'sf', 'stars', 'terra', 'raster', 'ncdf4', 'rnaturalearth', 'rnaturalearthdata', 'rgeos'
-    'GpGp', 'spdep', 'scoringRules',
+    'fields', 'GpGp', 'spdep', 'scoringRules',
 ))"
 
 

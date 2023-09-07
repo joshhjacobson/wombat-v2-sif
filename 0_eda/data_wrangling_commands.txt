@@ -1,0 +1,69 @@
+CDO Commands for Processing SiB4 Hourly Files
+
+NOTE: SiB4 files are stored on node 5; best to run cdo commands there
+
+## Hourly mean
+cdo -v -z zip_6 \
+    -splityear \
+    -shifttime,-30minutes \
+    -settunits,minutes \
+    -select,name=assim_non_zero,sif_non_zero \
+    -aexpr,"assim_non_zero=(abs(assim) + abs(sif) > 0)?assim:missval(assim)" \
+    -aexpr,"sif_non_zero=(abs(assim) + abs(sif) > 0)?sif:missval(sif)" \
+    -vertsum \
+    -select,name=assim,sif \
+    /data/2021-06-10_SiB4/sib4-hourly-{2014,2015,2016,2017,2018,2019,2020}-* \
+    data/eda/sib4/hourly/sib4-hourly-
+
+
+## Daily mean
+cdo -v -z zip_6 \
+    -splityear \
+    -daymean \
+    -select,name=assim_non_zero,sif_non_zero \
+    -aexpr,"assim_non_zero=(abs(assim) + abs(sif) > 0)?assim:missval(assim)" \
+    -aexpr,"sif_non_zero=(abs(assim) + abs(sif) > 0)?sif:missval(sif)" \
+    -vertsum \
+    -select,name=assim,sif \
+    /data/2021-06-10_SiB4/sib4-hourly-{2014,2015,2016,2017,2018,2019,2020}-* \
+    data/eda/sib4/daily/sib4-daily-
+
+
+## Weekly mean
+cdo -v -z zip_6 \
+    -splityear \
+    -weekmean \
+    -select,name=assim_non_zero,sif_non_zero \
+    -aexpr,"assim_non_zero=(abs(assim) + abs(sif) > 0)?assim:missval(assim)" \
+    -aexpr,"sif_non_zero=(abs(assim) + abs(sif) > 0)?sif:missval(sif)" \
+    -vertsum \
+    -select,name=assim,sif \
+    /data/2021-06-10_SiB4/sib4-hourly-{2014,2015,2016,2017,2018,2019,2020}-* \
+    data/eda/sib4/weekly/sib4-weekly-
+
+
+## Monthly mean
+cdo -v -z zip_6 \
+    -splityear \
+    -monmean \
+    -select,name=assim_non_zero,sif_non_zero \
+    -aexpr,"assim_non_zero=(abs(assim) + abs(sif) > 0)?assim:missval(assim)" \
+    -aexpr,"sif_non_zero=(abs(assim) + abs(sif) > 0)?sif:missval(sif)" \
+    -vertsum \
+    -select,name=assim,sif \
+    /data/2021-06-10_SiB4/sib4-hourly-{2014,2015,2016,2017,2018,2019,2020}-* \
+    data/eda/sib4/monthly/sib4-monthly-
+
+
+## Yearly mean
+cdo -v -z zip_6 \
+    -splityear \
+    -yearmean \
+    -fldmean \
+    -select,name=assim_non_zero,sif_non_zero \
+    -aexpr,"assim_non_zero=(abs(assim) + abs(sif) > 0)?assim:missval(assim)" \
+    -aexpr,"sif_non_zero=(abs(assim) + abs(sif) > 0)?sif:missval(sif)" \
+    -vertsum \
+    -select,name=assim,sif \
+    /data/2021-06-10_SiB4/sib4-hourly-{2014,2015,2016,2017,2018,2019,2020}-* \
+    data/eda/sib4/yearly/sib4-yearly-

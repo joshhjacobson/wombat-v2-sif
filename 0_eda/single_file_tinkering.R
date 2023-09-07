@@ -67,3 +67,22 @@ ggplot() +
   coord_equal() +
   facet_wrap(~X3) +
   theme_void()
+
+
+
+# pre-processed file
+sib4_path <- 'data/eda/sib4/'
+pre_file <- paste0(sib4_path, 'daily/sib4-daily-2020.nc')
+
+nc_vars(pre_file)
+sib4_daily <- nc_open(pre_file)
+
+sif_non_zero <- ncvar_get(sib4_daily, "sif_non_zero")  %>% st_as_stars()
+sif_non_zero %>% slice(X3, 1) -> sif_non_zero_1 
+ggplot() + 
+  geom_stars(data = sif_non_zero_1)
+
+assim_non_zero <- ncvar_get(sib4_daily, "assim_non_zero")  %>% st_as_stars()
+assim_non_zero %>% slice(X3, 1) -> assim_non_zero_1
+ggplot() + 
+  geom_stars(data = assim_non_zero_1)

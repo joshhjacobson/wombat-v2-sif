@@ -37,11 +37,11 @@ data/eda/sib4/daily/sib4-daily-
 printf "Daily done.\n"
 
 
-## Weekly mean
+## Weekly mean (with hourly data, weekly mean is calculated as the mean of the 168 hours in a week)
 printf "Creating weekly files...\n"
 cdo -w -z zip_6 \
 -splityear \
--weekmean \
+-timselmean,168 \
 -selname,assim_nonzero,sif_nonzero \
 -aexpr,"assim_nonzero=(abs(assim) + abs(sif) > 0)?assim:missval(assim)" \
 -aexpr,"sif_nonzero=(abs(assim) + abs(sif) > 0)?sif:missval(sif)" \

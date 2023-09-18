@@ -1,17 +1,33 @@
-library(ncmeta)
 library(ncdf4)
 library(stars)
 library(dplyr)
 library(ggplot2)
 
-transcom_path <- 'data/TRANSCOM_mask_original_1x1.nc'
+source("partials/display.R")
 
-nc_vars(transcom_path)
+# Read in the TRANSCOM3 grid
+transcom_path <- "data/TRANSCOM_mask_original_1x1.nc"
 
-transcom_mask <- read_ncdf(transcom_path, var = 'mask64')  %>% 
-    st_as_sf()  %>% 
-    mutate(mask64 = as.factor(as.int(mask64)))
-ggplot() + 
-  geom_sf(data = transcom_mask) +
-  scale_color_brewer(palette = 'tab20') +
-  theme_void()
+transcom_mask <- read_ncdf(transcom_path, var = "mask64") %>%
+  st_set_dimensions(names = c("lon", "lat")) %>%
+  mutate(regions = as.integer(mask64))
+
+ggplot() +
+  geom_stars(data = transcom_mask)
+
+p <- ggplot() +
+  geom_stars(data = transcom_mask) +
+  facet_wrap(~regions) + 
+  theme(legend.position="none")
+
+ggsave_base(
+  paste0("0_eda/figures/transcom_regions.png"),
+  p,
+  width = 18,
+  height = 20,
+)
+
+
+
+test <- transcom_mask %>% as_tibble() # %>% group_by(mask64)
+test %>% count(mask64)

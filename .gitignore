@@ -13,6 +13,8 @@ documentation
 utils
 
 # Temporary
+.vscode
+
 data/downloaded_20211217.tgz
 data/fossil-mipv10
 data/GEOS_Chem
@@ -24,4 +26,4 @@ data/sib4-hourly
 data/spco2_MPI-SOM_FFN_v2020.nc
 
 data/eda
-*/figures
+0_eda/figures

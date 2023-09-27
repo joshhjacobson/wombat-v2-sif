@@ -1,0 +1,5 @@
+# Concatenate standardized gifs to mp4
+ffmpeg -f concat -i gpp_files.txt gpp_full_ffmpeg.mp4
+
+# Combine two mp4s left and right with visually lossless compression
+ffmpeg -i sif_animations/sif_full_ffmpeg.mp4 -i gpp_animations/gpp_full_ffmpeg.mp4 -filter_complex hstack -c:v libx264 -crf 0 sif_gpp_daily.mp4

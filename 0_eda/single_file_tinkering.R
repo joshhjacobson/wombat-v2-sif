@@ -86,3 +86,18 @@ assim_non_zero <- ncvar_get(sib4_daily, "assim_non_zero")  %>% st_as_stars()
 assim_non_zero %>% slice(X3, 1) -> assim_non_zero_1
 ggplot() + 
   geom_stars(data = assim_non_zero_1)
+
+
+# Check coarsened grid
+sib4_path <- 'data/eda/sib4/daily_2x25/sib4-daily-2019.nc'
+sib4_daily <- read_ncdf(sib4_path, var = c("sif_nonzero", "assim_nonzero"))
+
+# read list of files as above, then combine with c(., along="time")
+
+sib4_daily %>%
+  slice("time", 1)  %>% 
+  select(sif_nonzero) %>%
+  st_as_sf() -> demo
+
+ggplot() +
+  geom_sf(data=demo, mapping=aes(fill=sif_nonzero), linewidth=0)

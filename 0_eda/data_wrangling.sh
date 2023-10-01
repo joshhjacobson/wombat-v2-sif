@@ -37,6 +37,17 @@ data/eda/sib4/daily/sib4-daily-
 printf "Daily done.\n"
 
 
+## Regrid daily files to 2 x 2.5 degree grid using conservative remapping
+printf "Regridding daily files to 2 x 2.5 degree grid...\n"
+cdo -w -z zip_6 \
+-splityear \
+-remapcon,data/geos.2x25.grid \
+-select,name=assim_nonzero,sif_nonzero \
+data/eda/sib4/daily/sib4-daily-* \
+data/eda/sib4/daily_2x25/sib4-daily-
+printf "Regridding done.\n"
+
+
 ## Weekly mean (with hourly data, weekly mean is calculated as the mean of the 168 hours in a week)
 printf "Creating weekly files...\n"
 cdo -w -z zip_6 \

@@ -28,6 +28,20 @@ ggsave_base(
 )
 
 
-
 test <- transcom_mask %>% as_tibble() # %>% group_by(mask64)
-test %>% count(mask64)
+test_mask %>% count(mask64)
+
+
+# Repeat with 2x2.5-degree grid
+transcom_path <- '1_transport/intermediates/TRANSCOM_mask_GEOS_Chem_2x2.5.nc'
+transcom_mask <- read_ncdf(transcom_path) %>%
+  st_redimension(name="mask_level") %>%
+  st_set_dimensions(which="mask_level", values=seq(0,22)) %>% 
+  st_apply(c("lon", "lat"), function(x) which(x == 1)-1) %>% 
+  rename(regions = everything())
+
+mask_sf <- transcom_mask %>%  st_as_sf()
+
+ggplot() +
+  geom_sf(data = mask_sf, mapping=aes(fill=regions)) +
+  facet_wrap(~regions)

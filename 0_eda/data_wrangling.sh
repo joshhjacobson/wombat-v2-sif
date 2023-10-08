@@ -48,6 +48,18 @@ data/eda/sib4/daily_2x25/sib4-daily-
 printf "Regridding done.\n"
 
 
+## Daily mean, all values
+printf "Creating daily files (all values)...\n"
+cdo -w -z zip_6 \
+-splityear \
+-daymean \
+-vertsum \
+-select,name=assim,sif \
+/data/2021-06-10_SiB4/sib4-hourly-{2014,2015,2016,2017,2018,2019,2020}-* \
+data/eda/sib4/daily_full/sib4-daily-
+printf "Daily done.\n"
+
+
 ## Weekly mean (with hourly data, weekly mean is calculated as the mean of the 168 hours in a week)
 printf "Creating weekly files...\n"
 cdo -w -z zip_6 \

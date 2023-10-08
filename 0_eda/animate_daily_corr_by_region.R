@@ -18,6 +18,13 @@ transcom_mask <- read_ncdf(transcom_path) %>%
     st_apply(c("lon", "lat"), function(x) which(x == 1) - 1) %>%
     rename(regions = everything())
 
+dates <- clock::date_seq(
+    from = as.POSIXct("2016-01-01"),
+    to = as.POSIXct("2019-01-01"),
+    by = clock::duration_days(1)
+)
+nframes = length(dates)
+
 sf_use_s2(FALSE)
 sib4_with_mask_land <- sib4 %>%
     st_join(transcom_mask) %>%
@@ -40,6 +47,7 @@ p <- ggplot(data = sib4_with_mask_land) +
     )
 anim <- animate(
     p,
+    nframes = nframes,
     fps = 10,
     height = 12,
     width = 14,

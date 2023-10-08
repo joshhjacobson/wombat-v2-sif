@@ -1,0 +1,15 @@
+
+Mike
+Green: #018571
+Brown: #a6611a
+Red: #ff4444
+
+
+Josh
+Green: #0a704e
+Orange: #fb8b00
+Yellow: #f9d32e
+
+Choices so far:
+Green: #018571
+Orange: #fb8b00

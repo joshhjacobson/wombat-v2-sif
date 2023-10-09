@@ -72,15 +72,24 @@ ggplot() +
 
 # pre-processed file
 sib4_path <- 'data/eda/sib4/'
-pre_file <- paste0(sib4_path, 'daily/sib4-daily-2020.nc')
+pre_file <- paste0(sib4_path, 'daily_full/sib4-daily-2020.nc')
 
 nc_vars(pre_file)
 sib4_daily <- nc_open(pre_file)
 
 sif_non_zero <- ncvar_get(sib4_daily, "sif_non_zero")  %>% st_as_stars()
 sif_non_zero %>% slice(X3, 1) -> sif_non_zero_1 
-ggplot() + 
-  geom_stars(data = sif_non_zero_1)
+
+sib4 <- read_stars(pre_file, sub = c("sif", "assim")) %>% 
+  st_set_dimensions(names = c("lon", "lat", "time")) %>%
+  st_set_crs(4326)
+
+sib4 %>% slice(time, 250) -> sib4_1 
+ggplot() +
+  geom_stars(data = select(sib4_1, sif))
+
+ggplot() +
+  geom_stars(data = select(sib4_1, assim))
 
 assim_non_zero <- ncvar_get(sib4_daily, "assim_non_zero")  %>% st_as_stars()
 assim_non_zero %>% slice(X3, 1) -> assim_non_zero_1

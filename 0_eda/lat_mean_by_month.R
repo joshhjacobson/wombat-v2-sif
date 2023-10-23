@@ -44,8 +44,11 @@ sib4_bands <- sib4 %>%
 #   select(lat, month, sif_std, assim_std)
 
 
-sif_color <- "#fb8b00"
-gpp_color <- "#018571"
+# sif_color <- "#fb8b00"
+# gpp_color <- "#018571"
+
+gpp_color <- "#026358"
+sif_color <- "#d6490c"
 scale_factor_med <- median(sib4_bands$scale_factor)
 
 # Plot lat means by month
@@ -63,12 +66,20 @@ p <- ggplot(sib4_bands, aes(x = lat)) +
       name = bquote("GPP [" * mu ~ "mol" ~ C ~ m^-2 ~ s^-1 * "]")
     )
   ) +
-  facet_wrap(~month) +
+  coord_flip() +
+  facet_wrap(~month, ncol=6) +
+  # theme(
+  #   axis.title.y.left = element_text(color = sif_color),
+  #   axis.text.y.left = element_text(color = sif_color),
+  #   axis.title.y.right = element_text(color = gpp_color),
+  #   axis.text.y.right = element_text(color = gpp_color)
+  # ) +
   theme(
-    axis.title.y.left = element_text(color = sif_color),
-    axis.text.y.left = element_text(color = sif_color),
-    axis.title.y.right = element_text(color = gpp_color),
-    axis.text.y.right = element_text(color = gpp_color)
+    axis.title.x.bottom = element_text(color = sif_color),
+    axis.text.x.bottom = element_text(color = sif_color),
+    axis.title.x.top = element_text(color = gpp_color),
+    axis.text.x.top = element_text(color = gpp_color),
+    strip.placement = "outside"
   ) +
   labs(
     x = "Latitude",
@@ -79,6 +90,6 @@ p
 ggsave_base(
   "0_eda/figures/lat_mean_by_month_updated.png",
   p,
-  width = 23,
-  height = 12,
+  width = 18,
+  height = 14,
 )

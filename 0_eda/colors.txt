@@ -13,3 +13,8 @@ Yellow: #f9d32e
 Choices so far:
 Green: #018571
 Orange: #fb8b00
+
+Propublica Palette:
+https://projects.propublica.org/repatriation-nagpra-database/
+Green: #026358
+Orange: #d6490c

@@ -10,6 +10,10 @@ Green: #0a704e
 Orange: #fb8b00
 Yellow: #f9d32e
 
+YNAB Bluish: #3B5EDA
+True Indigo: #330099
+Electric Indigo: #6F00FF
+
 Choices so far:
 Green: #018571
 Orange: #fb8b00
@@ -18,3 +22,5 @@ Propublica Palette:
 https://projects.propublica.org/repatriation-nagpra-database/
 Green: #026358
 Orange: #d6490c
+
+# Consider Dark2 Color Brewer Palette

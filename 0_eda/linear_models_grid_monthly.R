@@ -341,6 +341,9 @@ ggsave_base(
 
 
 # Check grid cell scatter plots for different intercept cases
+# BELOW IS NOT NEEDED
+# df_fit_metrics <- df_fit_metrics %>% 
+#     left_join(sib4_land_nested, by = c("lon", "lat", "month"))
 
 ## Collect world coastline data
 world <- ne_coastline(scale = 110, returnclass = "sf")
@@ -367,9 +370,15 @@ plot_scatter_location <- function(nested_data, i, type_name) {
         select(data) %>%
         unnest(cols = c(data))
     p_data <- ggplot(data = df_location) +
-        geom_point(aes(x = assim, y = sif)) +
+        geom_point(
+            aes(x = assim, y = sif, color = as.factor(clock::get_year(time))), 
+            alpha = 0.5,
+            shape = 1
+        ) +
+        scale_color_brewer(palette = "Dark2") +
         expand_limits(x = 0, y = 0) +
-        labs(x = "GPP", y = "SIF", title = specs)
+        labs(x = "GPP", y = "SIF", title = specs, color = "Year") +
+        theme(legend.position = "bottom")
 
     fname <- paste(
         "0_eda/figures/scatter/scatter_grid_monthly",
@@ -380,7 +389,7 @@ plot_scatter_location <- function(nested_data, i, type_name) {
     ggsave(
         paste0(fname, ".png"),
         p_data + p_location,
-        width = 9,
+        width = 8,
         height = 3,
     )
 }

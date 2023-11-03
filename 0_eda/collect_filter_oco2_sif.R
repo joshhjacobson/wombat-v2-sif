@@ -1,5 +1,4 @@
 library(dplyr)
-library(fst)
 library(furrr)
 library(ncdf4)
 
@@ -8,7 +7,7 @@ source("partials/utils.R")
 # Collect list of files from SIF subdirectory for 2014 through 2020
 sif_dir <- "/data/OCO-2/OCO2_L2_Lite_SIF.10r/"
 sif_files <- c()
-for (year in 2019:2020) {
+for (year in 2014:2020) {
     year_dir <- paste0(sif_dir, year)
     sif_files <- append(sif_files, list.files(year_dir, full.names = TRUE))
 }
@@ -45,4 +44,4 @@ oco_sif <- future_map(sif_files, read_oco2_sif_lite_file) %>% bind_rows()
 oco_sif
 
 # Write out to fst file
-write.fst(oco_sif, "data/eda/oco2/oco2_sif_lite_2014-2020.fst")
+fst::write.fst(oco_sif, "data/eda/oco2/oco2_sif_lite_2014-2020.fst")

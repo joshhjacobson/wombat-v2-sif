@@ -1,8 +1,7 @@
 library(dplyr)
-library(fst)
 
 # Read OCO-2 SIF data
-oco_sif <- read.fst("data/eda/oco2/oco2_sif_lite_2014-2020.fst") %>% as_tibble()
+oco_sif <- fst::read.fst("data/eda/oco2/oco2_sif_lite_2014-2020.fst") %>% as_tibble()
 
 lon_breaks <- seq(-180, 180, 1)
 lon_labs <- seq(-179.5, 179.5, 1)
@@ -36,4 +35,4 @@ oco_sif_grid <- oco_sif %>%
 head(oco_sif_grid)
 
 # Write out to fst file
-write.fst(oco_sif_grid, "data/eda/oco2/oco2_sif_2014-2020_daily_1deg.fst")
+fst::write.fst(oco_sif_grid, "data/eda/oco2/oco2_sif_2014-2020_daily_1deg.fst")

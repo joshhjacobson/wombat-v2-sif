@@ -123,40 +123,216 @@ anim_save("scatter_sib4_sif_oco2_sif_regional.gif", path = "./0_eda/figures/")
 
 
 # Join SiB4 and OCO-2 data, plot scatter plots by day (global and regional)
-df <- nested_summaries %>%
-    select(lon, lat, month, data) %>%
-    inner_join(oco2_sif, by = c("lon", "lat", "month")) %>% 
-    rename(data_sib4 = data.x, data_oco2 = data.y)
-df
-
-
-
-# Nest OCO-2 data by lon, lat, month
-# Inner join with nested SiB4 data
-# Plot scatter plots by intercept categories where data is sufficient
+oco2_sif_nested <- oco2_sif %>% 
+    group_by(lon, lat, month) %>%
+    nest() %>%
+    ungroup()
 
 nested_summaries <- readr::read_rds("data/eda/sib4/summaries_grid_month.rds")
 
+nested_data <- nested_summaries %>%
+    select(lon, lat, month, data, tidy_out) %>%
+    inner_join(oco2_sif_nested, by = c("lon", "lat", "month")) %>% 
+    rename(data_sib4 = data.x, data_oco2 = data.y)
+
 # Extract summaries and combine into a single tibble
-df_intercept <- nested_summaries %>%
+df_intercept <- nested_data %>%
     unnest(cols = c(tidy_out)) %>%
     filter(term == "(Intercept)") %>%
-    select(c(lon, lat, month, estimate))
+    select(c(lon, lat, month, estimate)) %>%
+    rename(intercept = estimate)
 
-df_slope <- nested_summaries %>%
-    unnest(cols = c(tidy_out)) %>%
-    filter(term == "assim") %>%
-    select(c(lon, lat, month, estimate))
 
-df_sigma <- nested_summaries %>%
-    unnest(cols = c(glance_out)) %>%
-    select(c(lon, lat, month, sigma))
+world <- ne_coastline(scale = 110, returnclass = "sf")
 
-df_rsquared <- nested_summaries %>%
-    unnest(cols = c(glance_out)) %>%
-    select(c(lon, lat, month, adj.r.squared))
+plot_scatter_location <- function(nested_data, i, type_name) {
+    row_data <- nested_data[i, ] %>% unnest(cols = c(data))
+    p_location <- ggplot(data = world) +
+        geom_sf() +
+        geom_point(
+            data = row_data,
+            aes(x = lon, y = lat),
+            color = "red",
+            size = 3
+        ) +
+        labs(x = element_blank(), y = element_blank(), title = "Location")
 
-df_fit_metrics <- list(df_intercept, df_slope, df_sigma, df_rsquared) %>%
-    purrr::reduce(inner_join, by = c("lon", "lat", "month")) %>%
-    rename(intercept = estimate.x, slope = estimate.y, std_err = sigma)
+    specs <- paste(
+        "Month: ",
+        row_data$month,
+        " |  Intercept: ",
+        round(row_data$intercept, 3)
+    )
+    df_sib4 <- row_data %>%
+        select(data_sib4) %>%
+        unnest(cols = c(data_sib4)) %>% 
+        mutate(date = as.Date(time))
+    df_oco2 <- row_data %>%
+        select(data_oco2) %>%
+        unnest(cols = c(data_oco2)) %>%
+        left_join(df_sib4, by = c("date"))
+    p_data <- ggplot() +
+        geom_point(
+            data = df_sib4, 
+            aes(x = assim, y = sif, color = "SiB4", shape = "SiB4"), 
+            alpha = 0.5
+        ) +
+        geom_point(
+            data = df_oco2, 
+            aes(x = assim, y = oco_sif, color = "OCO-2", shape = "OCO-2")
+        ) +
+        expand_limits(x = 0, y = 0) +
+        scale_color_manual(
+            element_blank(), 
+            values = c("SiB4" = "black", "OCO-2" = "red")
+        ) +
+        scale_shape_manual(
+            element_blank(), 
+            values = c("SiB4" = 1, "OCO-2" = 16)
+        ) +
+        labs(x = "GPP", y = "SIF", title = specs) +
+        theme(legend.position = "bottom")
 
+    fname <- paste(
+        "0_eda/figures/scatter_with_oco2/scatter_grid_monthly",
+        type_name,
+        i,
+        sep = "_"
+    )
+    ggsave(
+        paste0(fname, ".png"),
+        p_data + p_location,
+        width = 8,
+        height = 3,
+    )
+}
+
+
+
+## Negative intercepts (with OCO-2)
+set.seed(20231023)
+metrics_intercept_neg_south <- df_intercept %>%
+    filter(intercept < -0.1, between(lat, -30, 0)) %>%
+    sample_n(15)
+metrics_intercept_neg_north <- df_intercept %>%
+    filter(intercept < -0.1, between(lat, 50, 70)) %>%
+    sample_n(15)
+metrics_intercept_neg <- metrics_intercept_neg_south %>%
+    bind_rows(metrics_intercept_neg_north)
+
+
+p_locations_full <- ggplot(data = world) +
+    geom_sf() +
+    geom_point(data = metrics_intercept_neg, aes(x = lon, y = lat), color = "red") +
+    coord_sf(
+        crs = sf::st_crs(4326),
+        default_crs = sf::st_crs(4326)
+    ) +
+    labs(
+        x = element_blank(),
+        y = element_blank(),
+        title = "Sample locations with intercept < -0.1 [SIF Units]"
+    )
+p_locations_full
+
+ggsave_base(
+    "0_eda/figures/locations_neg_intercept_with_oco2.png",
+    p_locations_full,
+    width = 12,
+    height = 6
+)
+
+nested_data_neg <- nested_data %>%
+    select(-tidy_out) %>%
+    inner_join(metrics_intercept_neg, by = c("lon", "lat", "month")) %>%
+    group_by(lon, lat, month) %>%
+    nest() %>%
+    ungroup()
+
+for (i in seq_len(nrow(nested_data_neg))) {
+    plot_scatter_location(nested_data_neg, i, "neg_intercept")
+}
+
+
+## Positive intercepts (with OCO-2)
+set.seed(20231023)
+metrics_intercept_pos_south <- df_intercept %>%
+    filter(intercept > 0.1, between(lat, -30, 0)) %>%
+    sample_n(15)
+metrics_intercept_pos_north <- df_intercept %>%
+    filter(intercept > 0.1, between(lat, 50, 70)) %>%
+    sample_n(15)
+metrics_intercept_pos <- metrics_intercept_pos_south %>%
+    bind_rows(metrics_intercept_pos_north)
+
+
+p_locations_full <- ggplot(data = world) +
+    geom_sf() +
+    geom_point(data = metrics_intercept_pos, aes(x = lon, y = lat), color = "red") +
+    coord_sf(
+        crs = sf::st_crs(4326),
+        default_crs = sf::st_crs(4326)
+    ) +
+    labs(
+        x = element_blank(),
+        y = element_blank(),
+        title = "Sample locations with intercept > 0.1 [SIF Units]"
+    )
+p_locations_full
+
+ggsave_base(
+    "0_eda/figures/locations_pos_intercept_with_oco2.png",
+    p_locations_full,
+    width = 12,
+    height = 6
+)
+
+nested_data_pos <- nested_data %>%
+    select(-tidy_out) %>%
+    inner_join(metrics_intercept_pos, by = c("lon", "lat", "month")) %>%
+    group_by(lon, lat, month) %>%
+    nest() %>%
+    ungroup()
+
+for (i in seq_len(nrow(nested_data_pos))) {
+    plot_scatter_location(nested_data_pos, i, "pos_intercept")
+}
+
+
+## Near-zero intercepts (with OCO-2)
+set.seed(20231026)
+metrics_intercept_zero <- df_intercept %>%
+    filter(between(intercept, -0.1, 0.1)) %>%
+    sample_n(30)
+
+p_locations_full <- ggplot(data = world) +
+    geom_sf() +
+    geom_point(data = metrics_intercept_zero, aes(x = lon, y = lat), color = "red") +
+    coord_sf(
+        crs = sf::st_crs(4326),
+        default_crs = sf::st_crs(4326)
+    ) +
+    labs(
+        x = element_blank(),
+        y = element_blank(),
+        title = "Sample locations with intercept in (-0.1, 0.1) [SIF Units]"
+    )
+p_locations_full
+
+ggsave_base(
+    "0_eda/figures/locations_zero_intercept_with_oco2.png",
+    p_locations_full,
+    width = 12,
+    height = 6
+)
+
+nested_data_zero <- nested_data %>%
+    select(-tidy_out) %>%
+    inner_join(metrics_intercept_zero, by = c("lon", "lat", "month")) %>%
+    group_by(lon, lat, month) %>%
+    nest() %>%
+    ungroup()
+
+for (i in seq_len(nrow(nested_data_zero))) {
+    plot_scatter_location(nested_data_zero, i, "zero_intercept")
+}

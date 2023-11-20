@@ -1,9 +1,10 @@
-# You can do this as follows. Open R while in the base directroy of the 
-# repository, and run
+# Setup file to run 03_inversion/src/samples.R interactively.
+# With an R session running in the base directory, either source this file within samples.R, 
+# or run the following lines:
 
-Sys.setenv('UTILS_PARTIAL', 'partials/utils.R')
-Sys.setenv('UTILS_CPP_PARTIAL', 'partials/utils.cpp')
-Sys.setenv('HMC_EXACT_CPP_PARTIAL', 'partials/hmc-exact.cpp')
+Sys.setenv(UTILS_PARTIAL = 'partials/utils.R')
+Sys.setenv(UTILS_CPP_PARTIAL = 'partials/utils.cpp')
+Sys.setenv(HMC_EXACT_CPP_PARTIAL = 'partials/hmc-exact.cpp')
 
 args <- list(
   overall_observation_mode = c('LN', 'LG', 'IS'),
@@ -25,7 +26,5 @@ args <- list(
   output = '3_inversion/intermediates/samples-LNLGIS.rds'
 )
 
-# Then run each line in the file except for the ones that set up the args 
-# (lines 98 to 110). That way you emulate what happens when the script is 
-# called. You can manually set the logging output level to trace by 
-# running "log_threshold(TRACE)".
+# Then run each line in the file samples.R except for the ones that set up the args 
+# (lines 98 to 110).

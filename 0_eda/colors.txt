@@ -24,3 +24,5 @@ Green: #026358
 Orange: #d6490c
 
 # Consider Dark2 Color Brewer Palette
+
+# Consider Green and Yellow used in LN / LG figures at the end of the v1 paper

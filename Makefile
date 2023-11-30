@@ -14,6 +14,7 @@ GEOS_CHEM_SOURCE = external/GEOS_Chem/Code.v12.3.2
 GEOS_CHEM_EXTDATA = data/GEOS_Chem/ExtData
 
 AREA_1X1 = data/area-1x1.nc
+OCO2_SIF_DIRECTORY = data/OCO2_L2_Lite_SIF_10r
 OCO2_OBSERVATIONS = data/OCO2_b10c_10sec_GOOD_r5.nc4
 OBSPACK_DIRECTORY = data/obspack_co2_1_OCO2MIP_v3.2_2021-05-20/data/daily
 TCCON_SOUNDING_DIRECTORY = data/downloaded_20211217

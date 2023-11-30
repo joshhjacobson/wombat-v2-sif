@@ -61,8 +61,10 @@ All input datasets go into the `data` directory. There are a few files already t
 
 In addition to those data sets already provided, the following data are needed to run the inversions:
 
+
+- The OCO-2 Level 2 SIF Lite files, available from [NASA's GES DISC](https://disc.gsfc.nasa.gov/datasets/OCO2_L2_Lite_SIF_10r/summary). The Lite files are aggregated as daily files and stored within yearly subdirectories. The parent directory `OCO2_L2_Lite_SIF_10r` should be placed in the data directory.
 - Available from the [OCO-2 v10 MIP website](https://gml.noaa.gov/ccgg/OCO2_v10mip/download.php):
-  - 10s averages of the OCO-2 B10 retreivals, in a file named `OCO2_b10c_10sec_GOOD_r5.nc4`
+  - 10s averages of the OCO-2 B10 retrievals, in a file named `OCO2_b10c_10sec_GOOD_r5.nc4`
   - The ObsPack measurements used by the v10 MIP, `obspack_co2_1_OCO2MIP_v3.2_2021-05-20`. These should be untarred into the data directory.
   - The TCCON retrievals in the file `downloaded_20211217.tgz`. These were not actually used in the paper, but are required for the matching step to work.
 - The Landschutzer ocean fluxes in the file `spco2_MPI-SOM_FFN_v2020.nc`, available from this [NOAA website](https://www.ncei.noaa.gov/data/oceans/ncei/ocads/data/0160558/MPI_SOM-FFN_v2020/)

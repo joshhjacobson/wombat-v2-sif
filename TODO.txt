@@ -1,8 +1,0 @@
--[] Establish SIF prior using SiB4 in 1_transport/module.mk
--[] Fit SIF-GPP linear model by 1-degree grid-cell and month using 1-degree, hourly SiB4 SIF and GPP inventories
--[] Preprocess OCO-2 SIF observations via filtering and averaging; append preprocessed data to observations.fst intermediate file
-    - Could alternatively create a separate file for OCO-2 SIF observations
--[] Update the conditional likelihood p(rho, ell, gamma | alpha) to accommodate SIF observations and rho, ell, and gamma parameters for SIF
-    - Affects 3_inversion/residual.R and 3_inversion/hyperparameter-estimates.R
--[] Update the HMC algorithm to accommodate rho for SIF
-    - Affects 3_inversion/samples.R

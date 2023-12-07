@@ -1,1 +1,0 @@
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_inversion/intermediates/samples-LNLGIS.rds

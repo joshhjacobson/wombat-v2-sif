@@ -4,16 +4,16 @@ library(stars)
 library(dplyr)
 library(ggplot2)
 
-sib4_path <- '/data/2021-06-10_SiB4/'
+sib4_path <- 'data/sib4-hourly/'
 early_file <- paste0(sib4_path, 'sib4-hourly-2018-01-01.nc')
-late_file <- paste0(sib4_path, 'sib4-hourly-2020-12-31.nc')
+late_file <- paste0(sib4_path, 'sib4-hourly-2019-07-01.nc')
 
 nc_inq(early_file)
 nc_dims(early_file)
 nc_vars(early_file)
 nc_atts(early_file)
 
-nc <- nc_open(early_file)
+nc <- nc_open(late_file)
 
 # Plot the total pft_area at each location
 pft_area <- ncvar_get(nc, "pft_area")  %>% st_as_stars()

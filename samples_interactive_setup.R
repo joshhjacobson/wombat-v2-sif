@@ -16,8 +16,8 @@ args <- list(
   component_name = c('LNLG', 'IS'),
   component_parts = c('LN|LG', 'IS'),
   component_transport_matrix = c(
-    '3_inversion/intermediates/H-IS.mat.lz4',
-    '3_inversion/intermediates/H-LNLG.mat.lz4'
+    '3_inversion/intermediates/H-LNLG.mat.lz4',
+    '3_inversion/intermediates/H-IS.mat.lz4'
   ),
   observations = '3_inversion/intermediates/observations.fst',
   hyperparameter_estimates = '3_inversion/intermediates/hyperparameter-estimates.fst',

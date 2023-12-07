@@ -18,7 +18,6 @@ sif_lite_get_date <- function(filename){
     paste0('20', stringr::str_extract(filename, '\\d{6}'))
 }
 
-
 log_info('Loading OCO-2 SIF observations from {args$oco2_observations_sif}')
 sif_paths <- list.files(
     args$oco2_sif_directory,
@@ -45,25 +44,29 @@ sif_soundings <- bind_rows(mclapply(sif_paths, function(filename) {
       ) %>%
       filter(
         oco2_operation_mode < 2, # nadir and glint
-        flag < 2,
+        flag %in% c(0, 1),
         value + 3 * measurement_error > 0
       ) %>%
       select(-flag)
-  })
+  },
+  # HACK(jhj): ncdf4::nc_open() prints a lot of warnings since the 'SoundingId' and 
+  # 'FootprintId' variables have 8-byte precision in the OCO-2 SIF Lite files. We don't 
+  # use these variables, so we suppress the warnings.
+  quiet = TRUE)
 }, mc.cores = get_cores()))
 
 
 log_info('Computing 10s averages for OCO-2 SIF observations')
+time_bins <- seq(
+  from = as.POSIXct(args$start_date, tz = 'UTC'),
+  to = as.POSIXct(args$end_date, tz = 'UTC'),
+  by = '10 sec'
+)
 observations_sif <- sif_soundings %>%
   mutate(
-    time_bin = cut(time, seq(
-      from = as.POSIXct(args$start_date, tz = 'UTC'),
-      to = as.POSIXct(args$end_date, tz = 'UTC'),
-      by = '10 sec'
-    ))
+    time = time_bins[findInterval(time, time_bins)] %m+% seconds(5)
   ) %>%
-  select(-time) %>%
-  group_by(time_bin, oco2_operation_mode) %>%
+  group_by(time, oco2_operation_mode) %>%
   summarise(
     count = n(),
     longitude = mean(longitude),
@@ -73,13 +76,12 @@ observations_sif <- sif_soundings %>%
   ) %>%
   ungroup() %>%
   filter(count >= 30) %>%
+  select(-count) %>%
   mutate(
-    time = as.POSIXct(as.character(time_bin), tz = 'UTC') %m+% seconds(5),
     observation_id = stringr::str_replace_all(time, "[^[:digit:]]", ""),
     oco2_operation_mode = as.factor(oco2_operation_mode),
     observation_type = as.factor('oco2')
   ) %>%
-  select(-c(time_bin, count)) %>%
   select(observation_id, observation_type, time, everything())
 
 stopifnot(!any(is.na(observations_sif$value)))

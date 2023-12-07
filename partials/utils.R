@@ -236,12 +236,20 @@ ncvar_get_time <- function(x, variable_name) {
   ))
 }
 
-with_nc_file <- function(files, code, envir = parent.frame()) {
+with_nc_file <- function(files, code, envir = parent.frame(), quiet = FALSE) {
   for (nme in names(files)) {
-    assign(
-      nme,
-      ncdf4::nc_open(files[[nme]]),
-      envir = envir
+    ifelse(
+      quiet,
+      invisible(capture.output(assign(
+        nme,
+        ncdf4::nc_open(files[[nme]]),
+        envir = envir
+      ))),
+      assign(
+        nme,
+        ncdf4::nc_open(files[[nme]]),
+        envir = envir
+      )
     )
   }
   on.exit({

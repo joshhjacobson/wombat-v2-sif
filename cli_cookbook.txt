@@ -1,5 +1,0 @@
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_inversion/intermediates/samples-LNLGIS.rds
-
-
-OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/observations-sif.fst
-OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make SIB4_SIF_HOURLY

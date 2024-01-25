@@ -5,5 +5,6 @@ OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/observations
 OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-sif-2016.nc
 OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-sif-gpp-2x25-2016.nc
 
+OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/slope-sif-gpp.fst
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_inversion/intermediates/samples-LNLGIS.rds

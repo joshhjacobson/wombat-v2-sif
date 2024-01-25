@@ -110,3 +110,57 @@ sib4_daily %>%
 
 ggplot() +
   geom_sf(data=demo, mapping=aes(fill=sif_nonzero), linewidth=0)
+
+
+path <- '3_sif/intermediates/sib4-hourly-sif-gpp-2x25-2016.nc'
+sib4 <- read_stars(path, sub = c("sif", "assim")) %>%
+    st_set_dimensions(names = c("lon", "lat", "time")) %>%
+    st_set_crs(4326)
+
+sib4 %>% select(sif) %>% slice(time, 1) -> sib4_1
+dim(sib4_1)
+ggplot() +
+  geom_stars(data = data_1)
+ggplot() +
+  geom_stars(data = select(data_1, assim))
+
+source('partials/utils.R')
+
+gridded <- read_gridded_data(
+  '3_sif/intermediates/sib4-hourly-sif-gpp-2x25-2018.nc',
+  'assim'
+)
+
+sif_gridded <- expand.grid(
+    longitude = gridded$longitude,
+    latitude = gridded$latitude,
+    time = gridded$time,
+    stringsAsFactors = FALSE
+  ) %>%
+    mutate(
+      value = as.double(gridded$value)
+    ) %>% 
+    tibble()
+
+sif_gridded %>% filter(time == lubridate::as_datetime('2018-01-15 18:00:00')) -> sif_gridded_1
+
+ggplot() +
+  geom_tile(data = sif_gridded_1, aes(x = longitude, y = latitude, fill = value)) +
+  coord_equal() +
+  scale_fill_viridis_c() +
+  theme_void()
+
+
+# Check how TransCom regions overlay on land masses
+library("rnaturalearth")
+library("rnaturalearthdata")
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+region_sf <- readRDS('4_results/intermediates/region-sf.rds')
+
+ggplot() +
+    geom_sf(data = world, fill = NA, colour = '#888888', size = 0.1) +
+    geom_sf(data = region_sf, fill = NA, colour = 'black', size = 0.1)
+
+
+region_grid <- readRDS('4_results/intermediates/region-grid.rds')

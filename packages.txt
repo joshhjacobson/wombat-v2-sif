@@ -1,11 +1,10 @@
 Rscript -e "install.packages(c(
     'devtools', 'codetools', 'argparse', 'argparser', 'lifecycle', 'Rglpk',
-    'pbmcapply',
+    'fst', 'coda', 'pbmcapply',
     'matrixStats', 'WoodburyMatrix', 'slam', 'tensor', 'RcppEigen', 
-    'readr', 'dplyr', 'tidyr', 'purrr', 'tibble', 'ggplot2', 'ggrepel', 'igraph',
-    'fst', 'patchwork', 'coda',
-    'sf', 'stars', 'terra', 'raster', 'ncdf4', 'rnaturalearth', 'rnaturalearthdata', 'rgeos'
-    'fields', 'GpGp', 'spdep', 'scoringRules',
+    'readr', 'dplyr', 'tidyr', 'purrr', 'tibble', 'ggplot2', 'patchwork', 'ggrepel', 'igraph',
+    'sf', 'stars', 'terra', 'raster', 'ncdf4', 'rnaturalearth', 'rnaturalearthdata',
+    'fields', 'GpGp', 'spdep', 'scoringRules'
 ))"
 
 

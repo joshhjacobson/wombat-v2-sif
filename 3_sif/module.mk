@@ -1,4 +1,9 @@
-$(shell mkdir -p 3_sif/intermediates)
+3_SIF_SRC_DIR = 3_sif/src
+3_SIF_INTERMEDIATES_DIR = 3_sif/intermediates
+3_SIF_FIGURES_DIR = 3_sif/figures
+
+$(shell mkdir -p $(3_SIF_INTERMEDIATES_DIR))
+$(shell mkdir -p $(3_SIF_FIGURES_DIR))
 
 OCO2_OBSERVATIONS_SIF = 3_sif/intermediates/observations-sif.fst
 

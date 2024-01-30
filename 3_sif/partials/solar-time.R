@@ -1,4 +1,30 @@
-# NOTE: begining to adapt from photobiology package
+source('partials/utils.R')
+lon <- seq(-180, 177.5, 2.5)
+lat <- c(-89.5, seq(-88, 88, 2), 89.5)
+start <- as.POSIXct('2014-01-01 12:00:00', tz = 'UTC')
+end <- as.POSIXct('2020-12-31 12:00:00', tz = 'UTC')
+time <- seq(start, end, by = 'day')
+
+grid <- expand.grid(
+  longitude = lon,
+  latitude = lat
+)
+
+solar_table_new <- data.frame(
+  mclapply(seq_len(nrow(grid)), function(i, time) {
+    Reduce(c, suntools::solarnoon(as.matrix(grid[i, ], nrow = 1), time, POSIXct.out = TRUE)$time)
+  }, time, mc.cores = get_cores())
+)
+colnames(solar_table_new) <- NULL
+rownames(solar_table_new) <- as.Date(time)
+
+# NOTE: is there a way to preserve the POSIXct class? (use names/values_transform or type)
+df <- cbind(grid, t(solar_table_new)) %>% 
+  tidyr::pivot_longer(-c(longitude, latitude), names_to = 'time', values_to = 'solarnoon')
+
+
+
+# NOTE: below is the start of adapting from photobiology package
 
 sun_angles <- function(time = lubridate::now(tzone = "UTC"),
                        tz = lubridate::tz(time),

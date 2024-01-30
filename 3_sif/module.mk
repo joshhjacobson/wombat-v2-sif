@@ -5,7 +5,7 @@ OCO2_OBSERVATIONS_SIF = 3_sif/intermediates/observations-sif.fst
 SIB4_SIF_HOURLY = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-sif-$(SIB4_YEAR).nc)
 SIB4_SIF_GPP_HOURLY_2X25 = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-sif-gpp-2x25-$(SIB4_YEAR).nc)
 
-SLOPE_SIF_GPP = 3_sif/intermediates/slope-sif-gpp.fst
+MODEL_SIF_GPP = 3_sif/intermediates/model-sif-gpp.fst
 # CONTROL_SIF = 3_sif/intermediates/control-sif.fst
 
 
@@ -22,11 +22,12 @@ SLOPE_SIF_GPP = 3_sif/intermediates/slope-sif-gpp.fst
 
 # Fitted slope coefficients
 
-$(SLOPE_SIF_GPP): \
-	3_sif/src/linear-model-new.R \
+$(MODEL_SIF_GPP): \
+	3_sif/src/linear-model.R \
 	$(SIB4_SIF_GPP_HOURLY_2X25)
 	Rscript $< \
 		--input-list "$(SIB4_SIF_GPP_HOURLY_2X25)" \
+		--parallel-strategy multicore \
 		--output $@
 
 # SIF and GPP inventories

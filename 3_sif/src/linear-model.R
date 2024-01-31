@@ -67,6 +67,7 @@ models <- inventory %>%
   unnest(cols = c(model, fence))
 
 log_info('Saving')
+# saveRDS(models, "3_sif/intermediates/models-data.rds")
 fst::write_fst(models, args$output)
 
 log_info('Done')

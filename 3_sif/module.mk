@@ -19,7 +19,7 @@ MODEL_SIF_GPP = 3_sif/intermediates/model-sif-gpp.fst
 # $(CONTROL_SIF): \
 # 	3_sif/src/control-sif.R \
 # 		$(SIB4_SIF_HOURLY) \
-# 		$(SLOPES) \
+# 		$(SLOPES)
 # 	Rscript $< \
 # 		--inventory $(SIB4_SIF_HOURLY) \
 # 		--slopes $(SLOPES) \

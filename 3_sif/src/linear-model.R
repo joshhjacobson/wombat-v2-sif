@@ -18,6 +18,7 @@ plan(args$parallel_strategy, workers = get_cores())
 options <- furrr_options(packages = c('dplyr', 'broom'))
 
 input_paths <- strsplit(args$input_list, " ")[[1]]
+SIGNIFICANCE_LEVEL <- 0.001
 
 inventory <- bind_rows(mclapply(input_paths, function(path) {
   log_trace('Opening {path}')
@@ -45,29 +46,39 @@ models <- inventory %>%
   nest(.by = c(longitude, latitude, month)) %>%
   mutate(count = future_map_int(data, function(data) {
     sum(data$sif > 0.1)
-  })) %>% 
+  }, .options = options)) %>% 
   filter(count >= 30) %>%
   mutate(model = future_map(data, function(data) {
-    fit <- broom::tidy(lm(sif ~ assim, data = data), .options = options)
+    fit_linear <- lm(sif ~ assim, data = data)
+    fit_poly <- lm(sif ~ poly(assim, degree = 3, raw = TRUE), data = data)
+    metrics <- broom::tidy(fit_linear)
     tibble(
-      intercept = fit$estimate[1],
-      slope = fit$estimate[2],
-      pvalue_slope = fit$p.value[2]
+      intercept = metrics$estimate[1],
+      slope = metrics$estimate[2],
+      pvalue_slope = metrics$p.value[2],
+      pvalue_poly = anova(fit_linear, fit_poly)$Pr[2],
+      correlation = cor(data$assim, data$sif)
     )
-  })) %>% 
-  mutate(fence = future_map(data, function(data) {
+  }, .options = options)) %>%
+  unnest(cols = c(model)) %>%
+  filter(
+    correlation > 0.5,
+    pvalue_poly > SIGNIFICANCE_LEVEL,
+    intercept > -0.6
+  ) %>%
+  mutate(slope = if_else(pvalue_slope < SIGNIFICANCE_LEVEL, slope, 0)) %>%
+  mutate(tukey_fence = future_map(data, function(data) {
     quantiles <- quantile(data$sif, c(0.25, 0.75))
     iqr <- quantiles[2] - quantiles[1]
     tibble(
       lower_fence = quantiles[1] - 1.5 * iqr,
       upper_fence = quantiles[2] + 1.5 * iqr
     )
-  })) %>% 
-  select(-data) %>%
-  unnest(cols = c(model, fence))
+  }, .options = options)) %>% 
+  unnest(cols = c(tukey_fence))
 
 log_info('Saving')
-# saveRDS(models, "3_sif/intermediates/models-data.rds")
-fst::write_fst(models, args$output)
+saveRDS(models, "3_sif/intermediates/models-data.rds")
+models %>% select(-data) %>% fst::write_fst(args$output)
 
 log_info('Done')

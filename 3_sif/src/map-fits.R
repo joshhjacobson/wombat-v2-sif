@@ -6,133 +6,93 @@ library(patchwork)
 
 source("partials/display.R")
 region_sf <- readRDS('4_results/intermediates/region-sf.rds')
-models <- fst::read_fst('3_sif/intermediates/model-sif-gpp.fst')
-
-models <- models %>% tidyr::as_tibble()
-
-p <- ggplot() +
-  geom_raster(data = models, aes(x = longitude, y = latitude, fill = pvalue_slope)) +
-  geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
-  coord_sf(
-    crs = sf::st_crs(4326),
-    default_crs = sf::st_crs(4326)
-  ) +
-  scale_fill_continuous_sequential(
-    name = "Slope P-value",
-    palette = "BluYl"
-  ) +
-  labs(x = NULL, y = NULL) +
-  facet_wrap(~month, ncol = 3)
-p
-ggsave_base(
-    "3_sif/figures/model_pvalue.png",
-    p,
-    width = 18,
-    height = 12
-)
+models <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()
+# models <- fst::read_fst('3_sif/intermediates/model-sif-gpp.fst') %>% tidyr::as_tibble()
 
 
-summary(models$slope)
-b <- ggplot() +
-  geom_boxplot(data = models, aes(y = slope))
-b
-ggsave_base(
-    "3_sif/figures/model_slope_box.png",
-    b,
-    width = 9,
-    height = 12
-)
+# p <- ggplot() +
+#   geom_raster(data = models, aes(x = longitude, y = latitude, fill = pvalue_poly > 0.001)) +
+#   geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
+#   coord_sf(
+#     crs = sf::st_crs(4326),
+#     default_crs = sf::st_crs(4326)
+#   ) +
+#   scale_fill_discrete(
+#     name = "F-stat. P-value > 0.001",
+#   ) +
+#   labs(x = NULL, y = NULL) +
+#   facet_wrap(~month, ncol = 3)
+# p
+# ggsave_base(
+#     "3_sif/figures/model_pvalue_poly_class.png",
+#     p,
+#     width = 18,
+#     height = 12
+# )
 
+# p <- ggplot() +
+#   geom_raster(data = models, aes(x = longitude, y = latitude, fill = correlation > 0.5)) +
+#   geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
+#   coord_sf(
+#     crs = sf::st_crs(4326),
+#     default_crs = sf::st_crs(4326)
+#   ) +
+#   scale_fill_discrete(
+#     name = "Correlation > 0.5",
+#   ) +
+#   labs(x = NULL, y = NULL) +
+#   facet_wrap(~month, ncol = 3)
+# p
+# ggsave_base(
+#     "3_sif/figures/model_stong_correlation.png",
+#     p,
+#     width = 18,
+#     height = 12
+# )
 
-p <- ggplot() +
-  geom_raster(data = models, aes(x = longitude, y = latitude, fill = slope)) +
-  geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
-  coord_sf(
-    crs = sf::st_crs(4326),
-    default_crs = sf::st_crs(4326)
-  ) +
-  scale_fill_continuous_sequential(
-    name = "Slope",
-    palette = "BluYl"
-  ) +
-  labs(x = NULL, y = NULL) +
-  facet_wrap(~month, ncol = 3)
-p
-ggsave_base(
-    "3_sif/figures/model_slope_all.png",
-    p,
-    width = 18,
-    height = 12
-)
+# p <- ggplot() +
+#   geom_raster(data = models, aes(x = longitude, y = latitude, fill = intercept > -0.6)) +
+#   geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
+#   coord_sf(
+#     crs = sf::st_crs(4326),
+#     default_crs = sf::st_crs(4326)
+#   ) +
+#   scale_fill_discrete(
+#     name = "Intercept > -0.6",
+#   ) +
+#   labs(x = NULL, y = NULL) +
+#   facet_wrap(~month, ncol = 3)
+# p
+# ggsave_base(
+#     "3_sif/figures/model_intercept_class.png",
+#     p,
+#     width = 18,
+#     height = 12
+# )
 
-quantiles <- quantile(models$slope, probs = c(0.05, 0.95))
-
-p <- models %>% filter(slope > quantiles[2]) %>% 
-  ggplot() +
-  geom_raster(aes(x = longitude, y = latitude, fill = slope)) +
-  geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
-  coord_sf(
-    crs = sf::st_crs(4326),
-    default_crs = sf::st_crs(4326)
-  ) +
-  scale_fill_continuous_sequential(
-    name = "Slope",
-    palette = "BluYl"
-  ) +
-  labs(x = NULL, y = NULL) +
-  facet_wrap(~month, ncol = 3)
-ggsave_base(
-  "3_sif/figures/model_slope_extreme.png",
-  p,
-  width = 18,
-  height = 12
-)
-
-p <- models %>% 
-  filter(slope < 0) %>% 
-  ggplot() +
-    geom_raster(aes(x = longitude, y = latitude, fill = slope)) +
-    geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
-    coord_sf(
-      crs = sf::st_crs(4326),
-      default_crs = sf::st_crs(4326)
-    ) +
-    scale_fill_continuous_sequential(
-      name = "Slope",
-      palette = "YlOrRd",
-    ) +
-    labs(x = NULL, y = NULL) +
-    facet_wrap(~month, ncol = 3)
-p
-ggsave_base(
-  "3_sif/figures/model_slope_negative.png",
-  p,
-  width = 18,
-  height = 12
-)
-
-
-q95 <- quantile(models$slope, probs = 0.95)
-models_sub <- models %>% 
-  filter(between(slope, 0, q95)) %>%
-  mutate(slope = if_else(pvalue_slope < 0.05, slope, 0))
-
-h <- ggplot() +
-  geom_histogram(data = models_sub, aes(x = slope))
-h
-b <- ggplot() +
-  geom_boxplot(data = models_sub, aes(y = slope))
-b
-ggsave_base(
-    "3_sif/figures/model_slope_trim_dist.png",
-    h + b,
-    width = 14,
-    height = 9
-)
+# p <- ggplot() +
+#   geom_raster(data = models_sub, aes(x = longitude, y = latitude, fill = pvalue_slope < 0.001)) +
+#   geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
+#   coord_sf(
+#     crs = sf::st_crs(4326),
+#     default_crs = sf::st_crs(4326)
+#   ) +
+#   scale_fill_discrete(
+#     name = "Slope P-value < 0.05",
+#   ) +
+#   labs(x = NULL, y = NULL) +
+#   facet_wrap(~month, ncol = 3)
+# p
+# ggsave_base(
+#     "3_sif/figures/model_pvalue_slope_check.png",
+#     p,
+#     width = 18,
+#     height = 12
+# )
 
 
 p <- ggplot() +
-  geom_raster(data = models_sub, aes(x = longitude, y = latitude, fill = count)) +
+  geom_raster(data = models, aes(x = longitude, y = latitude, fill = count)) +
   geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
   coord_sf(
     crs = sf::st_crs(4326),
@@ -154,7 +114,7 @@ ggsave_base(
 
 
 p <- ggplot() +
-  geom_raster(data = models_sub, aes(x = longitude, y = latitude, fill = intercept)) +
+  geom_raster(data = models, aes(x = longitude, y = latitude, fill = intercept)) +
   geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
   coord_sf(
     crs = sf::st_crs(4326),
@@ -175,8 +135,10 @@ ggsave_base(
     height = 12
 )
 
+summary(models$slope)
+q95 <- quantile(models$slope, probs = 0.95)
 p <- ggplot() +
-  geom_raster(data = models_sub, aes(x = longitude, y = latitude, fill = slope)) +
+  geom_raster(data = models, aes(x = longitude, y = latitude, fill = slope)) +
   geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
   coord_sf(
     crs = sf::st_crs(4326),
@@ -184,19 +146,19 @@ p <- ggplot() +
   ) +
   scale_fill_continuous_sequential(
     name = "Slope",
-    palette = "BluYl"
+    palette = "BluYl",
+    limits = c(0, q95),
+    na.value = "red"
   ) +
   labs(x = NULL, y = NULL) +
   facet_wrap(~month, ncol = 3)
 p
 ggsave_base(
-    "3_sif/figures/model_slope.png",
+    "3_sif/figures/model_slope_with_lims.png",
     p,
     width = 18,
     height = 12
 )
-
-
 
 
 
@@ -214,10 +176,16 @@ plot_scatter_location <- function(nested_data, i, name) {
     labs(x = element_blank(), y = element_blank(), title = paste0("Month: ", row$month))
 
   specs <- paste0(
-    "Intercept: ",
+    "Correlation: ",
+    round(row$correlation, 2),
+    ", F-stat. P-value: ",
+    formatC(row$pvalue_poly, format = "e", digits = 1),
+    # ", F Statistic: ",
+    # round(row$f_stat, 2),
+    "\nIntercept: ",
     round(row$intercept, 2),
     ", Slope: ",
-    formatC(row$slope, format = "e", digits = 2)
+    formatC(row$slope, format = "e", digits = 1)
   )
   p_data <- ggplot() +
     geom_point(
@@ -250,37 +218,10 @@ plot_scatter_location <- function(nested_data, i, name) {
 }
 
 
-df <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()
 
 set.seed(18)
+model_sample <- models %>% sample_n(30)
 
-# Regular slopes
-q95 <- quantile(df$slope, probs = 0.95)
-df_reg <- df %>% 
-  filter(
-    pvalue_slope < 0.05,
-    between(slope, 0, q95)
-  ) %>% 
-  sample_n(30)
-
-for (i in seq_len(nrow(df_reg))) {
-  plot_scatter_location(df_reg, i, "regular_slope")
-}
-
-# Extreme slopes
-df_large <- df %>% 
-  filter(slope > q95, pvalue_slope < 0.05) %>% 
-  sample_n(30)
-
-for (i in seq_len(nrow(df_large))) {
-  plot_scatter_location(df_large, i, "extreme_slope")
-}
-
-# Negative slopes
-df_neg <- df %>% 
-  filter(slope < 0, pvalue_slope < 0.05) %>% 
-  sample_n(30)
-
-for (i in seq_len(nrow(df_neg))) {
-  plot_scatter_location(df_neg, i, "negative_slope")
+for (i in seq_len(nrow(model_sample))) {
+  plot_scatter_location(model_sample, i, "regular_slope")
 }

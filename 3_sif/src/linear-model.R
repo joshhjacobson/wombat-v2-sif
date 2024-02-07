@@ -13,7 +13,6 @@ parser$add_argument('--parallel-strategy')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
-
 plan(args$parallel_strategy, workers = get_cores())
 options <- furrr_options(packages = c('dplyr', 'broom'))
 

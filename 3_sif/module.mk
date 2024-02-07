@@ -11,19 +11,21 @@ SIB4_SIF_HOURLY = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/si
 SIB4_SIF_GPP_HOURLY_2X25 = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-sif-gpp-2x25-$(SIB4_YEAR).nc)
 
 MODEL_SIF_GPP = 3_sif/intermediates/model-sif-gpp.fst
-# CONTROL_SIF = 3_sif/intermediates/control-sif.fst
+CONTROL_SIF = 3_sif/intermediates/control-sif.fst
 
 
 # SIF control
 
-# $(CONTROL_SIF): \
-# 	3_sif/src/control-sif.R \
-# 		$(SIB4_SIF_HOURLY) \
-# 		$(SLOPES)
-# 	Rscript $< \
-# 		--inventory $(SIB4_SIF_HOURLY) \
-# 		--slopes $(SLOPES) \
-# 		--output $@
+$(CONTROL_SIF): \
+	3_sif/src/match-sif.R \
+	$(OCO2_OBSERVATIONS_SIF) \
+	$(SIB4_SIF_GPP_HOURLY_2X25) \
+	$(MODEL_SIF_GPP)
+	Rscript $< \
+		--oco2-observations-sif $(OCO2_OBSERVATIONS_SIF) \
+		--inventory-list "$(SIB4_SIF_GPP_HOURLY_2X25)" \
+		--linear-models $(MODEL_SIF_GPP) \
+		--output $@
 
 # Fitted slope coefficients
 

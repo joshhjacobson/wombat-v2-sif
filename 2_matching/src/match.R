@@ -9,21 +9,6 @@ source(Sys.getenv('UTILS_PARTIAL'))
 
 pluck <- function(x, name) lapply(x, getElement, name)
 
-get_cell_width <- function(longitude) {
-  rep(longitude[2] - longitude[1], length(longitude))
-}
-
-get_cell_height <- function(latitude) {
-  unique_diff <- unique(diff(latitude))
-  if (length(unique_diff) == 1) {
-    rep(unique_diff, length(latitude))
-  } else {
-    # Half-height polar cells
-    full_width <- max(unique_diff)
-    c(full_width / 2, rep(full_width, length(latitude) - 2), full_width / 2)
-  }
-}
-
 get_tccon_pressure_weights <- function(p) {
   # NOTE(mgnb): these are trapezoidal rule weights
   0.5 * abs(cbind(
@@ -121,33 +106,6 @@ read_model <- function(species_conc_filename, meteorology_run) {
     vertical_conc = vertical_conc,
     pressure_edge = pressure_edge,
     altitude = altitude
-  )
-}
-
-match_time <- function(time, model) {
-  findInterval(
-    time,
-    c(model$time[1] - model$time_width / 2, model$time + model$time_width / 2),
-    rightmost.closed = FALSE
-  )
-}
-
-match_grid <- function(longitude, latitude, model) {
-  latitude_index <- findInterval(
-    latitude,
-    c(model$latitude[1] - model$cell_height[1] / 2, model$latitude + model$cell_height / 2),
-    rightmost.closed = TRUE
-  )
-  longitude_index <- findInterval(
-    longitude,
-    c(model$longitude[1] - model$cell_width[1] / 2, model$longitude + model$cell_width / 2),
-    rightmost.closed = TRUE
-  )
-  longitude_index[longitude_index > length(model$longitude)] <- 1L
-
-  data.frame(
-    latitude = latitude_index,
-    longitude = longitude_index
   )
 }
 

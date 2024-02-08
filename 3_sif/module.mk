@@ -5,16 +5,55 @@
 $(shell mkdir -p $(3_SIF_INTERMEDIATES_DIR))
 $(shell mkdir -p $(3_SIF_FIGURES_DIR))
 
-OCO2_OBSERVATIONS_SIF = 3_sif/intermediates/observations-sif.fst
+# NOTE: for consistency the rest of the project, maybe rename GPP to ASSIM throughout the this directory
 
 SIB4_SIF_HOURLY = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-sif-$(SIB4_YEAR).nc)
 SIB4_SIF_GPP_HOURLY_2X25 = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-sif-gpp-2x25-$(SIB4_YEAR).nc)
-
 MODEL_SIF_GPP = 3_sif/intermediates/model-sif-gpp.fst
+
+OCO2_OBSERVATIONS_SIF = 3_sif/intermediates/observations-sif.fst
 CONTROL_SIF = 3_sif/intermediates/control-sif.fst
 
+SIB4_CLIMATOLOGY_INVENTORY_ASSIM_HOURLY_2X25 = $(foreach SIB4_YEAR,$(INVENTORY_OUTPUT_YEARS),3_sif/intermediates/sib4-hourly-climatology-inventory-assim-2x25-$(SIB4_YEAR).nc)
+SIB4_RESIDUAL_ASSIM_HOURLY_2X25 = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-residual-assim-2x25-$(SIB4_YEAR).nc)
 
-# SIF control
+SENSITIVITIES_SIF_BASE_PART_1 = 3_sif/intermediates/sensitivities-sif-base-oco2-hourly-part-1.fst
+
+# Sensitivities
+
+$(SENSITIVITIES_SIF_BASE_PART_1) &: \
+	3_sif/src/sensitivities-sif.R
+	Rscript $< \
+		--input \
+			oco2-hourly.fst \
+			oco2-daily.fst \
+		--resolution hourly daily \
+		--runs 1_transport/intermediates/runs \
+		--matched-runs 2_matching/intermediates/runs \
+		--output-base 3_inversion/intermediates/sensitivities-sif-base-oco2-hourly \
+			3_inversion/intermediates/sensitivities-sif-base-oco2-daily
+
+## Regrid time-series components to basis grid
+
+$(SIB4_CLIMATOLOGY_INVENTORY_ASSIM_HOURLY_2X25) &: \
+	3_sif/src/regrid-decomposition.sh \
+	$(GEOS_2X25_GRID) \
+	$(SIB4_CLIMATOLOGY_INVENTORY_ASSIM_HOURLY)
+	bash $< \
+		$(GEOS_2X25_GRID) \
+		"$(SIB4_CLIMATOLOGY_INVENTORY_ASSIM_HOURLY)" \
+		3_sif/intermediates
+
+$(SIB4_RESIDUAL_ASSIM_HOURLY_2X25) &: \
+	3_sif/src/regrid-decomposition.sh \
+	$(GEOS_2X25_GRID) \
+	$(SIB4_RESIDUAL_ASSIM_HOURLY)
+	bash $< \
+		$(GEOS_2X25_GRID) \
+		"$(SIB4_RESIDUAL_ASSIM_HOURLY)" \
+		3_sif/intermediates
+
+# Control SIF
 
 $(CONTROL_SIF): \
 	3_sif/src/match-sif.R \

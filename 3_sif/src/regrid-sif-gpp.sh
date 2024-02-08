@@ -4,6 +4,9 @@
 
 set -aex
 
+source /etc/profile.d/conda.sh
+conda activate ./.conda_env
+
 grid_file=$1
 IFS=' ' read -ra gpp_input_files <<< "$2"
 IFS=' ' read -ra sif_input_files <<< "$3"

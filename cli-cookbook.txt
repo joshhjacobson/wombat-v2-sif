@@ -7,4 +7,7 @@ OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-
 OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/model-sif-gpp.fst
 OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/control-sif.fst
 
+OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-climatology-inventory-assim-2x25-2018.nc
+OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-residual-assim-2x25-2018.nc
+
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_inversion/intermediates/samples-LNLGIS.rds

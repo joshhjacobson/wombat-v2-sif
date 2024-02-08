@@ -17,6 +17,7 @@ read_inventory <- function(inventory_filename) {
   longitude <- as.vector(ncvar_get(inventory_fn, 'lon'))
   cell_width <- get_cell_width(longitude)
   sif <- ncvar_get(inventory_fn, 'sif')
+  # assim <- ncvar_get(inventory_fn, 'assim')
 
   nc_close(inventory_fn)
 
@@ -28,6 +29,7 @@ read_inventory <- function(inventory_filename) {
     longitude = longitude,
     cell_width = cell_width,
     sif = sif
+    # assim = assim
   )
 }
 
@@ -45,11 +47,13 @@ match_observations <- function(observations, inventory) {
     return(tidyr::tibble(
       observation_type = factor(),
       observation_id = factor(),
+      observation_value = numeric(),
       time = POSIXct(),
       longitude = numeric(),
       latitude = numeric(),
       species = factor(),
-      value = numeric()
+      inventory_value = numeric(),
+      # gpp_value = numeric()
     ))
   }
 
@@ -59,11 +63,13 @@ match_observations <- function(observations, inventory) {
 
   log_trace('Subsetting SIF inventory')
   sif_match <- inventory$sif[cbind(indices$longitude, indices$latitude, indices$time)]
+  # gpp_match <- inventory$assim[cbind(indices$longitude, indices$latitude, indices$time)]
   
   observations_part %>%
     select(
       observation_type,
-      observation_id
+      observation_id,
+      observation_value = value
     ) %>%
     mutate(
       observation_id = factor(observation_id),
@@ -71,7 +77,8 @@ match_observations <- function(observations, inventory) {
       longitude = inventory$longitude[indices$longitude],
       latitude = inventory$latitude[indices$latitude],
       species = factor('SIF'),
-      value = sif_match
+      inventory_value = sif_match,
+      # gpp_value = gpp_match
     )
 }
 
@@ -104,16 +111,19 @@ sif_control <- sif_control %>%
     by = c('longitude', 'latitude', 'month')
   ) %>% 
   mutate(
-    outlier = value < lower_fence | value > upper_fence
+    outlier = observation_value < lower_fence | observation_value > upper_fence
   ) %>%
   select(
     observation_type,
     observation_id,
-    time,
-    longitude,
-    latitude,
+    # month,
+    # time,
+    # longitude,
+    # latitude,
     species,
-    value,
+    value = inventory_value,
+    # gpp_value,
+    # intercept,
     slope,
     lower_fence,
     upper_fence,

@@ -24,7 +24,7 @@ models <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()
 #   facet_wrap(~month, ncol = 3)
 # p
 # ggsave_base(
-#     "3_sif/figures/model_pvalue_poly_class.png",
+#     "3_sif/figures/modelling/model_pvalue_poly_class.png",
 #     p,
 #     width = 18,
 #     height = 12
@@ -44,7 +44,7 @@ models <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()
 #   facet_wrap(~month, ncol = 3)
 # p
 # ggsave_base(
-#     "3_sif/figures/model_stong_correlation.png",
+#     "3_sif/figures/modelling/model_stong_correlation.png",
 #     p,
 #     width = 18,
 #     height = 12
@@ -64,7 +64,7 @@ models <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()
 #   facet_wrap(~month, ncol = 3)
 # p
 # ggsave_base(
-#     "3_sif/figures/model_intercept_class.png",
+#     "3_sif/figures/modelling/model_intercept_class.png",
 #     p,
 #     width = 18,
 #     height = 12
@@ -84,7 +84,7 @@ models <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()
 #   facet_wrap(~month, ncol = 3)
 # p
 # ggsave_base(
-#     "3_sif/figures/model_pvalue_slope_check.png",
+#     "3_sif/figures/modelling/model_pvalue_slope_check.png",
 #     p,
 #     width = 18,
 #     height = 12
@@ -106,7 +106,7 @@ p <- ggplot() +
   facet_wrap(~month, ncol = 3)
 p
 ggsave_base(
-    "3_sif/figures/model_count.png",
+    "3_sif/figures/modelling/model_count.png",
     p,
     width = 18,
     height = 12
@@ -129,7 +129,7 @@ p <- ggplot() +
   facet_wrap(~month, ncol = 3)
 p
 ggsave_base(
-    "3_sif/figures/model_intercept.png",
+    "3_sif/figures/modelling/model_intercept.png",
     p,
     width = 18,
     height = 12
@@ -154,7 +154,7 @@ p <- ggplot() +
   facet_wrap(~month, ncol = 3)
 p
 ggsave_base(
-    "3_sif/figures/model_slope_with_lims.png",
+    "3_sif/figures/modelling/model_slope_with_lims.png",
     p,
     width = 18,
     height = 12
@@ -204,7 +204,7 @@ plot_scatter_location <- function(nested_data, i, name) {
     labs(x = "GPP", y = "SIF", title = specs)
 
   fname <- paste0(
-    "3_sif/figures/temp/",
+    "3_sif/figures/modelling/",
     name,
     "/scatter_",
     i

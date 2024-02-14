@@ -13,7 +13,7 @@ read_basis <- function(basis_filename) {
     time <- ncvar_get_time(fn, 'time')
     year <- lubridate::year(time[1])
     component_names <- names(fn$var)
-    components <- lapply(component_names, v)
+    components <- mclapply(component_names, v, mc.cores = get_cores())
   })
   list(
     year = year,
@@ -62,37 +62,43 @@ control <- fst::read_fst(
 )
 
 log_info('Constructing SIF sensitivities')
-output <- bind_rows(mclapply(seq_along(args$basis_climatology), function(year_index) {
+output_years <- lapply(seq_along(args$basis_climatology), function(year_index) {
   basis_climatology <- read_basis(args$basis_climatology[year_index])
-  basis_residual <- if_else(
+  basis_residual <- ifelse(
     year_index <= length(args$basis_residual),
     read_basis(args$basis_residual[year_index]),
-    read_basis(args$basis_residual[year_index-1])
+    read_basis(tail(args$basis_residual, 1))
   )
-
-  same_year <- basis_climatology$year == basis_residual$year
-  recycled_residual <- (
-    (i > length(args$basis_residual)) &
-    (basis_climatology$year == basis_residual$year + 1)
+  stopifnot(
+    (basis_climatology$year == basis_residual$year) |
+    (year_index > length(args$basis_residual))
   )
-  stopifnot(same_year | recycled_residual)
 
   control_year <- control %>% 
     filter(lubridate::year(time) == basis_climatology$year)
 
-  match_indices <- cbind(
-    match(control_year$longitude, basis_climatology$longitude),
-    match(control_year$latitude, basis_climatology$latitude),
+  longitude_indices <- match(control_year$longitude, basis_climatology$longitude)
+  latitude_indices <- match(control_year$latitude, basis_climatology$latitude)
+  match_indices_climatology <- cbind(
+    longitude_indices,
+    latitude_indices,
     match(control_year$time, basis_climatology$time)
   )
+  match_indices_residual <- cbind(
+    longitude_indices,
+    latitude_indices,
+    match(control_year$time, basis_residual$time)
+  )
 
-  sapply(basis_climatology$components, function(component) {
-    component[match_indices]
-  }) %>%
-    as_tibble() %>%
+  sapply(
+    basis_climatology$components, function(component) {
+      component[match_indices_climatology]
+    }
+  ) %>%
+    as.data.frame() %>%
     rename_with(~ basis_climatology$component_names) %>%
     mutate(
-      residual = basis_residual$components[[1]][match_indices]
+      residual = basis_residual$components[[1]][match_indices_residual]
     ) %>%
     mutate(
       across(
@@ -126,8 +132,10 @@ output <- bind_rows(mclapply(seq_along(args$basis_climatology), function(year_in
     select(
       observation_id, resolution, region, month, inventory, component, value
     )
+})
 
-}, mc.cores = get_cores()))
+log_debug('Combining output')
+output <- bind_rows(output_years)
 
 log_info('Writing SIF sensitivities to {args$output}')
 fst::write_fst(output, args$output)

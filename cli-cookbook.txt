@@ -8,7 +8,6 @@ OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/model-sif-gp
 OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/control-sif.fst
 OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-climatology-inventory-assim-2x25-2018.nc
 OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-residual-assim-2x25-2018.nc
-
 OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sensitivities-sif-oco2-hourly.fst
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_inversion/intermediates/samples-LNLGIS.rds
@@ -16,11 +15,5 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_inversion/intermediates/samples
 
 
 # Files updates:
-touch 3_sif/intermediates/observations-sif.fst 
-touch 3_sif/intermediates/sib4-hourly-sif-20{14..20}.nc
-touch 3_sif/intermediates/sib4-hourly-sif-gpp-2x25-20{14..20}.nc 
-touch 3_sif/intermediates/model-sif-gpp.fst 
-touch 3_sif/intermediates/control-sif.fst 
-touch 3_sif/intermediates/sib4-hourly-climatology-inventory-assim-2x25-20{14..21}.nc 
-touch 3_sif/intermediates/sib4-hourly-residual-assim-2x25-20{14..20}.nc 
-touch 3_sif/intermediates/sensitivities-sif-oco2-hourly.fst 
+chmod +x 3_sif/modify-timestamps.sh
+bash 3_sif/modify-timestamps.sh

@@ -53,7 +53,7 @@ match_observations <- function(observations, inventory) {
       latitude = numeric(),
       species = factor(),
       inventory_value = numeric(),
-      # gpp_value = numeric()
+      # assim_value = numeric()
     ))
   }
 
@@ -63,7 +63,7 @@ match_observations <- function(observations, inventory) {
 
   log_trace('Subsetting SIF inventory')
   sif_match <- inventory$sif[cbind(indices$longitude, indices$latitude, indices$time)]
-  # gpp_match <- inventory$assim[cbind(indices$longitude, indices$latitude, indices$time)]
+  # assim_match <- inventory$assim[cbind(indices$longitude, indices$latitude, indices$time)]
   
   observations_part %>%
     select(
@@ -78,28 +78,26 @@ match_observations <- function(observations, inventory) {
       latitude = inventory$latitude[indices$latitude],
       species = factor('SIF'),
       inventory_value = sif_match,
-      # gpp_value = gpp_match
+      # assim_value = assim_match
     )
 }
 
 parser <- ArgumentParser()
 parser$add_argument('--oco2-observations-sif')
-parser$add_argument('--inventory-list')
+parser$add_argument('--inventory', nargs = '+')
 parser$add_argument('--linear-models')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
-inventory_filenames <- strsplit(args$inventory_list, " ")[[1]]
-
 log_info('Loading OCO-2 SIF observations from {args$oco2_observations}')
 oco2_observations <- fst::read_fst(args$oco2_observations_sif)
 
-sif_control <- bind_rows(mclapply(inventory_filenames, function(filename) {
+sif_control <- bind_rows(mclapply(args$inventory, function(filename) {
   sib4_inventory <- read_inventory(filename)
   match_observations(oco2_observations, sib4_inventory)
 }, mc.cores = get_cores()))
 
-log_info('Loading fitted SIF-GPP models from {args$linear_models}')
+log_info('Loading fitted SIF-ASSIM models from {args$linear_models}')
 linear_models <- fst::read_fst(args$linear_models)
 
 sif_control <- sif_control %>%
@@ -122,7 +120,7 @@ sif_control <- sif_control %>%
     # latitude,
     species,
     value = inventory_value,
-    # gpp_value,
+    # assim_value,
     # intercept,
     slope,
     lower_fence,
@@ -130,7 +128,7 @@ sif_control <- sif_control %>%
     outlier
   )
 
-log_info('Saving matched SIF observations to {args$output}')
+log_info('Writing matched SIF observations to {args$output}')
 fst::write_fst(sif_control, args$output)
 
 log_info('Done')

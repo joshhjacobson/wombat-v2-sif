@@ -118,7 +118,7 @@ plot_scatter_location <- function(nested_data, i, name) {
     ) +
     geom_point(
       data = match_data,
-      aes(x = gpp_value, y = value.y, shape = "Matched Control")
+      aes(x = assim_value, y = value.y, shape = "Matched Control")
     ) +
     scale_shape_manual(
       "SiB4",

@@ -86,7 +86,7 @@ observations_sif <- sif_soundings %>%
 
 stopifnot(!any(is.na(observations_sif$value)))
 
-log_info('Saving')
+log_info('Writing SIF observations to {args$output}')
 fst::write_fst(observations_sif, args$output)
 
 log_info('Done')

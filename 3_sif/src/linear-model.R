@@ -8,18 +8,17 @@ library(tidyr, warn.conflicts = FALSE)
 source(Sys.getenv('UTILS_PARTIAL'))
 
 parser <- ArgumentParser()
-parser$add_argument('--input-list')
+parser$add_argument('--input', nargs = '+')
 parser$add_argument('--parallel-strategy')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
 plan(args$parallel_strategy, workers = get_cores())
-options <- furrr_options(packages = c('dplyr', 'broom'))
+shared_packages <- furrr_options(packages = c('dplyr', 'broom'))
 
-input_paths <- strsplit(args$input_list, " ")[[1]]
 SIGNIFICANCE_LEVEL <- 0.001
 
-inventory <- bind_rows(mclapply(input_paths, function(path) {
+inventory <- bind_rows(mclapply(args$input, function(path) {
   log_trace('Opening {path}')
   fn <- ncdf4::nc_open(path)
   on.exit(ncdf4::nc_close(fn))
@@ -39,13 +38,13 @@ inventory <- bind_rows(mclapply(input_paths, function(path) {
     filter(between(local_hour, 12, 15))
 }, mc.cores = get_cores())) %>% as_tibble()
 
-log_info('Fitting SIF-GPP linear models and computing SIF outlier statistics')
+log_info('Fitting SIF-ASSIM linear models and computing SIF outlier statistics')
 models <- inventory %>% 
   mutate(month = month(time)) %>%
   nest(.by = c(longitude, latitude, month)) %>%
   mutate(count = future_map_int(data, function(data) {
     sum(data$sif > 0.1)
-  }, .options = options)) %>% 
+  }, .options = shared_packages)) %>% 
   filter(count >= 30) %>%
   mutate(model = future_map(data, function(data) {
     fit_linear <- lm(sif ~ assim, data = data)
@@ -58,7 +57,7 @@ models <- inventory %>%
       pvalue_poly = anova(fit_linear, fit_poly)$Pr[2],
       correlation = cor(data$assim, data$sif)
     )
-  }, .options = options)) %>%
+  }, .options = shared_packages)) %>%
   unnest(cols = c(model)) %>%
   filter(
     correlation > 0.5,
@@ -73,10 +72,10 @@ models <- inventory %>%
       lower_fence = quantiles[1] - 1.5 * iqr,
       upper_fence = quantiles[2] + 1.5 * iqr
     )
-  }, .options = options)) %>% 
+  }, .options = shared_packages)) %>% 
   unnest(cols = c(tukey_fence))
 
-log_info('Saving')
+log_info('Writing fitted models to {args$output}')
 saveRDS(models, "3_sif/intermediates/models-data.rds")
 models %>% select(-data) %>% fst::write_fst(args$output)
 

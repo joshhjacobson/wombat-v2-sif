@@ -5,11 +5,9 @@
 $(shell mkdir -p $(3_SIF_INTERMEDIATES_DIR))
 $(shell mkdir -p $(3_SIF_FIGURES_DIR))
 
-# NOTE: for consistency the rest of the project, maybe rename GPP to ASSIM throughout the this directory
-
 SIB4_SIF_HOURLY = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-sif-$(SIB4_YEAR).nc)
-SIB4_SIF_GPP_HOURLY_2X25 = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-sif-gpp-2x25-$(SIB4_YEAR).nc)
-MODEL_SIF_GPP = 3_sif/intermediates/model-sif-gpp.fst
+SIB4_SIF_ASSIM_HOURLY_2X25 = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-sif-assim-2x25-$(SIB4_YEAR).nc)
+MODEL_SIF_ASSIM = 3_sif/intermediates/model-sif-assim.fst
 
 OCO2_OBSERVATIONS_SIF = 3_sif/intermediates/observations-sif.fst
 CONTROL_SIF = 3_sif/intermediates/control-sif.fst
@@ -59,29 +57,29 @@ $(SIB4_RESIDUAL_ASSIM_HOURLY_2X25) &: \
 $(CONTROL_SIF): \
 	3_sif/src/match-sif.R \
 	$(OCO2_OBSERVATIONS_SIF) \
-	$(SIB4_SIF_GPP_HOURLY_2X25) \
-	$(MODEL_SIF_GPP)
+	$(SIB4_SIF_ASSIM_HOURLY_2X25) \
+	$(MODEL_SIF_ASSIM)
 	Rscript $< \
 		--oco2-observations-sif $(OCO2_OBSERVATIONS_SIF) \
-		--inventory $(SIB4_SIF_GPP_HOURLY_2X25) \
-		--linear-models $(MODEL_SIF_GPP) \
+		--inventory $(SIB4_SIF_ASSIM_HOURLY_2X25) \
+		--linear-models $(MODEL_SIF_ASSIM) \
 		--output $@
 
 # Fitted slope coefficients
 
-$(MODEL_SIF_GPP): \
+$(MODEL_SIF_ASSIM): \
 	3_sif/src/linear-model.R \
-	$(SIB4_SIF_GPP_HOURLY_2X25)
+	$(SIB4_SIF_ASSIM_HOURLY_2X25)
 	Rscript $< \
-		--input $(SIB4_SIF_GPP_HOURLY_2X25) \
+		--input $(SIB4_SIF_ASSIM_HOURLY_2X25) \
 		--parallel-strategy multicore \
 		--output $@
 
-# SIF and GPP inventories
+# SIF and ASSIM inventories
 
 # NOTE: need to rebuild this
-$(SIB4_SIF_GPP_HOURLY_2X25) &: \
-	3_sif/src/regrid-sif-gpp.sh \
+$(SIB4_SIF_ASSIM_HOURLY_2X25) &: \
+	3_sif/src/regrid-sif-assim.sh \
 	$(GEOS_2X25_GRID) \
 	$(SIB4_HOURLY) \
 	$(SIB4_SIF_HOURLY)

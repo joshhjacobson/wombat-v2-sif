@@ -11,17 +11,17 @@ grid_file=$1
 IFS=' ' read -ra input_files <<< "$2"
 output_directory=$3
 
-# Can we do this in parallel?
-
-for i in "${!input_files[@]}"; do
-
-    input_file=${input_files[$i]}
-    basename=$(basename "$(echo $input_file | grep -oP '.*(?=-\d+\.nc)')")
-    year=$(echo $input_file | grep -oP '(?<=-)\d+(?=.nc)')
-    echo $year
-
-    output_file="${output_directory}/${basename}-2x25-${year}.nc"
-
+remap () {
+    local input_file=$1
+    local basename=$(basename "$(echo $input_file | grep -oP '.*(?=-\d+\.nc)')")
+    local year=$(echo $input_file | grep -oP '(?<=-)\d+(?=.nc)')
+    local output_file="${output_directory}/${basename}-2x25-${year}.nc"
+    echo "Remapping $input_file to $output_file"
     cdo -f nc2 -remapcon,$grid_file $input_file $output_file
+}
 
+# Remap each file in parallel
+for file in "${input_files[@]}"; do
+    remap $file &
 done
+wait

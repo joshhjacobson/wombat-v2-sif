@@ -33,13 +33,13 @@ all:
 include 1_transport/module.mk
 include 2_matching/module.mk
 include 3_sif/module.mk
-include 3_inversion/module.mk
-include 4_results/module.mk
+include 4_inversion/module.mk
+include 5_results/module.mk
 
 1_transport_targets: $(1_TRANSPORT_TARGETS)
 2_matching_targets: $(2_MATCHING_TARGETS)
 3_sif_targets: $(3_SIF_TARGETS)
-3_inversion_targets: $(3_INVERSION_TARGETS)
-4_results_targets: $(4_RESULTS_TARGETS)
+4_inversion_targets: $(4_inversion_TARGETS)
+5_results_targets: $(5_RESULTS_TARGETS)
 
 .SECONDARY: $(SECONDARY_TARGETS)

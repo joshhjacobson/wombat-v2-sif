@@ -15,13 +15,13 @@ parser$add_argument('--output')
 args <- parser$parse_args()
 
 args <- list(
-  region_sf = '4_results/intermediates/region-sf.rds',
+  region_sf = '5_results/intermediates/region-sf.rds',
   control_emissions = 'data/wombat-v1-control-emissions.fst',
   perturbations = 'data/wombat-v1-perturbations.fst',
   xco2_daily_base = 'data/wombat-v1-xco2-daily-base.nc',
   xco2_daily_201601r02 = 'data/wombat-v1-xco2-daily-201601R02.nc',
   xco2_daily_201601r06 = 'data/wombat-v1-xco2-daily-201601R06.nc',
-  output = '4_results/figures/sensitivities.pdf'
+  output = '5_results/figures/sensitivities.pdf'
 )
 
 region_sf <- readRDS(args$region_sf)

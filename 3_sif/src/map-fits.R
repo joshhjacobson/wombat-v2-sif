@@ -5,7 +5,7 @@ library(patchwork)
 
 
 source("partials/display.R")
-region_sf <- readRDS('4_results/intermediates/region-sf.rds')
+region_sf <- readRDS('5_results/intermediates/region-sf.rds')
 models <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()
 # models <- fst::read_fst('3_sif/intermediates/model-sif-assim.fst') %>% tidyr::as_tibble()
 

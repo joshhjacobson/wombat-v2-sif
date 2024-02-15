@@ -156,11 +156,11 @@ library("rnaturalearth")
 library("rnaturalearthdata")
 
 world <- ne_countries(scale = "medium", returnclass = "sf")
-region_sf <- readRDS('4_results/intermediates/region-sf.rds')
+region_sf <- readRDS('5_results/intermediates/region-sf.rds')
 
 ggplot() +
     geom_sf(data = world, fill = NA, colour = '#888888', size = 0.1) +
     geom_sf(data = region_sf, fill = NA, colour = 'black', size = 0.1)
 
 
-region_grid <- readRDS('4_results/intermediates/region-grid.rds')
+region_grid <- readRDS('5_results/intermediates/region-grid.rds')

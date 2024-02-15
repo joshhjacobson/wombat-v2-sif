@@ -1,4 +1,4 @@
-# Setup file to run 03_inversion/src/samples.R interactively.
+# Setup file to run 04_inversion/src/samples.R interactively.
 # With an R session running in the base directory, either source this file within samples.R, 
 # or run the following lines:
 
@@ -12,18 +12,18 @@ args <- list(
     '2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst',
     '2_matching/intermediates/runs/base/oco2-hourly.fst'
   ),
-  constraints = '3_inversion/intermediates/constraints.rds',
+  constraints = '4_inversion/intermediates/constraints.rds',
   component_name = c('LNLG', 'IS'),
   component_parts = c('LN|LG', 'IS'),
   component_transport_matrix = c(
-    '3_inversion/intermediates/H-LNLG.mat.lz4',
-    '3_inversion/intermediates/H-IS.mat.lz4'
+    '4_inversion/intermediates/H-LNLG.mat.lz4',
+    '4_inversion/intermediates/H-IS.mat.lz4'
   ),
-  observations = '3_inversion/intermediates/observations.fst',
-  hyperparameter_estimates = '3_inversion/intermediates/hyperparameter-estimates.fst',
-  basis_vectors = '3_inversion/intermediates/basis-vectors.fst',
-  prior = '3_inversion/intermediates/prior.rds',
-  output = '3_inversion/intermediates/samples-LNLGIS.rds'
+  observations = '4_inversion/intermediates/observations.fst',
+  hyperparameter_estimates = '4_inversion/intermediates/hyperparameter-estimates.fst',
+  basis_vectors = '4_inversion/intermediates/basis-vectors.fst',
+  prior = '4_inversion/intermediates/prior.rds',
+  output = '4_inversion/intermediates/samples-LNLGIS.rds'
 )
 
 # Then run each line in the file samples.R except for the ones that set up the args 

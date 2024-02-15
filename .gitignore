@@ -4,11 +4,11 @@
 2_matching/figures/
 3_sif/intermediates/
 3_sif/figures/
-3_inversion/intermediates/
-3_inversion/figures/
-4_results/intermediates/
-4_results/figures/
-4_results/products/
+4_inversion/intermediates/
+4_inversion/figures/
+5_results/intermediates/
+5_results/figures/
+5_results/products/
 .Rhistory
 docs
 documentation

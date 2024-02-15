@@ -5,7 +5,7 @@ library(tidyr, warn.conflicts = FALSE)
 library(patchwork)
 
 source("partials/display.R")
-region_sf <- readRDS('4_results/intermediates/region-sf.rds')
+region_sf <- readRDS('5_results/intermediates/region-sf.rds')
 
 oco2_observations <- fst::read_fst("3_sif/intermediates/observations-sif.fst")
 models <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()

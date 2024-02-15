@@ -103,8 +103,9 @@ The workflow of this repository is split into four steps:
 
 1. `1_transport`: Creates GEOS-Chem basis function runs. This includes setting up the inventories, creating the run directories, and setting up the configuration files. You will then need to find a way to run GEOS-Chem for each run.
 2. `2_matching`: Postprocesses the run output from the previous step by extracting the modelled mole-fraction values for each basis function at each observation time and location.
-3. `3_inversion`: Performs the inversions.
-4. `4_results`: Summarise the results as a series of plots and other outputs. This reproduces all the figures in the paper.
+3. `3_sif`: Prepares SIF data for use in the inversions. This includes computing the 10-second observation averages, setting up the SIF inventory, fitting the SIF-GPP linear models, and extracting the SIF values for each GPP basis function at each observation time and location.
+4. `4_inversion`: Performs the inversions.
+5. `5_results`: Summarise the results as a series of plots and other outputs. This reproduces all the figures in the paper.
 
 ## Step 1: running transport
 
@@ -159,12 +160,16 @@ This will create a directory structure in `2_matching/intermediates/runs` and `2
 
 Once that's done, there are two steps to run for each directory. The first step aggregates the basis-function fluxes to a monthly resolution. Scripts for running that on the Gadi supercomputer are in `2_matching/intermediates/runs/<RUN>/run-aggregate-flux-gadi.sh`; the script just uses [CDO](https://code.mpimet.mpg.de/projects/cdo/embedded/index.html) and can be adapted to your needs. The second step extracts those portions of the mole fraction outputs of GEOS-Chem that correspond to observations. Scripts for running that on the Gadi supercomputer are in `2_matching/intermediates/runs/<RUN>/run-matching-gadi.sh`. This calls the R script `2_matching/src/match.R` and can again be adapted to your needs.
 
-## Steps 3 and 4: inversion and results
+## Step 3: incorporating SIF data
+
+TODO.
+
+## Steps 4 and 5: inversion and results
 
 Once steps 1 and 2 are completed (or you've downloaded the intermediate files mentioned earlier), you can run the inversions. The simplest way to do this is to run
 
 ```
-WOMBAT_LOG_LEVEL=debug OMP_NUM_THREADS=8 make -j4 4_results_targets
+WOMBAT_LOG_LEVEL=debug OMP_NUM_THREADS=8 make -j4 5_results_targets
 ```
 
 This should work it's way through the steps, ultimately running the inversion and then generating all the plots and outputs. You can modify the `-j` option and the `OMP_NUM_THREADS` variable to suit your local system.

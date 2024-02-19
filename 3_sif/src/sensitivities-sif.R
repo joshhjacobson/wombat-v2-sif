@@ -58,17 +58,23 @@ region_grid <- expand.grid(
 log_info('Reading SIF control from {args$control_sif}')
 control <- fst::read_fst(
   args$control_sif,
-  columns = c('observation_id', 'longitude', 'latitude', 'time', 'slope')
-)
+  columns = c('observation_id', 'model_longitude', 'model_latitude', 'model_time', 'slope')
+) %>%
+  rename(
+    longitude = model_longitude,
+    latitude = model_latitude,
+    time = model_time
+  )
 
 log_info('Constructing SIF sensitivities')
 output_years <- lapply(seq_along(args$basis_climatology), function(year_index) {
   basis_climatology <- read_basis(args$basis_climatology[year_index])
-  basis_residual <- ifelse(
+  residual_path <- ifelse(
     year_index <= length(args$basis_residual),
-    read_basis(args$basis_residual[year_index]),
-    read_basis(tail(args$basis_residual, 1))
+    args$basis_residual[year_index],
+    tail(args$basis_residual, 1)
   )
+  basis_residual <- read_basis(residual_path)
   stopifnot(
     (basis_climatology$year == basis_residual$year) |
     (year_index > length(args$basis_residual))
@@ -114,7 +120,7 @@ output_years <- lapply(seq_along(args$basis_climatology), function(year_index) {
       by = c('longitude', 'latitude')
     ) %>%
     mutate(
-      month = factor(format(time, '%Y-%m'))
+      month = format(time, '%Y-%m')
     ) %>%
     select(
       -c(longitude, latitude, time)
@@ -124,10 +130,12 @@ output_years <- lapply(seq_along(args$basis_climatology), function(year_index) {
       names_to = 'component',
       values_to = 'value'
     ) %>%
+    filter(value != 0) %>%
     mutate(
-      component = factor(component),
       resolution = factor('hourly'),
-      inventory = factor('bio_assim')
+      inventory = factor('bio_assim'),
+      month = factor(if_else(component == 'residual', month, NA)),
+      component = factor(component),
     ) %>%
     select(
       observation_id, resolution, region, month, inventory, component, value

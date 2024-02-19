@@ -17,7 +17,7 @@ read_inventory <- function(inventory_filename) {
   longitude <- as.vector(ncvar_get(inventory_fn, 'lon'))
   cell_width <- get_cell_width(longitude)
   sif <- ncvar_get(inventory_fn, 'sif')
-  # assim <- ncvar_get(inventory_fn, 'assim')
+  assim <- ncvar_get(inventory_fn, 'assim')
 
   nc_close(inventory_fn)
 
@@ -28,8 +28,8 @@ read_inventory <- function(inventory_filename) {
     cell_height = cell_height,
     longitude = longitude,
     cell_width = cell_width,
-    sif = sif
-    # assim = assim
+    sif = sif,
+    assim = assim
   )
 }
 
@@ -48,12 +48,11 @@ match_observations <- function(observations, inventory) {
       observation_type = factor(),
       observation_id = factor(),
       observation_value = numeric(),
-      time = POSIXct(),
-      longitude = numeric(),
-      latitude = numeric(),
-      species = factor(),
-      inventory_value = numeric(),
-      # assim_value = numeric()
+      model_time = POSIXct(),
+      model_longitude = numeric(),
+      model_latitude = numeric(),
+      model_sif = numeric(),
+      model_assim = numeric()
     ))
   }
 
@@ -62,9 +61,10 @@ match_observations <- function(observations, inventory) {
   indices$time <- match_time(observations_part$time, inventory)
 
   log_trace('Subsetting SIF inventory')
-  sif_match <- inventory$sif[cbind(indices$longitude, indices$latitude, indices$time)]
-  # assim_match <- inventory$assim[cbind(indices$longitude, indices$latitude, indices$time)]
-  
+  indices_array <- cbind(indices$longitude, indices$latitude, indices$time)
+  sif_match <- inventory$sif[indices_array]
+  assim_match <- inventory$assim[indices_array]
+
   observations_part %>%
     select(
       observation_type,
@@ -73,12 +73,11 @@ match_observations <- function(observations, inventory) {
     ) %>%
     mutate(
       observation_id = factor(observation_id),
-      time = inventory$time[indices$time],
-      longitude = inventory$longitude[indices$longitude],
-      latitude = inventory$latitude[indices$latitude],
-      species = factor('SIF'),
-      inventory_value = sif_match,
-      # assim_value = assim_match
+      model_time = inventory$time[indices$time],
+      model_longitude = inventory$longitude[indices$longitude],
+      model_latitude = inventory$latitude[indices$latitude],
+      model_sif = sif_match,
+      model_assim = assim_match
     )
 }
 
@@ -92,7 +91,7 @@ args <- parser$parse_args()
 log_info('Loading OCO-2 SIF observations from {args$oco2_observations}')
 oco2_observations <- fst::read_fst(args$oco2_observations_sif)
 
-sif_control <- bind_rows(mclapply(args$inventory, function(filename) {
+control_sif <- bind_rows(mclapply(args$inventory, function(filename) {
   sib4_inventory <- read_inventory(filename)
   match_observations(oco2_observations, sib4_inventory)
 }, mc.cores = get_cores()))
@@ -100,13 +99,13 @@ sif_control <- bind_rows(mclapply(args$inventory, function(filename) {
 log_info('Loading fitted SIF-ASSIM models from {args$linear_models}')
 linear_models <- fst::read_fst(args$linear_models)
 
-sif_control <- sif_control %>%
+control_sif <- control_sif %>%
   mutate(
-    month = lubridate::month(time)
+    month = lubridate::month(model_time)
   ) %>% 
   inner_join(
     linear_models,
-    by = c('longitude', 'latitude', 'month')
+    by = c('model_longitude', 'model_latitude', 'month')
   ) %>% 
   mutate(
     outlier = observation_value < lower_fence | observation_value > upper_fence
@@ -114,14 +113,12 @@ sif_control <- sif_control %>%
   select(
     observation_type,
     observation_id,
-    # month,
-    # time,
-    # longitude,
-    # latitude,
-    species,
-    value = inventory_value,
-    # assim_value,
-    # intercept,
+    model_time,
+    model_longitude,
+    model_latitude,
+    model_sif,
+    model_assim,
+    intercept,
     slope,
     lower_fence,
     upper_fence,
@@ -129,6 +126,6 @@ sif_control <- sif_control %>%
   )
 
 log_info('Writing matched SIF observations to {args$output}')
-fst::write_fst(sif_control, args$output)
+fst::write_fst(control_sif, args$output)
 
 log_info('Done')

@@ -1,21 +1,16 @@
-3_SIF_SRC_DIR = 3_sif/src
-3_SIF_INTERMEDIATES_DIR = 3_sif/intermediates
-3_SIF_FIGURES_DIR = 3_sif/figures
-
-$(shell mkdir -p $(3_SIF_INTERMEDIATES_DIR))
-$(shell mkdir -p $(3_SIF_FIGURES_DIR))
+$(shell mkdir -p 3_sif/intermediates)
+$(shell mkdir -p 3_sif/figures)
 
 SIB4_SIF_HOURLY = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-sif-$(SIB4_YEAR).nc)
 SIB4_SIF_ASSIM_HOURLY_2X25 = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-sif-assim-2x25-$(SIB4_YEAR).nc)
 MODEL_SIF_ASSIM = 3_sif/intermediates/model-sif-assim.fst
 
 OCO2_OBSERVATIONS_SIF = 3_sif/intermediates/observations-sif.fst
-CONTROL_SIF = 3_sif/intermediates/control-sif.fst
+CONTROL_SIF = 3_sif/intermediates/oco2-hourly-sif.fst
 
 SIB4_CLIMATOLOGY_INVENTORY_ASSIM_HOURLY_2X25 = $(foreach SIB4_YEAR,$(INVENTORY_OUTPUT_YEARS),3_sif/intermediates/sib4-hourly-climatology-inventory-assim-2x25-$(SIB4_YEAR).nc)
 SIB4_RESIDUAL_ASSIM_HOURLY_2X25 = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-residual-assim-2x25-$(SIB4_YEAR).nc)
-
-SENSITIVITIES_SIF = 3_sif/intermediates/sensitivities-sif-oco2-hourly.fst
+SENSITIVITIES_SIF = 3_sif/intermediates/sensitivities-oco2-hourly-sif.fst
 
 # Sensitivities
 
@@ -77,7 +72,6 @@ $(MODEL_SIF_ASSIM): \
 
 # SIF and ASSIM inventories
 
-# NOTE: need to rebuild this
 $(SIB4_SIF_ASSIM_HOURLY_2X25) &: \
 	3_sif/src/regrid-sif-assim.sh \
 	$(GEOS_2X25_GRID) \

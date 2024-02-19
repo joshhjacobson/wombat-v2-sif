@@ -24,24 +24,24 @@ inventory <- bind_rows(mclapply(args$input, function(path) {
   on.exit(ncdf4::nc_close(fn))
   v <- function(...) ncdf4::ncvar_get(fn, ...)
   expand.grid(
-    longitude = as.vector(v('lon')),
-    latitude = as.vector(v('lat')),
-    time = ncvar_get_time(fn, 'time'),
+    model_longitude = as.vector(v('lon')),
+    model_latitude = as.vector(v('lat')),
+    model_time = ncvar_get_time(fn, 'time'),
     stringsAsFactors = FALSE
   ) %>%
     mutate(
       sif = as.vector(v('sif')),
       assim = as.vector(v('assim')),
-      # The below equation for local time assumes time is in UTC
-      local_hour = hour(time + hours(round(longitude / 15)))
+      # The below equation for local time assumes model_time is in UTC
+      local_hour = hour(model_time + hours(round(model_longitude / 15)))
     ) %>% 
     filter(between(local_hour, 12, 15))
 }, mc.cores = get_cores())) %>% as_tibble()
 
 log_info('Fitting SIF-ASSIM linear models and computing SIF outlier statistics')
 models <- inventory %>% 
-  mutate(month = month(time)) %>%
-  nest(.by = c(longitude, latitude, month)) %>%
+  mutate(month = month(model_time)) %>%
+  nest(.by = c(model_longitude, model_latitude, month)) %>%
   mutate(count = future_map_int(data, function(data) {
     sum(data$sif > 0.1)
   }, .options = shared_packages)) %>% 
@@ -72,11 +72,11 @@ models <- inventory %>%
       lower_fence = quantiles[1] - 1.5 * iqr,
       upper_fence = quantiles[2] + 1.5 * iqr
     )
-  }, .options = shared_packages)) %>% 
-  unnest(cols = c(tukey_fence))
+  }, .options = shared_packages)) %>%
+  unnest(cols = c(tukey_fence)) %>%
+  select(-data)
 
 log_info('Writing fitted models to {args$output}')
-saveRDS(models, "3_sif/intermediates/models-data.rds")
-models %>% select(-data) %>% fst::write_fst(args$output)
+models %>% fst::write_fst(args$output)
 
 log_info('Done')

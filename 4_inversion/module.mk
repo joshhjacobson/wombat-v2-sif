@@ -29,6 +29,7 @@ SENSITIVITIES_R10_R15_RNZ_PART_1 = 4_inversion/intermediates/sensitivities-r10-r
 
 H_IS = 4_inversion/intermediates/H-IS.mat.lz4
 H_LNLG = 4_inversion/intermediates/H-LNLG.mat.lz4
+H_SIF = 4_inversion/intermediates/H-SIF.mat.lz4
 
 RESIDUAL_1ST_STAGE = 4_inversion/intermediates/residual-1st-stage.fst
 HYPERPARAMETER_ESTIMATES = 4_inversion/intermediates/hyperparameter-estimates.fst
@@ -36,6 +37,8 @@ HYPERPARAMETER_ESTIMATES = 4_inversion/intermediates/hyperparameter-estimates.fs
 SAMPLES_IS = 4_inversion/intermediates/samples-IS.rds
 SAMPLES_LNLG = 4_inversion/intermediates/samples-LNLG.rds
 SAMPLES_LNLGIS = 4_inversion/intermediates/samples-LNLGIS.rds
+SAMPLES_SIF = 4_inversion/intermediates/samples-SIF.rds
+SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 
 $(SAMPLES_IS): \
 	4_inversion/src/samples.R \
@@ -83,6 +86,8 @@ $(SAMPLES_LNLG): \
 		--component-transport-matrix $(H_LNLG) \
 		--output $@
 
+# SAMPLES_SIF
+
 $(SAMPLES_LNLGIS): \
 	4_inversion/src/samples.R \
   	$(OBSERVATIONS) \
@@ -109,7 +114,10 @@ $(SAMPLES_LNLGIS): \
 		--component-transport-matrix $(H_LNLG) $(H_IS) \
 		--output $@
 
+# SAMPLES_LNLGISSIF
+
 # Hyperparameter estimates
+# NOTE: could temporarily fix values for SIF hyperparameters here
 $(HYPERPARAMETER_ESTIMATES): \
 	4_inversion/src/hyperparameter-estimates.R \
   	$(OBSERVATIONS) \
@@ -178,6 +186,19 @@ $(H_LNLG): \
 	$(TRANSPORT_MATRIX_CALL) \
 		--overall-observation-mode LN LG \
 		--control 2_matching/intermediates/runs/base/oco2-hourly.fst \
+		--output $@
+
+$(H_SIF): \
+	4_inversion/src/transport-matrix.R \
+	$(SENSITIVITIES_SIF) \
+	$(BASIS_VECTORS) \
+	$(OBSERVATIONS)
+	Rscript 4_inversion/src/transport-matrix.R \
+		--basis-vectors $(BASIS_VECTORS) \
+		--observations $(OBSERVATIONS) \
+		--sensitivities-base 3_sif/intermediates/sensitivities \
+		--overall-observation-mode LN_SIF LG_SIF \
+		--control 3_sif/intermediates/oco2-sif-hourly.fst \
 		--output $@
 
 ## Sensitivities

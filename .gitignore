@@ -17,7 +17,7 @@ utils
 # Temporary
 .vscode
 
-data/downloaded_20211217.tgz
+data/downloaded_20211217
 data/fossil-mipv10
 data/GEOS_Chem
 data/GFED4.1s_Aleya_hemco_080321

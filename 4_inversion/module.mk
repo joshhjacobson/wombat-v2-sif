@@ -294,11 +294,15 @@ $(BASIS_VECTORS): \
 
 $(OBSERVATIONS): \
 	4_inversion/src/observations.R \
-	$(OCO2_OBSERVATIONS)
+	$(OCO2_OBSERVATIONS) \
+	$(OCO2_OBSERVATIONS_SIF) \
+	$(CONTROL_SIF)
 	Rscript $< \
 		--oco2-observations $(OCO2_OBSERVATIONS) \
 		--obspack-directory $(OBSPACK_DIRECTORY) \
 		--tccon-sounding-directory $(TCCON_SOUNDING_DIRECTORY) \
+		--oco2-observations-sif $(OCO2_OBSERVATIONS_SIF) \
+		--control-sif $(CONTROL_SIF) \
 		--start-date $(INVERSION_START_DATE) \
 		--end-date $(INVERSION_END_DATE) \
 		--output $@

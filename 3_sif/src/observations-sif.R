@@ -43,7 +43,7 @@ sif_soundings <- bind_rows(mclapply(sif_paths, function(filename) {
         flag = v('Quality_Flag'),
       ) %>%
       filter(
-        oco2_operation_mode < 2, # nadir and glint
+        oco2_operation_mode < 2, # keep nadir and glint only
         flag %in% c(0, 1),
         value + 3 * measurement_error > 0
       ) %>%
@@ -79,10 +79,14 @@ observations_sif <- sif_soundings %>%
   select(-count) %>%
   mutate(
     observation_id = stringr::str_replace_all(time, "[^[:digit:]]", ""),
-    oco2_operation_mode = as.factor(oco2_operation_mode),
-    observation_type = as.factor('oco2')
+    oco2_operation_mode = if_else(
+      oco2_operation_mode == 0,
+      'LN_SIF',
+      'LG_SIF'
+    ),
+    model_error = 0
   ) %>%
-  select(observation_id, observation_type, time, everything())
+  select(observation_id, time, everything())
 
 stopifnot(!any(is.na(observations_sif$value)))
 

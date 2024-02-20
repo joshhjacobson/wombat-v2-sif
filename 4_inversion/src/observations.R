@@ -10,6 +10,8 @@ parser <- ArgumentParser()
 parser$add_argument('--oco2-observations')
 parser$add_argument('--obspack-directory')
 parser$add_argument('--tccon-sounding-directory')
+parser$add_argument('--oco2-observations-sif')
+parser$add_argument('--control-sif')
 parser$add_argument('--start-date')
 parser$add_argument('--end-date')
 parser$add_argument('--output')
@@ -96,6 +98,19 @@ tccon_soundings <- bind_rows(mclapply(tccon_paths, function(filename) {
   })
 }, mc.cores = get_cores()))
 
+log_info('Loading OCO-2 SIF observations from {args$oco2_observations_sif}')
+control_sif <- fst::read_fst(args$control_sif, columns = c('observation_id', 'outlier'))
+oco2_observations_sif <- fst::read_fst(args$oco2_observations_sif) %>%
+  left_join(control_sif, by = 'observation_id') %>%
+  mutate(
+    assimilate = case_when(
+      is.na(outlier) ~ 0,
+      outlier == FALSE ~ 1,
+      outlier == TRUE ~ 4
+    )
+  ) %>%
+  select(-outlier)
+
 log_info('Combining observations')
 observations <- bind_rows(
   oco2_soundings %>%
@@ -115,6 +130,11 @@ observations <- bind_rows(
       observation_id = as.character(observation_id),
       observation_type = 'tccon',
       assimilate = 0
+    ),
+  oco2_observations_sif %>%
+    mutate(
+      observation_id = as.character(observation_id),
+      observation_type = 'oco2'
     )
 ) %>%
   select(observation_id, observation_type, time, everything()) %>%
@@ -135,6 +155,8 @@ observations <- bind_rows(
         ~ '1_LNLG',
       overall_observation_mode == 'OG'
         ~ '2_OG',
+      overall_observation_mode %in% c('LN_SIF', 'LG_SIF')
+        ~ '3_SIF',
       TRUE
         ~ as.character(overall_observation_mode)
     )),

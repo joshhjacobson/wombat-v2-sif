@@ -9,7 +9,7 @@ region_sf <- readRDS('5_results/intermediates/region-sf.rds')
 
 oco2_observations <- fst::read_fst("3_sif/intermediates/observations-sif.fst")
 models <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()
-control_sif <- fst::read_fst("3_sif/intermediates/control-sif.fst")
+control_sif <- fst::read_fst("3_sif/intermediates/oco2-hourly-sif.fst")
 
 table(control_sif$outlier)
 

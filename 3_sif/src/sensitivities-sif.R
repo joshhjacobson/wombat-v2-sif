@@ -13,7 +13,7 @@ read_basis <- function(basis_filename) {
     time <- ncvar_get_time(fn, 'time')
     year <- lubridate::year(time[1])
     component_names <- names(fn$var)
-    components <- mclapply(component_names, v, mc.cores = get_cores())
+    components <- lapply(component_names, v)
   })
   list(
     year = year,
@@ -67,7 +67,7 @@ control <- fst::read_fst(
   )
 
 log_info('Constructing SIF sensitivities')
-output_years <- lapply(seq_along(args$basis_climatology), function(year_index) {
+output_years <- mclapply(seq_along(args$basis_climatology), function(year_index) {
   basis_climatology <- read_basis(args$basis_climatology[year_index])
   residual_path <- ifelse(
     year_index <= length(args$basis_residual),
@@ -140,7 +140,7 @@ output_years <- lapply(seq_along(args$basis_climatology), function(year_index) {
     select(
       observation_id, resolution, region, month, inventory, component, value
     )
-})
+}, mc.cores = get_cores())
 
 log_debug('Combining output')
 output <- bind_rows(output_years)

@@ -17,7 +17,7 @@ remap () {
     local year=$(echo $input_file | grep -oP '(?<=-)\d+(?=.nc)')
     local output_file="${output_directory}/${basename}-2x25-${year}.nc"
     echo "Remapping $input_file to $output_file"
-    cdo -f nc2 -remapcon,$grid_file $input_file $output_file
+    cdo -w -f nc2 -z zip_6 -remapcon,$grid_file $input_file $output_file
 }
 
 # Remap each file in parallel

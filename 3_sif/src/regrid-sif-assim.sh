@@ -33,7 +33,7 @@ for i in "${!assim_input_files[@]}"; do
 
     output_file="${output_directory}/sib4-hourly-sif-assim-2x25-${assim_year}.nc"
 
-    cdo -f nc2 \
+    cdo -w -f nc2 -z zip_6 \
         -remapcon,$grid_file \
         -merge \
         -selvar,sif \

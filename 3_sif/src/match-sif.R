@@ -45,7 +45,6 @@ match_observations <- function(observations, inventory) {
     )
   if (nrow(observations_part) == 0) {
     return(tidyr::tibble(
-      observation_type = factor(),
       observation_id = factor(),
       observation_value = numeric(),
       model_time = POSIXct(),
@@ -67,7 +66,6 @@ match_observations <- function(observations, inventory) {
 
   observations_part %>%
     select(
-      observation_type,
       observation_id,
       observation_value = value
     ) %>%
@@ -78,7 +76,8 @@ match_observations <- function(observations, inventory) {
       model_latitude = inventory$latitude[indices$latitude],
       model_sif = sif_match,
       model_assim = assim_match
-    )
+    ) %>%
+    as_tibble()
 }
 
 parser <- ArgumentParser()
@@ -111,7 +110,6 @@ control_sif <- control_sif %>%
     outlier = observation_value < lower_fence | observation_value > upper_fence
   ) %>%
   select(
-    observation_type,
     observation_id,
     model_time,
     model_longitude,

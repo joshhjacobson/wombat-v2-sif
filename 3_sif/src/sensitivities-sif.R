@@ -115,7 +115,7 @@ output_years <- mclapply(seq_along(args$basis_climatology), function(year_index)
     bind_cols(
       control_year %>% select(observation_id, longitude, latitude, time)
     ) %>%
-    left_join(
+    inner_join(
       region_grid,
       by = c('longitude', 'latitude')
     ) %>%
@@ -144,6 +144,9 @@ output_years <- mclapply(seq_along(args$basis_climatology), function(year_index)
 
 log_debug('Combining output')
 output <- bind_rows(output_years)
+
+stopifnot(!anyNA(output$region))
+stopifnot(!anyNA(output$component))
 
 log_info('Writing SIF sensitivities to {args$output}')
 fst::write_fst(output, args$output)

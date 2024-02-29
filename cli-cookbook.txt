@@ -1,17 +1,18 @@
 # Get list of make targets
 make -qp | awk -F':' '/^[a-zA-Z0-9][^$#\\\t=]*:([^=]|$)/ {split($1,A,/ /);for(i in A)print A[i]}' | grep ...
 
-OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/observations-sif.fst
-OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-sif-2016.nc
-OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-sif-gpp-2x25-2016.nc
-OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/model-sif-gpp.fst
-OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/oco2-hourly-sif.fst
-OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-climatology-inventory-assim-2x25-2018.nc
-OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-residual-assim-2x25-2018.nc
-OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sensitivities-oco2-hourly-sif.fst
-OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/observations.fst
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/observations-sif.fst
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-sif-2016.nc
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-sif-assim-2x25-2016.nc
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/model-sif-assim.fst
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/oco2-hourly-sif.fst
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-climatology-inventory-assim-2x25-2018.nc
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-residual-assim-2x25-2018.nc
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sensitivities-oco2-hourly-sif.fst
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/observations.fst
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/H-SIF.mat.lz4
 
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-LNLGIS.rds
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-LNLG.rds --dry-run
 
 
 

@@ -198,7 +198,7 @@ $(H_SIF): \
 		--observations $(OBSERVATIONS) \
 		--sensitivities-base 3_sif/intermediates/sensitivities \
 		--overall-observation-mode LN_SIF LG_SIF \
-		--control 3_sif/intermediates/oco2-sif-hourly.fst \
+		--control 3_sif/intermediates/oco2-hourly-sif.fst \
 		--output $@
 
 ## Sensitivities

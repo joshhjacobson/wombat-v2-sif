@@ -15,9 +15,13 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/H-SIF.m
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/hyperparameter-estimates.fst --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-LNLG.rds --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-LNLGSIF.rds --dry-run
 
 
 
 # Files updates:
 chmod +x 3_sif/modify-timestamps.sh
 bash 3_sif/modify-timestamps.sh
+
+chmod +x 4_inversion/modify-timestamps.sh
+bash 4_inversion/modify-timestamps.sh

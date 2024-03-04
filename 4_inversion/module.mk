@@ -38,6 +38,8 @@ SAMPLES_IS = 4_inversion/intermediates/samples-IS.rds
 SAMPLES_LNLG = 4_inversion/intermediates/samples-LNLG.rds
 SAMPLES_LNLGIS = 4_inversion/intermediates/samples-LNLGIS.rds
 SAMPLES_SIF = 4_inversion/intermediates/samples-SIF.rds
+SAMPLES_LNLGSIF = 4_inversion/intermediates/samples-LNLGSIF.rds
+SAMPLES_ISSIF = 4_inversion/intermediates/samples-ISSIF.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 
 $(SAMPLES_IS): \
@@ -86,8 +88,6 @@ $(SAMPLES_LNLG): \
 		--component-transport-matrix $(H_LNLG) \
 		--output $@
 
-# SAMPLES_SIF
-
 $(SAMPLES_LNLGIS): \
 	4_inversion/src/samples.R \
   	$(OBSERVATIONS) \
@@ -114,10 +114,113 @@ $(SAMPLES_LNLGIS): \
 		--component-transport-matrix $(H_LNLG) $(H_IS) \
 		--output $@
 
-# SAMPLES_LNLGISSIF
+$(SAMPLES_SIF): \
+	4_inversion/src/samples.R \
+		$(OBSERVATIONS) \
+		$(BASIS_VECTORS) \
+		$(HYPERPARAMETER_ESTIMATES) \
+		$(CONSTRAINTS) \
+		$(PRIOR) \
+	3_sif/intermediates/oco2-hourly-sif.fst \
+		$(H_SIF)
+	Rscript $< \
+		--observations $(OBSERVATIONS) \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
+		--constraints $(CONSTRAINTS) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--overall-observation-mode LN_SIF LG_SIF \
+		--control \
+			3_sif/intermediates/oco2-hourly-sif.fst \
+		--component-name SIF \
+		--component-parts "LN_SIF|LG_SIF" \
+		--component-transport-matrix $(H_SIF) \
+		--output $@
+
+$(SAMPLES_LNLGSIF): \
+	4_inversion/src/samples.R \
+		$(OBSERVATIONS) \
+		$(BASIS_VECTORS) \
+		$(HYPERPARAMETER_ESTIMATES) \
+		$(CONSTRAINTS) \
+		$(PRIOR) \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	3_sif/intermediates/oco2-hourly-sif.fst \
+		$(H_LNLG) \
+		$(H_SIF)
+	Rscript $< \
+		--observations $(OBSERVATIONS) \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
+		--constraints $(CONSTRAINTS) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--overall-observation-mode LN LG LN_SIF LG_SIF \
+		--control \
+			2_matching/intermediates/runs/base/oco2-hourly.fst \
+			3_sif/intermediates/oco2-hourly-sif.fst \
+		--component-name LNLG SIF \
+		--component-parts "LN|LG" "LN_SIF|LG_SIF" \
+		--component-transport-matrix $(H_LNLG) $(H_SIF) \
+		--output $@
+
+# TODO(jhj): need to delete all sensitivities and rebuild observations from here (due to 4_IS renaming)
+$(SAMPLES_ISSIF): \
+	4_inversion/src/samples.R \
+		$(OBSERVATIONS) \
+		$(BASIS_VECTORS) \
+		$(HYPERPARAMETER_ESTIMATES) \
+		$(CONSTRAINTS) \
+		$(PRIOR) \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	3_sif/intermediates/oco2-hourly-sif.fst \
+		$(H_IS) \
+		$(H_SIF)
+	Rscript $< \
+		--observations $(OBSERVATIONS) \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
+		--constraints $(CONSTRAINTS) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--overall-observation-mode IS LN_SIF LG_SIF \
+		--control \
+			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+			3_sif/intermediates/oco2-hourly-sif.fst \
+		--component-name IS SIF \
+		--component-parts IS "LN_SIF|LG_SIF" \
+		--component-transport-matrix $(H_IS) $(H_SIF) \
+		--output $@
+
+$(SAMPLES_LNLGISSIF): \
+	4_inversion/src/samples.R \
+		$(OBSERVATIONS) \
+		$(BASIS_VECTORS) \
+		$(HYPERPARAMETER_ESTIMATES) \
+		$(CONSTRAINTS) \
+		$(PRIOR) \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	3_sif/intermediates/oco2-hourly-sif.fst \
+		$(H_LNLG) \
+		$(H_IS) \
+		$(H_SIF)
+	Rscript $< \
+		--observations $(OBSERVATIONS) \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
+		--constraints $(CONSTRAINTS) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
+		--control \
+			2_matching/intermediates/runs/base/oco2-hourly.fst \
+			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+			3_sif/intermediates/oco2-hourly-sif.fst \
+		--component-name LNLG IS SIF \
+		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
+		--component-transport-matrix $(H_LNLG) $(H_IS) $(H_SIF) \
+		--output $@
 
 # Hyperparameter estimates
-# NOTE: could temporarily fix values for SIF hyperparameters here
+# TODO(jhj): need to fit values for SIF hyperparameters (rather than hard-code them)
 $(HYPERPARAMETER_ESTIMATES): \
 	4_inversion/src/hyperparameter-estimates.R \
   	$(OBSERVATIONS) \

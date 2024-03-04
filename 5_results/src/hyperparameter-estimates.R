@@ -120,7 +120,7 @@ fits <- residuals %>%
   mutate(
     fit_group = if_else(
       overall_observation_mode == 'IS',
-      '3_IS',
+      '4_IS',
       as.character(observation_group)
     )
   ) %>%

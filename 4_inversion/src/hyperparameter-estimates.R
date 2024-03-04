@@ -120,7 +120,7 @@ fits <- residuals %>%
   mutate(
     fit_group = if_else(
       overall_observation_mode == 'IS',
-      '3_IS',
+      '4_IS',
       as.character(observation_group)
     )
   ) %>%
@@ -202,11 +202,19 @@ fits <- residuals %>%
   ungroup() %>%
   select(hyperparameter_group, rho, ell, gamma, ell_unit)
 
+# TODO(jhj): hard-coding SIF hyperparameter group for now; need to update
 fits <- bind_rows(
   fits,
   fits %>%
     filter(hyperparameter_group == 'surface') %>%
-    mutate(hyperparameter_group = 'lauder')
+    mutate(hyperparameter_group = 'lauder'),
+  data.frame(
+    hyperparameter_group = '3_SIF',
+    rho = 0.8,
+    ell = 0.75,
+    gamma = 0.6,
+    ell_unit = 'mins'
+  )
 )
 
 log_debug('Saving to {args$output}')

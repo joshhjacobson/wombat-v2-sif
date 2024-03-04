@@ -150,7 +150,7 @@ observations <- bind_rows(
     )),
     observation_group = factor(case_when(
       overall_observation_mode == 'IS'
-        ~ stringr::str_split(observation_id, '~', simplify = TRUE)[, 2],
+        ~ stringr::str_split(observation_id, '~', simplify = TRUE)[, 2], # becomes '4_IS' later
       overall_observation_mode %in% c('LN', 'LG')
         ~ '1_LNLG',
       overall_observation_mode == 'OG'

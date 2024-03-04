@@ -9,7 +9,7 @@ library(Rcpp)
 library(fst)
 
 # Set up manual paths and args
-source('samples_interactive_setup.R')
+source('4_inversion/setup_samples_interactive.R')
 
 # Set the logging output level to "TRACE"
 log_threshold(TRACE)
@@ -102,23 +102,12 @@ dmvnorm <- function(x, mean, covariance, precision, log = FALSE) {
   if (log) output else exp(output)
 }
 
-# parser <- ArgumentParser()
-# parser$add_argument('--overall-observation-mode', nargs = '+')
-# parser$add_argument('--control', nargs = '+')
-# parser$add_argument('--constraints')
-# parser$add_argument('--component-name', nargs = '+')
-# parser$add_argument('--component-parts', nargs = '+')
-# parser$add_argument('--component-transport-matrix', nargs = '+')
-# parser$add_argument('--observations')
-# parser$add_argument('--hyperparameter-estimates')
-# parser$add_argument('--basis-vectors')
-# parser$add_argument('--prior')
-# parser$add_argument('--output')
-# args <- parser$parse_args()
 
+# TODO(jhj): update SIF control to use variable name 'value' in addition to 'model_sif'
 log_debug('Loading control')
 control <- bind_rows(lapply(args$control, read_fst)) %>%
   mutate(observation_id = droplevels(observation_id))
+
 
 log_debug('Loading observations')
 observations <- read_fst(args$observations) %>%
@@ -196,8 +185,6 @@ H_component_parts <- lapply(part_indices, function(part_i) {
   fn <- pipe(sprintf('lz4 -v %s -', args$component_transport_matrix[part_i]), 'rb')
   H_vec <- readBin(fn, 'double', n_i)
   close(fn)
-  # NOTE (JHJ): error here 
-  # "data length [-941445971] is not a sub-multiple or multiple of the number of rows [1053457]"
   output <- matrix(H_vec, nrow = n_observations_i)
   gc()
   output[, alpha_to_include]
@@ -250,8 +237,25 @@ observation_parts <- lapply(hyperparameter_group_indices, function(i) {
 
 offset_parts <- lapply(observation_parts, getElement, 'offset')
 
+# TODO(jhj): re-estimate hyperparameters with more samples, and/or use v2 params for now
 # hyperparameter_estimates_raw <- read_fst(args$hyperparameter_estimates)
-hyperparameter_estimates <- read_fst(args$hyperparameter_estimates)
+# hyperparameter_estimates <- read_fst(args$hyperparameter_estimates)
+hyperparameter_estimates <- read_fst(
+  '/data/wombat-v2-workflow/3_inversion/intermediates/hyperparameter-estimates.fst'
+)
+hyperparameter_estimates <- bind_rows(
+  hyperparameter_estimates,
+  hyperparameter_estimates %>%
+    filter(hyperparameter_group == 'surface') %>%
+    mutate(hyperparameter_group = 'lauder'),
+  data.frame(
+    hyperparameter_group = '3_SIF',
+    rho = 0.8,
+    ell = 0.75,
+    gamma = 0.6,
+    ell_unit = 'mins'
+  )
+)
 
 Sigma_epsilon_parts <- lapply(hyperparameter_group_indices, function(i) {
   observations_i <- observation_parts[[i]]

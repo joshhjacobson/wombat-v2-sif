@@ -114,7 +114,7 @@ control_sif <- control_sif %>%
     model_time,
     model_longitude,
     model_latitude,
-    model_sif,
+    value = model_sif,
     model_assim,
     intercept,
     slope,

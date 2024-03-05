@@ -11,11 +11,14 @@ if (Sys.getenv('WOMBAT_LOG_LEVEL') != '') {
 }
 
 get_cores <- function() {
+  omp_threads <- as.integer(Sys.getenv('OMP_NUM_THREADS'))
   max_workers <- as.integer(Sys.getenv('WOMBAT_MAX_WORKERS'))
-  if (is.na(max_workers)) {
-    parallel::detectCores()
-  } else {
+  if (!is.na(omp_threads) & omp_threads > 0) {
+    omp_threads
+  } else if (!is.na(max_workers) & max_workers > 0) {
     max_workers
+  } else {
+    parallel::detectCores()
   }
 }
 

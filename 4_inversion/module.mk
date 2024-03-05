@@ -163,7 +163,6 @@ $(SAMPLES_LNLGSIF): \
 		--component-transport-matrix $(H_LNLG) $(H_SIF) \
 		--output $@
 
-# TODO(jhj): need to delete all sensitivities and rebuild observations from here (due to 4_IS renaming)
 $(SAMPLES_ISSIF): \
 	4_inversion/src/samples.R \
 		$(OBSERVATIONS) \

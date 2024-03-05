@@ -242,7 +242,23 @@ observation_parts <- lapply(hyperparameter_group_indices, function(i) {
 offset_parts <- lapply(observation_parts, getElement, 'offset')
 
 # hyperparameter_estimates_raw <- read_fst(args$hyperparameter_estimates)
-hyperparameter_estimates <- read_fst(args$hyperparameter_estimates)
+# hyperparameter_estimates <- read_fst(args$hyperparameter_estimates)
+hyperparameter_estimates <- read_fst(
+  '/data/wombat-v2-workflow/3_inversion/intermediates/hyperparameter-estimates.fst'
+)
+hyperparameter_estimates <- bind_rows(
+  hyperparameter_estimates,
+  hyperparameter_estimates %>%
+    filter(hyperparameter_group == 'surface') %>%
+    mutate(hyperparameter_group = 'lauder'),
+  data.frame(
+    hyperparameter_group = '3_SIF',
+    rho = 0.8,
+    ell = 0.75,
+    gamma = 0.6,
+    ell_unit = 'mins'
+  )
+)
 
 Sigma_epsilon_parts <- lapply(hyperparameter_group_indices, function(i) {
   observations_i <- observation_parts[[i]]

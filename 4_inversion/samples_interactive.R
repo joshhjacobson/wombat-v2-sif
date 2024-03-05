@@ -102,8 +102,6 @@ dmvnorm <- function(x, mean, covariance, precision, log = FALSE) {
   if (log) output else exp(output)
 }
 
-
-# TODO(jhj): update SIF control to use variable name 'value' in addition to 'model_sif'
 log_debug('Loading control')
 control <- bind_rows(lapply(args$control, read_fst)) %>%
   mutate(observation_id = droplevels(observation_id))

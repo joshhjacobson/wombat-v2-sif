@@ -2,16 +2,23 @@
 
 my_targets=$(make -qp | awk -F':' '/^[a-zA-Z0-9][^$#\\\t=]*:([^=]|$)/ {split($1,A,/ /);for(i in A)print A[i]}')
 
+sensitivities_paths=$(find "4_inversion/intermediates" -name "sensitivities-*")
+
 touch 4_inversion/intermediates/observations.fst
 sleep 2s
 
-for target in $(echo "$my_targets" | grep "4_inversion/intermediates/sensitivities-base-*"); do
-    touch $target
-done
-sleep 2s
+# for target in $(echo "$my_targets" | grep "4_inversion/intermediates/sensitivities-base-*"); do
+#     touch $target
+# done
+# sleep 2s
 
-for target in $(echo "$my_targets" | grep "4_inversion/intermediates/sensitivities-r10-r15-rNZ-*"); do
-    touch $target
+# for target in $(echo "$my_targets" | grep "4_inversion/intermediates/sensitivities-r10-r15-rNZ-*"); do
+#     touch -h $target
+# done
+# sleep 2s
+
+for path in $sensitivities_paths; do
+    touch $path
 done
 sleep 2s
 

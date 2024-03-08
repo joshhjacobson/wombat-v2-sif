@@ -1,0 +1,9 @@
+Plots to make for each set of samples
+
+[x]Trace plots
+* Could include ESS in the title
+- all tau, rho, kappa, and gamma parameters
+- alpha for intercept and slope in all regions
+- different harmonics at different regions
+- residuals in a handful of locations, and a uniform sample across the 79 months
+  - also include ocean component here (it's fixed everywhere else)

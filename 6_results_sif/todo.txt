@@ -7,3 +7,23 @@ Plots to make for each set of samples
 - different harmonics at different regions
 - residuals in a handful of locations, and a uniform sample across the 79 months
   - also include ocean component here (it's fixed everywhere else)
+
+
+[] Coefficient estimates
+- plot estimates for trend and seasonality components; put basis-vector ID on the y-axis and dots on the y axis; one dot for each method, and maybe intervals too
+- for the residual component, try monthly global maps of differences between LNLGIS and LNLGISSIF
+
+[] SIF residuals
+
+
+[] Time series
+- global total flux per year
+- global total flux per month
+- same as above, but for GPP, respiration, and NEE
+- monthly decomposition of GPP, respiration, and NEE
+
+[] Maps
+* differences between LNLGIS and LNLGISSIF
+** also, how can we map adjustments to uncertainty?
+- difference maps of total fluxes
+- difference maps for GPP intercept and trend

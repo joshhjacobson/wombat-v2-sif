@@ -1,6 +1,29 @@
 # Get list of make targets
 make -qp | awk -F':' '/^[a-zA-Z0-9][^$#\\\t=]*:([^=]|$)/ {split($1,A,/ /);for(i in A)print A[i]}' | grep ...
 
+# Files updates:
+chmod +x 3_sif/modify-timestamps.sh
+bash 3_sif/modify-timestamps.sh
+
+chmod +x 4_inversion/modify-timestamps.sh
+bash 4_inversion/modify-timestamps.sh
+
+
+# Supposedly these are the only needed sensitivity files (but could simply copy all sensitivities):
+3_inversion/intermediates/sensitivities-base-oco2-hourly-part-1.fst
+3_inversion/intermediates/sensitivities-base-obspack-hourly-assim-1-part-1.fst
+3_inversion/intermediates/sensitivities-base-oco2-daily-part-1.fst
+3_inversion/intermediates/sensitivities-base-obspack-daily-assim-1-part-1.fst
+3_inversion/intermediates/sensitivities-base-oco2-hourly-part-1.fst
+3_inversion/intermediates/sensitivities-r10-r15-rNZ-obspack-hourly-assim-1-part-1.fst
+3_inversion/intermediates/sensitivities-r10-r15-rNZ-oco2-daily-part-1.fst
+3_inversion/intermediates/sensitivities-r10-r15-rNZ-obspack-daily-assim-1-part-1.fst
+
+rsync -azP $(find /data/wombat-v2-workflow/3_inversion/intermediates/sensitivities-* -not -regex '.*\(lauder\).*') 4_inversion/intermediates
+rsync -azP /data/wombat-v2-workflow/3_inversion/intermediates/samples-LNLGIS.rds 4_inversion/intermediates
+
+# Individual targets:
+
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/observations-sif.fst
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-sif-2016.nc
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-sif-assim-2x25-2016.nc
@@ -22,26 +45,5 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-ISSIF.rds --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-LNLGISSIF.rds --dry-run
 
-
-
-# Files updates:
-chmod +x 3_sif/modify-timestamps.sh
-bash 3_sif/modify-timestamps.sh
-
-chmod +x 4_inversion/modify-timestamps.sh
-bash 4_inversion/modify-timestamps.sh
-
-
-
-
-# Supposedly these are the only needed sensitivity files (but could simply copy all sensitivities):
-3_inversion/intermediates/sensitivities-base-oco2-hourly-part-1.fst
-3_inversion/intermediates/sensitivities-base-obspack-hourly-assim-1-part-1.fst
-3_inversion/intermediates/sensitivities-base-oco2-daily-part-1.fst
-3_inversion/intermediates/sensitivities-base-obspack-daily-assim-1-part-1.fst
-3_inversion/intermediates/sensitivities-base-oco2-hourly-part-1.fst
-3_inversion/intermediates/sensitivities-r10-r15-rNZ-obspack-hourly-assim-1-part-1.fst
-3_inversion/intermediates/sensitivities-r10-r15-rNZ-oco2-daily-part-1.fst
-3_inversion/intermediates/sensitivities-r10-r15-rNZ-obspack-daily-assim-1-part-1.fst
-
-rsync -azP $(find /data/wombat-v2-workflow/3_inversion/intermediates/sensitivities-* -not -regex '.*\(lauder\).*') 4_inversion/intermediates
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 5_results/figures/global-bottom-up.pdf --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 5_results/figures/flux-components-global.pdf --dry-run

@@ -45,17 +45,43 @@ df_samples <- bind_rows(lapply(samples_paths_clean, function(path) {
   mutate(basis_vector_str = paste0(component, '.', region)) %>%
   arrange(type, component, region)
 
-p <- ggplot(data = df_samples) +
+df_net <- df_samples %>% 
+  select(-c(value_samples, basis_vector, basis_vector_str)) %>%
+  filter(type %in% c('LNLGIS', 'LNLGISSIF')) %>%
+  tidyr::pivot_wider(names_from = inventory, values_from = value) %>%
+  tidyr::drop_na() %>%
+  mutate(
+    net_bio = bio_resp_tot + bio_assim,
+    basis_vector_str = paste0(component, '.', region)
+  ) %>%
+  arrange(type, component, region)
+
+p1 <- ggplot(data = df_samples %>% filter(type %in% c('LNLGIS', 'LNLGISSIF'))) +
   geom_vline(xintercept = 0, linetype = 'dashed', colour = 'grey50') +
-  geom_point(aes(x = value, y = basis_vector_str, colour = type), shape = 1) +
+  geom_point(aes(x = value, y = basis_vector_str, colour = type, shape = type)) +
   scale_y_discrete(limits = rev(levels(factor(df_samples$basis_vector_str)))) +
   facet_wrap(~inventory, scales = 'free_y', nrow = 2) +
-  scale_colour_brewer(palette = 'Dark2') +
+  scale_colour_brewer(name = 'Obs. Groups', palette = 'Dark2') +
+  scale_shape_manual(name = 'Obs. Groups', values = c(0, 1, 2, 5, 3, 4)) +
   labs(
     x = sprintf('Mean of Posterior Samples %d:%d', N_MCMC_WARM_UP + 1, N_MCMC_SAMPLES),
-    y = NULL,
-    colour = 'Obs. Groups'
+    y = NULL
   ) +
   theme(axis.text.y = element_text(size = 6))
 
-ggsave_base(args$output, p, width = 20, height = 100)
+p2 <- ggplot(data = df_net) +
+  geom_vline(xintercept = 0, linetype = 'dashed', colour = 'grey50') +
+  geom_point(aes(x = net_bio, y = basis_vector_str, colour = type, shape = type)) +
+  scale_y_discrete(limits = rev(levels(factor(df_net$basis_vector_str)))) +
+  scale_colour_brewer(name = 'Obs. Groups', palette = 'Dark2') +
+  scale_shape_manual(name = 'Obs. Groups', values = c(0, 1, 2, 5, 3, 4)) +
+  labs(
+    x = 'Sum of coefficient posterior means (GPP + Respiration)',
+    y = NULL
+  ) +
+  theme(axis.text.y = element_text(size = 6))
+
+p <- p1 / p2
+
+# ggsave_base(args$output, p, width = 20, height = 100)
+ggsave_base(args$output, p, width = 20, height = 150, limitsize = FALSE)

@@ -102,7 +102,7 @@ perturbations_region <- perturbations_split %>%
     latitude_bottom < plot_region$latitude_upper
   ) %>%
   group_by(inventory_year, basis_vector) %>%
-  summarise(value = KG_M2_S_TO_PGC_MONTH * 12 * sum(area * value)) %>%
+  summarise(value = KG_M2_S_TO_PGC_MONTH * sum(area * value)) %>%
   left_join(
     perturbations_split %>%
       distinct(inventory_year, inventory, year),

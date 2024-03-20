@@ -37,13 +37,13 @@ Findings:
 - for global monthly, including SIF shifts the respiration cycle, but strangely NEE cycle isn't effected
 - including SIF increases the amplitude of GPP and respiration cycles
 
-[] Maps
+[x] Maps
 * differences between LNLGIS and LNLGISSIF
 ** also, how can we map adjustments to uncertainty?
 - difference maps of total fluxes
 - difference maps for GPP intercept and trend
 
 
-[] Mike's analyses
+[x] Mike's analyses
 - some changes in zonal amplitude and phase shifts
 - some changes to spatial patterns of phase shifts, esp. for respiration

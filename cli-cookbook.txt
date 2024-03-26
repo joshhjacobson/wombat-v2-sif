@@ -51,3 +51,5 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 5_results/figures/flux-components
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 5_results_targets --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif_targets --dry-run
+
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-monthly-sif-2x25.nc --dry-run

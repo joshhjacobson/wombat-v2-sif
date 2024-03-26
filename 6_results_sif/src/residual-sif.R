@@ -1,7 +1,6 @@
 library(argparse)
 library(dplyr, warn.conflicts = FALSE)
 library(fst)
-library(Matrix)
 library(patchwork)
 
 # source(Sys.getenv('UTILS_PARTIAL'))
@@ -45,7 +44,7 @@ output <- observations %>%
     offset = value - value_control
   )
 
-perturbations <- perturbations_base %>%
+perturbations_sif <- perturbations_base %>%
   filter(
     inventory == "bio_assim"
   ) %>%
@@ -55,7 +54,8 @@ perturbations <- perturbations_base %>%
     by = "basis_vector"
   ) %>%
   mutate(
-    value = alpha * value # NOTE: or is it 1 + alpha?
+    # NOTE: sign of perturbations are switched to match SIF
+    value = -value * alpha
   ) %>%
   group_by(longitude, latitude, time) %>%
   summarise(value = sum(value), .groups = "drop")
@@ -65,7 +65,7 @@ output <- output %>%
     month = strftime(model_time, "%Y-%m")
   ) %>%
   left_join(
-    perturbations %>%
+    perturbations_sif %>%
       mutate(month = strftime(time, "%Y-%m")) %>%
       select(c(
         model_longitude = longitude,
@@ -76,34 +76,41 @@ output <- output %>%
     by = c("model_longitude", "model_latitude", "month")
   ) %>%
   mutate(
-    # NOTE: perturbations multiplied by -1 to match sign of SIF
-    fitted = value_control + (-1) * slope * perturbation,
-    residual = offset - (-1) * slope * perturbation
+    fitted = value_control + slope * perturbation,
+    residual = offset - slope * perturbation
   )
 
-p <- ggplot(output) +
+p_scatter <- ggplot(output) +
   geom_point(aes(x = fitted, y = residual), shape = 1, alpha = 0.1) +
   labs(
     x = "Fitted SIF",
     y = "Residual SIF",
-    title = "Fitted vs Residual SIF (2014-09 to 2020-12)"
   )
 
 ggsave_base(
   '6_results_sif/figures/sif-fitted-vs-residual.png',
-  p,
+  p_scatter,
   bg = 'white',
   width = 12,
   height = 12
 )
 
-ggplot(output) +
+p_hist <- ggplot(output) +
   geom_histogram(aes(x = residual), binwidth = 0.1) +
-  theme_minimal() +
   labs(
-    x = "Residual",
+    x = "Residual SIF",
     y = "Count"
   )
+
+ggsave_base(
+  '6_results_sif/figures/sif-fitted-vs-residual-with-hist.png',
+  (p_scatter + p_hist) + plot_annotation(
+    title = 'SIF residuals (2014-09 to 2020-12)'
+  ),
+  bg = 'white',
+  width = 24,
+  height = 12
+)
 
 output_global_monthly <- output %>%
   filter(
@@ -112,15 +119,14 @@ output_global_monthly <- output %>%
   ) %>%
   group_by(month) %>%
   summarise(
-    value = mean(value, na.rm = TRUE), 
+    value = mean(value, na.rm = TRUE),
     value_control = mean(value_control, na.rm = TRUE),
-    offset = mean(offset, na.rm = TRUE),
-    perturbation = mean(-slope * perturbation, na.rm = TRUE),
+    fitted = mean(fitted, na.rm = TRUE),
     residual = mean(residual, na.rm = TRUE),
     .groups = 'drop'
   ) %>%
   tidyr::pivot_longer(
-    c(value, value_control, offset, perturbation, residual),
+    c(value, value_control, fitted, residual),
     names_to = 'stage',
     values_to = 'value'
   ) %>%
@@ -128,40 +134,63 @@ output_global_monthly <- output %>%
     month = as.Date(paste0(month, '-01')),
     stage = factor(c(
       'value' = 'OCO-2',
-      'value_control' = 'Bottom-up',
-      'offset' = 'Offset',
-      'perturbation' = 'Perturbation',
+      'value_control' = 'Bottom-up (solar noon)',
+      'fitted' = 'Fitted',
       'residual' = 'Residual'
     )[stage], levels = c(
       'OCO-2',
-      'Bottom-up',
-      'Offset',
-      'Perturbation',
+      'Bottom-up (solar noon)',
+      'Fitted',
       'Residual'
     )),
-    plot_group = case_when(
-      stage %in% c('OCO-2', 'Bottom-up') ~ 'OCO-2 and Bottom-up',
-      stage == 'Offset' ~ 'Offset',
-      stage == 'Perturbation' ~ 'Perturbation',
-      stage == 'Residual' ~ 'Residual'
+    plot_group = if_else(
+      stage == 'Residual', 
+      'Residual (observed - fitted)', 
+      'OCO-2, Bottom-up, and Fitted'
     )
+    # plot_group = case_when(
+    #   stage %in% c('OCO-2', 'Bottom-up') ~ 'OCO-2 and Bottom-up',
+    #   stage == 'Offset' ~ 'Offset',
+    #   stage == 'Perturbation' ~ 'Perturbation',
+    #   stage == 'Residual' ~ 'Residual (observed - fitted)'
+    # )
   )
 
 p <- ggplot(output_global_monthly) +
-  geom_line(aes(x = month, y = value, colour = stage)) +
+  geom_line(aes(x = month, y = value, colour = stage, linetype = stage)) +
   facet_wrap(~ plot_group, ncol = 1, scales = 'free_y') +
-  scale_colour_brewer(palette = 'Dark2') +
+  scale_colour_manual(
+    values = c(
+      'OCO-2' = 'blue',
+      'Bottom-up (solar noon)' = 'black',
+      'Fitted' = '#ff4444',
+      'Residual' = 'purple'
+    )
+  ) +
+  scale_linetype_manual(
+    values = c(
+      'OCO-2' = 'dotted',
+      'Bottom-up (solar noon)' = 'dashed',
+      'Fitted' = 'solid',
+      'Residual' = 'dotdash'
+    )
+  ) +
+  scale_x_date(date_breaks = '6 months', date_labels = '%Y-%m') +
   labs(
     x = "Month",
     y = "SIF",
     colour = NULL,
-    title = "Global monthly mean SIF components"
+    linetype = NULL,
+    title = "Monthly SIF: mean across observation locations"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, colour = '#23373b')
   )
 
 ggsave_base(
   '6_results_sif/figures/sif-components-global.pdf',
   p,
-  width = 16,
+  width = 20,
   height = 12
 )
 

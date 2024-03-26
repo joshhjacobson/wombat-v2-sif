@@ -42,6 +42,15 @@ SAMPLES_LNLGSIF = 4_inversion/intermediates/samples-LNLGSIF.rds
 SAMPLES_ISSIF = 4_inversion/intermediates/samples-ISSIF.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 
+OSSE_BASE_CASES = fixed wombatv2
+OSSE_MODEL_BASE = 4_inversion/intermediates/model-osse
+OSSE_MODEL_CASES = $(foreach OSSE_CASE,$(OSSE_BASE_CASES),$(OSSE_MODEL_BASE)-$(OSSE_CASE).rds)
+OSSE_OBSERVATIONS_BASE = 4_inversion/intermediates/observations-osse
+OSSE_OBSERVATIONS_CASES = $(foreach OSSE_CASE,$(OSSE_BASE_CASES),$(OSSE_OBSERVATIONS_BASE)-$(OSSE_CASE).fst)
+OSSE_SAMPLES_BASE = 4_inversion/intermediates/samples-osse
+OSSE_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_BASE_CASES),$(OSSE_SAMPLES_BASE)-$(OSSE_CASE).rds)
+
+
 $(SAMPLES_IS): \
 	4_inversion/src/samples.R \
   	$(OBSERVATIONS) \
@@ -393,6 +402,22 @@ $(BASIS_VECTORS): \
 	Rscript $< \
 		--perturbations $(PERTURBATIONS) \
 		--output $@
+
+$(OSSE_OBSERVATIONS_BASE)-%: \
+	4_inversion/src/observations-osse.R \
+	$(OBSERVATIONS) \
+	$(PERTURBATIONS) \
+	$(OSSE_MODEL_BASE)-%
+	Rscript $< \
+		--observations $(OBSERVATIONS) \
+		--perturbations $(PERTURBATIONS) \
+		--model $(OSSE_MODEL_BASE)-$*.rds \
+		--start-date $(INVERSION_START_DATE) \
+		--end-date $(INVERSION_END_DATE) \
+		--output $@
+
+$(OSSE_MODEL_BASE)-%.rds: \
+	touch $@
 
 $(OBSERVATIONS): \
 	4_inversion/src/observations.R \

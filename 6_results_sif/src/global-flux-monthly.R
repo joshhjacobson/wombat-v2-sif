@@ -19,7 +19,7 @@ source('partials/utils.R')
 args <- list()
 args$area_1x1 <- 'data/area-1x1.nc'
 args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
-args$samples <- '4_inversion/intermediates/samples-LNLGIS.rds'
+args$samples <- '4_inversion/intermediates/samples-LNLGISSIF.rds'
 args$region <- 'global'
 args$output_base <- '6_results_sif/figures'
 
@@ -253,6 +253,7 @@ output <- wrap_plots(
       scale_colour_manual(values = c('black', '#ff4444')) +
       scale_fill_manual(values = c('black', '#ff4444')) +
       scale_linetype_manual(values = c('41', 'solid')) +
+      scale_x_date(date_breaks = '6 months', date_labels = '%Y-%m') +
       labs(x = 'Time', y = 'Flux [PgC/month]', colour = NULL, fill = NULL, linetype = NULL) +
       guides(fill = 'none') +
       ggtitle(inventory_i)
@@ -271,7 +272,7 @@ output <- wrap_plots(
       'bottom'
     },
     legend.margin = margin(t = 0, r = 5, b = 0, l = 0, unit = 'mm'),
-    axis.text.x = element_text(size = 9),
+    axis.text.x = element_text(size = 9, angle = 45, hjust = 1),
     axis.text.y = element_text(size = 7),
     axis.title.y = element_text(size = 10),
     strip.text = element_text(size = 8)

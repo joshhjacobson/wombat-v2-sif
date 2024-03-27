@@ -9,3 +9,9 @@ if (interactive() && Sys.getenv("TERM_PROGRAM") == "vscode") {
     })
   }
 }
+
+options(languageserver.formatting_style = function(options) {
+  style <- styler::tidyverse_style()
+  style$token$fix_quotes <- NULL
+  style
+})

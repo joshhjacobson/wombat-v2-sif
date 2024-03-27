@@ -134,18 +134,18 @@ output_global_monthly <- output %>%
     month = as.Date(paste0(month, '-01')),
     stage = factor(c(
       'value' = 'OCO-2',
-      'value_control' = 'Bottom-up (solar noon)',
+      'value_control' = 'Bottom-up',
       'fitted' = 'Fitted',
       'residual' = 'Residual'
     )[stage], levels = c(
       'OCO-2',
-      'Bottom-up (solar noon)',
+      'Bottom-up',
       'Fitted',
       'Residual'
     )),
     plot_group = if_else(
-      stage == 'Residual', 
-      'Residual (observed - fitted)', 
+      stage == 'Residual',
+      'Residual (observed - fitted)',
       'OCO-2, Bottom-up, and Fitted'
     )
     # plot_group = case_when(
@@ -158,11 +158,11 @@ output_global_monthly <- output %>%
 
 p <- ggplot(output_global_monthly) +
   geom_line(aes(x = month, y = value, colour = stage, linetype = stage)) +
-  facet_wrap(~ plot_group, ncol = 1, scales = 'free_y') +
+  facet_wrap(~plot_group, ncol = 1, scales = 'free_y') +
   scale_colour_manual(
     values = c(
       'OCO-2' = 'blue',
-      'Bottom-up (solar noon)' = 'black',
+      'Bottom-up' = 'black',
       'Fitted' = '#ff4444',
       'Residual' = 'purple'
     )
@@ -170,7 +170,7 @@ p <- ggplot(output_global_monthly) +
   scale_linetype_manual(
     values = c(
       'OCO-2' = 'dotted',
-      'Bottom-up (solar noon)' = 'dashed',
+      'Bottom-up' = 'dashed',
       'Fitted' = 'solid',
       'Residual' = 'dotdash'
     )
@@ -178,7 +178,7 @@ p <- ggplot(output_global_monthly) +
   scale_x_date(date_breaks = '6 months', date_labels = '%Y-%m') +
   labs(
     x = "Month",
-    y = "SIF",
+    y = expression('SIF [W' * m^-2 * µm^-1 * sr^-1 * ']'),
     colour = NULL,
     linetype = NULL,
     title = "Monthly SIF: mean across observation locations"
@@ -190,13 +190,13 @@ p <- ggplot(output_global_monthly) +
 ggsave_base(
   '6_results_sif/figures/sif-components-global.pdf',
   p,
-  width = 20,
+  width = 18,
   height = 12
 )
 
 
 
-p <-  ggplot(output) +
+p <- ggplot(output) +
   geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
   geom_point(
     aes(x = longitude, y = latitude, colour = residual),
@@ -204,8 +204,8 @@ p <-  ggplot(output) +
     shape = 1,
     alpha = 0.3
   ) +
-  colorspace::scale_color_binned_divergingx(
-    palette = 'Roma',
+  colorspace::scale_colour_binned_divergingx(
+    palette = 'RdYlBu',
     rev = TRUE,
     guide = guide_colorbar(
       title.position = 'top',
@@ -213,14 +213,20 @@ p <-  ggplot(output) +
       axis = FALSE,
       label.theme = element_text(size = 8),
       frame.colour = '#999999',
-      barwidth = 13
-    )
+      barwidth = 20
+    ),
+    n.breaks = 7,
   ) +
   coord_sf(
     default_crs = sf::st_crs('WGS84'),
     crs = sf::st_crs('+proj=eck4 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m no_defs')
   ) +
-  labs(x = NULL, y = NULL, colour = 'SIF', title = 'SIF residuals (2014-09 to 2020-12)') +
+  labs(
+    x = NULL,
+    y = NULL,
+    colour = expression('SIF [W' * m^-2 * µm^-1 * sr^-1 * ']'),
+    title = 'SIF residuals (2014-09 to 2020-12)'
+  ) +
   theme(
     legend.position = 'bottom',
     plot.title = element_text(size = 13, hjust = 0.5),
@@ -258,8 +264,8 @@ p <- ggplot(output_seasons) +
     shape = 1,
     alpha = 0.3
   ) +
-  colorspace::scale_color_binned_divergingx(
-    palette = 'Roma',
+  colorspace::scale_colour_binned_divergingx(
+    palette = 'RdYlBu',
     rev = TRUE,
     guide = guide_colorbar(
       title.position = 'top',
@@ -267,15 +273,21 @@ p <- ggplot(output_seasons) +
       axis = FALSE,
       label.theme = element_text(size = 8),
       frame.colour = '#999999',
-      barwidth = 13
-    )
+      barwidth = 20
+    ),
+    n.breaks = 7,
   ) +
   coord_sf(
     default_crs = sf::st_crs('WGS84'),
     crs = sf::st_crs('+proj=eck4 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m no_defs')
   ) +
-  facet_wrap(~ season, ncol = 2) +
-  labs(x = NULL, y = NULL, colour = 'SIF', title = 'SIF residuals by season (2014-09 to 2020-12)') +
+  facet_wrap(~season, ncol = 2) +
+  labs(
+    x = NULL,
+    y = NULL,
+    colour = expression('SIF [W' * m^-2 * µm^-1 * sr^-1 * ']'),
+    title = 'SIF residuals by season (2014-09 to 2020-12)'
+  ) +
   theme(
     legend.position = 'bottom',
     plot.title = element_text(size = 13, hjust = 0.5),

@@ -152,7 +152,7 @@ output <- ggplot(posterior_sif, aes(time)) +
 
 
 ggsave_base(
-  '6_results_sif/figures/global-sif-yearly.pdf',
+  '6_results_sif/figures/global-sif-monthly.pdf',
   output,
   width = 17,
   height = 11

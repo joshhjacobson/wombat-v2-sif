@@ -5,26 +5,30 @@ library(patchwork)
 
 # source(Sys.getenv('UTILS_PARTIAL'))
 # source(Sys.getenv('DISPLAY_PARTIAL'))
-source("partials/display.R")
-source("partials/utils.R")
+source('partials/display.R')
+source('partials/utils.R')
 
 args <- list()
-args$control_sif <- "3_sif/intermediates/oco2-hourly-sif.fst"
-args$perturbations_augmented <- "5_results/intermediates/perturbations-augmented.fst"
-args$samples <- "4_inversion/intermediates/samples-LNLGISSIF.rds"
-args$observations <- "4_inversion/intermediates/observations.fst"
+args$observations <- '4_inversion/intermediates/observations.fst'
+args$control_sif <- '3_sif/intermediates/oco2-hourly-sif.fst'
+# args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
+args$basis_vectors <- '4_inversion/intermediates/basis-vectors.fst'
+args$prior <- '4_inversion/intermediates/prior.rds'
+args$samples <- '4_inversion/intermediates/samples-LNLGISSIF.rds'
 args$region_sf <- '5_results/intermediates/region-sf.rds'
 
 observations <- read_fst(args$observations)
 control_sif <- read_fst(args$control_sif)
-perturbations_base <- read_fst(args$perturbations_augmented)
+# perturbations_base <- read_fst(args$perturbations_augmented)
+basis_vectors <- read_fst(args$basis_vectors)
+prior <- readRDS(args$prior)
 samples <- readRDS(args$samples)
 region_sf <- readRDS(args$region_sf)
 
 
 output <- observations %>%
   filter(
-    observation_group == "3_SIF",
+    observation_group == '3_SIF',
     assimilate == 1
   ) %>%
   select(c(observation_id, longitude, latitude, time, value)) %>%
@@ -38,53 +42,74 @@ output <- observations %>%
         value_control = value,
         slope
       )),
-    by = "observation_id"
+    by = 'observation_id'
   ) %>%
   mutate(
     offset = value - value_control
   )
 
-perturbations_sif <- perturbations_base %>%
-  filter(
-    inventory == "bio_assim"
-  ) %>%
-  left_join(
-    samples$alpha_df %>%
-      select(basis_vector, alpha = value),
-    by = "basis_vector"
-  ) %>%
-  mutate(
-    # NOTE: sign of perturbations are switched to match SIF
-    value = -value * alpha
-  ) %>%
-  group_by(longitude, latitude, time) %>%
-  summarise(value = sum(value), .groups = "drop")
+# perturbations_sif <- perturbations_base %>%
+#   filter(
+#     inventory == 'bio_assim'
+#   ) %>%
+#   left_join(
+#     samples$alpha_df %>%
+#       select(basis_vector, alpha = value),
+#     by = 'basis_vector'
+#   ) %>%
+#   mutate(
+#     # NOTE: sign of perturbations are switched to match SIF
+#     value = -value * alpha
+#   ) %>%
+#   group_by(longitude, latitude, time) %>%
+#   summarise(value = sum(value), .groups = 'drop')
+
+
+n_observations <- nrow(output)
+n_alpha <- nrow(basis_vectors)
+n_mat <- n_observations * n_alpha
+alpha_to_include <- is.finite(diag(prior$precision)) & with(
+  basis_vectors,
+  !(inventory == 'bio_resp_tot' & component %in% c('intercept', 'trend'))
+)
+
+fn <- pipe(sprintf('lz4 -v %s -', '4_inversion/intermediates/H-SIF.mat.lz4'), 'rb')
+H_vec <- readBin(fn, 'double', n_mat)
+close(fn)
+H_sif <- matrix(H_vec, nrow = n_observations)
+gc()
+H_sif <- H_sif[, alpha_to_include]
+gc()
 
 output <- output %>%
   mutate(
-    month = strftime(model_time, "%Y-%m")
+    month = strftime(model_time, '%Y-%m'),
+    perturbation = as.vector(H_sif %*% samples$alpha_df$value)
   ) %>%
-  left_join(
-    perturbations_sif %>%
-      mutate(month = strftime(time, "%Y-%m")) %>%
-      select(c(
-        model_longitude = longitude,
-        model_latitude = latitude,
-        month,
-        perturbation = value
-      )),
-    by = c("model_longitude", "model_latitude", "month")
-  ) %>%
+  # left_join(
+  #   perturbations_sif %>%
+  #     mutate(month = strftime(time, '%Y-%m')) %>%
+  #     select(c(
+  #       model_longitude = longitude,
+  #       model_latitude = latitude,
+  #       month,
+  #       perturbation = value
+  #     )),
+  #   by = c('model_longitude', 'model_latitude', 'month')
+  # ) %>%
   mutate(
-    fitted = value_control + slope * perturbation,
-    residual = offset - slope * perturbation
+    # fitted = value_control + slope * perturbation,
+    # residual = offset - slope * perturbation
+    # NOTE: slopes already multiplied in sensitivities
+    fitted = value_control + perturbation,
+    residual = offset - perturbation
   )
 
 p_scatter <- ggplot(output) +
   geom_point(aes(x = fitted, y = residual), shape = 1, alpha = 0.1) +
   labs(
-    x = "Fitted SIF",
-    y = "Residual SIF",
+    x = 'Fitted SIF',
+    y = 'Residual SIF',
   )
 
 ggsave_base(
@@ -98,8 +123,8 @@ ggsave_base(
 p_hist <- ggplot(output) +
   geom_histogram(aes(x = residual), binwidth = 0.1) +
   labs(
-    x = "Residual SIF",
-    y = "Count"
+    x = 'Residual SIF',
+    y = 'Count'
   )
 
 ggsave_base(
@@ -148,12 +173,6 @@ output_global_monthly <- output %>%
       'Residual (observed - fitted)',
       'OCO-2, Bottom-up, and Fitted'
     )
-    # plot_group = case_when(
-    #   stage %in% c('OCO-2', 'Bottom-up') ~ 'OCO-2 and Bottom-up',
-    #   stage == 'Offset' ~ 'Offset',
-    #   stage == 'Perturbation' ~ 'Perturbation',
-    #   stage == 'Residual' ~ 'Residual (observed - fitted)'
-    # )
   )
 
 p <- ggplot(output_global_monthly) +
@@ -177,11 +196,11 @@ p <- ggplot(output_global_monthly) +
   ) +
   scale_x_date(date_breaks = '6 months', date_labels = '%Y-%m') +
   labs(
-    x = "Month",
+    x = 'Month',
     y = expression('SIF [W' * m^-2 * µm^-1 * sr^-1 * ']'),
     colour = NULL,
     linetype = NULL,
-    title = "Monthly SIF: mean across observation locations"
+    title = 'Monthly SIF: mean across observation locations'
   ) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1, colour = '#23373b')

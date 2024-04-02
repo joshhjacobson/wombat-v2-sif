@@ -34,6 +34,7 @@ H_SIF = 4_inversion/intermediates/H-SIF.mat.lz4
 RESIDUAL_1ST_STAGE = 4_inversion/intermediates/residual-1st-stage.fst
 HYPERPARAMETER_ESTIMATES = 4_inversion/intermediates/hyperparameter-estimates.fst
 
+# NOTE(jhj): setup sample cases if keeping most of these?
 SAMPLES_IS = 4_inversion/intermediates/samples-IS.rds
 SAMPLES_LNLG = 4_inversion/intermediates/samples-LNLG.rds
 SAMPLES_LNLGIS = 4_inversion/intermediates/samples-LNLGIS.rds
@@ -42,13 +43,14 @@ SAMPLES_LNLGSIF = 4_inversion/intermediates/samples-LNLGSIF.rds
 SAMPLES_ISSIF = 4_inversion/intermediates/samples-ISSIF.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 
-OSSE_BASE_CASES = fixed wombatv2
-OSSE_MODEL_BASE = 4_inversion/intermediates/model-osse
-OSSE_MODEL_CASES = $(foreach OSSE_CASE,$(OSSE_BASE_CASES),$(OSSE_MODEL_BASE)-$(OSSE_CASE).rds)
-OSSE_OBSERVATIONS_BASE = 4_inversion/intermediates/observations-osse
-OSSE_OBSERVATIONS_CASES = $(foreach OSSE_CASE,$(OSSE_BASE_CASES),$(OSSE_OBSERVATIONS_BASE)-$(OSSE_CASE).fst)
-OSSE_SAMPLES_BASE = 4_inversion/intermediates/samples-osse
-OSSE_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_BASE_CASES),$(OSSE_SAMPLES_BASE)-$(OSSE_CASE).rds)
+OSSE_BASE_CASES = zero wombatv2
+OSSE_CASES = zero zero-SIF wombatv2 wombatv2-SIF
+OSSE_OBSERVATIONS_BASE = 4_inversion/intermediates/osse-model
+OSSE_OBSERVATIONS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_CASES),$(OSSE_OBSERVATIONS_BASE)-$(OSSE_BASE_CASE).fst)
+OSSE_ERRORS_BASE = 4_inversion/intermediates/osse-errors
+OSSE_ERRORS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_ERRORS_BASE)-$(OSSE_BASE_CASE).fst)
+OSSE_SAMPLES_BASE = 4_inversion/intermediates/osse-samples
+OSSE_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_SAMPLES_BASE)-$(OSSE_CASE).rds)
 
 
 $(SAMPLES_IS): \
@@ -403,21 +405,29 @@ $(BASIS_VECTORS): \
 		--perturbations $(PERTURBATIONS) \
 		--output $@
 
-$(OSSE_OBSERVATIONS_BASE)-%: \
-	4_inversion/src/observations-osse.R \
+# NOTE: save v2 alphas to data folder for this step
+$(OSSE_OBSERVATIONS_BASE)-%.fst: \
+	4_inversion/src/osse-observations.R \
 	$(OBSERVATIONS) \
 	$(PERTURBATIONS) \
-	$(OSSE_MODEL_BASE)-%
+	$(OSSE_ERRORS_BASE)-%.fst
 	Rscript $< \
+		--case $* \
 		--observations $(OBSERVATIONS) \
 		--perturbations $(PERTURBATIONS) \
-		--model $(OSSE_MODEL_BASE)-$*.rds \
+		--errors $(OSSE_ERRORS) \
 		--start-date $(INVERSION_START_DATE) \
 		--end-date $(INVERSION_END_DATE) \
 		--output $@
 
-$(OSSE_MODEL_BASE)-%.rds: \
-	touch $@
+$(OSSE_ERRORS_BASE)-%.fst: \
+	4_inversion/src/osse-errors.R \
+	$(OBSERVATIONS)
+	Rscript $< \
+		--case $* \
+		--observations $(OBSERVATIONS) \
+		--overall-observation-mode LN LG IS SIF \
+		--output $@
 
 $(OBSERVATIONS): \
 	4_inversion/src/observations.R \

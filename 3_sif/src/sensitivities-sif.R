@@ -37,7 +37,7 @@ log_info('Constructing region grid using {args$region_mask}')
 region_list <- readRDS(args$region_mask)
 
 region_values <- region_list[[1]]
-for (i in 2 : length(region_list)) {
+for (i in 2:length(region_list)) {
   x <- region_list[[i]]
   region_values[x == 1] <- i
 }
@@ -46,10 +46,10 @@ region_values[region_values == 0] <- NA
 region_grid <- expand.grid(
   longitude = attr(region_list$Region01, 'longitude'),
   latitude = attr(region_list$Region01, 'latitude')
-) %>% 
+) %>%
   mutate(
     region = as.vector(region_values)
-  ) %>% 
+  ) %>%
   filter(!is.na(region)) %>%
   mutate(
     region = factor(names(region_list)[region])
@@ -77,10 +77,10 @@ output_years <- mclapply(seq_along(args$basis_climatology), function(year_index)
   basis_residual <- read_basis(residual_path)
   stopifnot(
     (basis_climatology$year == basis_residual$year) |
-    (year_index > length(args$basis_residual))
+      (year_index > length(args$basis_residual))
   )
 
-  control_year <- control %>% 
+  control_year <- control %>%
     filter(lubridate::year(time) == basis_climatology$year)
 
   longitude_indices <- match(control_year$longitude, basis_climatology$longitude)

@@ -37,6 +37,7 @@ OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/H-SIF.m
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/H-LNLG.mat.lz4 --dry-run
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/H-IS.mat.lz4 --dry-run
 
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/residual-1st-stage.fst --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/hyperparameter-estimates.fst --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-LNLG.rds --dry-run

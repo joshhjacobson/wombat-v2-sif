@@ -1,16 +1,23 @@
 library(argparse)
 library(dplyr, warn.conflicts = FALSE)
 library(fastsparse)
-library(lubridate, warn.conflicts = FALSE)
-library(tidyr, warn.conflicts = FALSE)
 library(WoodburyMatrix)
 
 # source(Sys.getenv('UTILS_PARTIAL'))
-source('partials/utils.R')
 
+# parser <- ArgumentParser()
+# parser$add_argument('--case')
+# parser$add_argument('--observations')
+# parser$add_argument('--overall-observation-mode', nargs = '+')
+# parser$add_argument('--hyperparameter-estimates')
+# parser$add_argument('--output')
+# args <- parser$parse_args()
+
+source('partials/utils.R')
 args <- list()
 args$observations <- '4_inversion/intermediates/observations.fst'
 args$overall_observation_mode <- c('LN', 'LG', 'IS', 'LN_SIF', 'LG_SIF')
+args$hyperparameter_estimates <- '4_inversion/intermediates/hyperparameter-estimates.fst'
 args$case <- 'zero'
 
 SEED <- 20240403 + as.integer(
@@ -64,9 +71,10 @@ simulate_epsilon <- function(
   unlist(epsilon)
 }
 
-produce_group_epsilons <- function(group) {
+produce_group_epsilons <- function(group, parameters) {
   # NOTE(mgnb): each hyperparameter_group has its own rho, ell, and is nested
   # within a fit_group, which has its own gamma
+  stopifnot(length(unique(group$fit_group)) == 1)
   fit_group <- group$fit_group[[1]]
   log_trace('Simulating epsilons for {fit_group} group')
   is_oco2 <- fit_group %in% c('1_LNLG', '2_OG', '3_SIF')
@@ -91,7 +99,7 @@ produce_group_epsilons <- function(group) {
   error_parts <- lapply(group_parts, lapply, getElement, 'error')
 
   if(is_oco2) {
-    # Setup hyperparameters
+    # TODO: Setup hyperparameters
     simulate_epsilon(
       gamma = 1,
       rho = c(0.5, 0.5),
@@ -100,7 +108,7 @@ produce_group_epsilons <- function(group) {
       error = error_parts
     )
   } else {
-    # Setup hyperparameters
+    # TODO: Setup hyperparameters
     simulate_epsilon(
       gamma = 1,
       rho = c(0.5, 0.5),
@@ -111,6 +119,9 @@ produce_group_epsilons <- function(group) {
   }
 }
 
+hyperparameter_estimates <- fst::read_fst(args$hyperparameter_estimates)
+
+log_debug('Loading observations from {args$observations}')
 observations <- fst::read_fst(args$observations, columns = c(
   'observation_id',
   'overall_observation_mode',
@@ -120,9 +131,11 @@ observations <- fst::read_fst(args$observations, columns = c(
   'error'
 )) %>%
   filter(
+    assimilate == 1,
     overall_observation_mode %in% args$overall_observation_mode,
   )
 
+log_debug('Simulating epsilons')
 output  <-  observations %>% 
   arrange(time) %>%
   mutate(
@@ -133,6 +146,11 @@ output  <-  observations %>%
     )
   ) %>%
   group_by(fit_group) %>%
-  mutate(epsilon = produce_group_epsilons(.)) %>%
+  mutate(epsilon = produce_group_epsilons(., hyperparameter_estimates)) %>%
   ungroup() %>%
   select(c(observation_id, epsilon))
+
+log_debug('Saving')
+fst::write_fst(output, args$output)
+
+log_debug('Done')

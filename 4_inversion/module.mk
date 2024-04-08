@@ -52,16 +52,59 @@ OSSE_ERRORS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_ERRORS_BA
 OSSE_SAMPLES_BASE = 4_inversion/intermediates/osse-samples
 OSSE_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_SAMPLES_BASE)-$(OSSE_CASE).rds)
 
+# OSSE inversions
+
+$(OSSE_OBSERVATIONS_BASE)-%.fst: \
+	4_inversion/src/osse-observations.R \
+	$(OBSERVATIONS) \
+	$(BASIS_VECTORS) \
+	$(PRIOR) \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	3_sif/intermediates/oco2-hourly-sif.fst \
+	$(H_LNLG) \
+	$(H_IS) \
+	$(H_SIF) \
+	$(OSSE_ERRORS_BASE)-%.fst
+	Rscript $< \
+		--case $* \
+		--observations $(OBSERVATIONS) \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
+		--wombat-v2-alpha $(WOMBAT_V2_ALPHAS) \
+		--errors $(OSSE_ERRORS) \
+		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
+		--control \
+			2_matching/intermediates/runs/base/oco2-hourly.fst \
+			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+			3_sif/intermediates/oco2-hourly-sif.fst \
+		--component-name LNLG IS SIF \
+		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
+		--component-transport-matrix $(H_LNLG) $(H_IS) $(H_SIF) \
+		--output $@
+
+$(OSSE_ERRORS_BASE)-%.fst: \
+	4_inversion/src/osse-errors.R \
+	$(OBSERVATIONS) \
+	$(HYPERPARAMETER_ESTIMATES)
+	Rscript $< \
+		--case $* \
+		--observations $(OBSERVATIONS) \
+		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--output $@
+
+# Real-data inversions
 
 $(SAMPLES_IS): \
 	4_inversion/src/samples.R \
-  	$(OBSERVATIONS) \
-  	$(BASIS_VECTORS) \
-  	$(HYPERPARAMETER_ESTIMATES) \
-  	$(CONSTRAINTS) \
-  	$(PRIOR) \
+	$(OBSERVATIONS) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-    $(H_IS)
+	$(H_IS)
 	Rscript $< \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
@@ -78,13 +121,13 @@ $(SAMPLES_IS): \
 
 $(SAMPLES_LNLG): \
 	4_inversion/src/samples.R \
-  	$(OBSERVATIONS) \
-  	$(BASIS_VECTORS) \
-  	$(HYPERPARAMETER_ESTIMATES) \
-  	$(CONSTRAINTS) \
-  	$(PRIOR) \
+	$(OBSERVATIONS) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
 	2_matching/intermediates/runs/base/oco2-hourly.fst \
-    $(H_LNLG)
+	$(H_LNLG)
 	Rscript $< \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
@@ -101,15 +144,15 @@ $(SAMPLES_LNLG): \
 
 $(SAMPLES_LNLGIS): \
 	4_inversion/src/samples.R \
-  	$(OBSERVATIONS) \
-  	$(BASIS_VECTORS) \
-  	$(HYPERPARAMETER_ESTIMATES) \
-  	$(CONSTRAINTS) \
-  	$(PRIOR) \
+	$(OBSERVATIONS) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
 	2_matching/intermediates/runs/base/oco2-hourly.fst \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-    $(H_LNLG) \
-    $(H_IS)
+	$(H_LNLG) \
+	$(H_IS)
 	Rscript $< \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
@@ -127,13 +170,13 @@ $(SAMPLES_LNLGIS): \
 
 $(SAMPLES_SIF): \
 	4_inversion/src/samples.R \
-		$(OBSERVATIONS) \
-		$(BASIS_VECTORS) \
-		$(HYPERPARAMETER_ESTIMATES) \
-		$(CONSTRAINTS) \
-		$(PRIOR) \
+	$(OBSERVATIONS) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
 	3_sif/intermediates/oco2-hourly-sif.fst \
-		$(H_SIF)
+	$(H_SIF)
 	Rscript $< \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
@@ -150,15 +193,15 @@ $(SAMPLES_SIF): \
 
 $(SAMPLES_LNLGSIF): \
 	4_inversion/src/samples.R \
-		$(OBSERVATIONS) \
-		$(BASIS_VECTORS) \
-		$(HYPERPARAMETER_ESTIMATES) \
-		$(CONSTRAINTS) \
-		$(PRIOR) \
+	$(OBSERVATIONS) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
 	2_matching/intermediates/runs/base/oco2-hourly.fst \
 	3_sif/intermediates/oco2-hourly-sif.fst \
-		$(H_LNLG) \
-		$(H_SIF)
+	$(H_LNLG) \
+	$(H_SIF)
 	Rscript $< \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
@@ -176,15 +219,15 @@ $(SAMPLES_LNLGSIF): \
 
 $(SAMPLES_ISSIF): \
 	4_inversion/src/samples.R \
-		$(OBSERVATIONS) \
-		$(BASIS_VECTORS) \
-		$(HYPERPARAMETER_ESTIMATES) \
-		$(CONSTRAINTS) \
-		$(PRIOR) \
+	$(OBSERVATIONS) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	3_sif/intermediates/oco2-hourly-sif.fst \
-		$(H_IS) \
-		$(H_SIF)
+	$(H_IS) \
+	$(H_SIF)
 	Rscript $< \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
@@ -202,17 +245,17 @@ $(SAMPLES_ISSIF): \
 
 $(SAMPLES_LNLGISSIF): \
 	4_inversion/src/samples.R \
-		$(OBSERVATIONS) \
-		$(BASIS_VECTORS) \
-		$(HYPERPARAMETER_ESTIMATES) \
-		$(CONSTRAINTS) \
-		$(PRIOR) \
+	$(OBSERVATIONS) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
 	2_matching/intermediates/runs/base/oco2-hourly.fst \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	3_sif/intermediates/oco2-hourly-sif.fst \
-		$(H_LNLG) \
-		$(H_IS) \
-		$(H_SIF)
+	$(H_LNLG) \
+	$(H_IS) \
+	$(H_SIF)
 	Rscript $< \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
@@ -230,11 +273,10 @@ $(SAMPLES_LNLGISSIF): \
 		--output $@
 
 # Hyperparameter estimates
-# TODO(jhj): need to fit values for SIF hyperparameters (rather than hard-code them)
 $(HYPERPARAMETER_ESTIMATES): \
 	4_inversion/src/hyperparameter-estimates.R \
-  	$(OBSERVATIONS) \
-  	$(RESIDUAL_1ST_STAGE)
+	$(OBSERVATIONS) \
+	$(RESIDUAL_1ST_STAGE)
 	Rscript $< \
 		--observations $(OBSERVATIONS) \
 		--residuals $(RESIDUAL_1ST_STAGE) \
@@ -243,28 +285,29 @@ $(HYPERPARAMETER_ESTIMATES): \
 ## Inversions (1st stage) to get a residual for hyperparameter estimates
 $(RESIDUAL_1ST_STAGE): \
 	4_inversion/src/residual.R \
-    2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-    2_matching/intermediates/runs/base/oco2-hourly.fst \
-  	$(OBSERVATIONS) \
-  	$(BASIS_VECTORS) \
-  	$(PRIOR) \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	3_sif/intermediates/oco2-hourly-sif.fst \
+	$(OBSERVATIONS) \
+	$(BASIS_VECTORS) \
+	$(PRIOR) \
 	$(CONSTRAINTS) \
-    $(H_IS) \
-    $(H_LNLG)
+	$(H_LNLG) \
+	$(H_IS) \
+	$(H_SIF)
 	Rscript $< \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
 		--constraints $(CONSTRAINTS) \
-		--overall-observation-mode LN LG IS \
+		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
 		--control \
 			2_matching/intermediates/runs/base/oco2-hourly.fst \
 			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-		--component-name LNLG IS \
-		--component-parts "LN|LG" IS \
-		--component-transport-matrix \
-			$(H_LNLG) \
-			$(H_IS) \
+			3_sif/intermediates/oco2-hourly-sif.fst \
+		--component-name LNLG IS SIF \
+		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
+		--component-transport-matrix $(H_LNLG) $(H_IS) $(H_SIF) \
 		--output $@
 
 ## Transport matrix (H)
@@ -403,30 +446,6 @@ $(BASIS_VECTORS): \
 	$(PERTURBATIONS)
 	Rscript $< \
 		--perturbations $(PERTURBATIONS) \
-		--output $@
-
-# NOTE: save v2 alphas to data folder for this step
-$(OSSE_OBSERVATIONS_BASE)-%.fst: \
-	4_inversion/src/osse-observations.R \
-	$(OBSERVATIONS) \
-	$(PERTURBATIONS) \
-	$(OSSE_ERRORS_BASE)-%.fst
-	Rscript $< \
-		--case $* \
-		--observations $(OBSERVATIONS) \
-		--perturbations $(PERTURBATIONS) \
-		--errors $(OSSE_ERRORS) \
-		--start-date $(INVERSION_START_DATE) \
-		--end-date $(INVERSION_END_DATE) \
-		--output $@
-
-$(OSSE_ERRORS_BASE)-%.fst: \
-	4_inversion/src/osse-errors.R \
-	$(OBSERVATIONS)
-	Rscript $< \
-		--case $* \
-		--observations $(OBSERVATIONS) \
-		--overall-observation-mode LN LG IS SIF \
 		--output $@
 
 $(OBSERVATIONS): \

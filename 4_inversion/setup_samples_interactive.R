@@ -7,16 +7,18 @@ Sys.setenv(UTILS_CPP_PARTIAL = 'partials/utils.cpp')
 Sys.setenv(HMC_EXACT_CPP_PARTIAL = 'partials/hmc-exact.cpp')
 
 args <- list(
-  overall_observation_mode = c('LN', 'LG', 'LN_SIF', 'LG_SIF'),
+  overall_observation_mode = c('LN', 'LG', 'IS', 'LN_SIF', 'LG_SIF'),
   control = c(
     '2_matching/intermediates/runs/base/oco2-hourly.fst',
+    '2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst',
     '3_sif/intermediates/oco2-hourly-sif.fst'
   ),
   constraints = '4_inversion/intermediates/constraints.rds',
-  component_name = c('LNLG', 'SIF'),
-  component_parts = c('LN|LG', 'LN_SIF|LG_SIF'),
+  component_name = c('LNLG', 'IS', 'SIF'),
+  component_parts = c('LN|LG', 'IS', 'LN_SIF|LG_SIF'),
   component_transport_matrix = c(
     '4_inversion/intermediates/H-LNLG.mat.lz4',
+    '4_inversion/intermediates/H-IS.mat.lz4',
     '4_inversion/intermediates/H-SIF.mat.lz4'
   ),
   observations = '4_inversion/intermediates/observations.fst',

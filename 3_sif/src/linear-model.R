@@ -34,18 +34,18 @@ inventory <- bind_rows(mclapply(args$input, function(path) {
       assim = as.vector(v('assim')),
       # The below equation for local time assumes model_time is in UTC
       local_hour = hour(model_time + hours(round(model_longitude / 15)))
-    ) %>% 
+    ) %>%
     filter(between(local_hour, 12, 15))
 }, mc.cores = get_cores())) %>% as_tibble()
 
 log_info('Fitting SIF-ASSIM linear models and computing SIF outlier statistics')
-models <- inventory %>% 
+models <- inventory %>%
   mutate(month = month(model_time)) %>%
   nest(.by = c(model_longitude, model_latitude, month)) %>%
-  mutate(count = future_map_int(data, function(data) {
+  mutate(model_count = future_map_int(data, function(data) {
     sum(data$sif > 0.1)
-  }, .options = shared_packages)) %>% 
-  filter(count >= 30) %>%
+  }, .options = shared_packages)) %>%
+  filter(model_count >= 30) %>%
   mutate(model = future_map(data, function(data) {
     fit_linear <- lm(sif ~ assim, data = data)
     fit_poly <- lm(sif ~ poly(assim, degree = 3, raw = TRUE), data = data)
@@ -55,7 +55,8 @@ models <- inventory %>%
       slope = metrics$estimate[2],
       pvalue_slope = metrics$p.value[2],
       pvalue_poly = anova(fit_linear, fit_poly)$Pr[2],
-      correlation = cor(data$assim, data$sif)
+      correlation = cor(data$assim, data$sif),
+      model_error = sqrt(mean(fit_linear$residuals^2))
     )
   }, .options = shared_packages)) %>%
   unnest(cols = c(model)) %>%

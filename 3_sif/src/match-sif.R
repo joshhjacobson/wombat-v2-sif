@@ -101,13 +101,13 @@ linear_models <- fst::read_fst(args$linear_models)
 control_sif <- control_sif %>%
   mutate(
     month = lubridate::month(model_time)
-  ) %>% 
+  ) %>%
   inner_join(
     linear_models,
     by = c('model_longitude', 'model_latitude', 'month')
-  ) %>% 
+  ) %>%
   mutate(
-    outlier = observation_value < lower_fence | observation_value > upper_fence
+    is_outlier = observation_value < lower_fence | observation_value > upper_fence
   ) %>%
   select(
     observation_id,
@@ -118,9 +118,10 @@ control_sif <- control_sif %>%
     model_assim,
     intercept,
     slope,
+    model_error,
     lower_fence,
     upper_fence,
-    outlier
+    is_outlier
   )
 
 log_info('Writing matched SIF observations to {args$output}')

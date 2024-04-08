@@ -51,8 +51,8 @@ obspack_times <- strptime(
 )
 # NOTE(mgnb): add a few days buffer to account for overlap
 obspack_paths <- obspack_paths[
-  obspack_times >= (as.Date(args$start_date) - days(2))
-  & obspack_times <= (as.Date(args$end_date) + days(2))
+  obspack_times >= (as.Date(args$start_date) - days(2)) &
+    obspack_times <= (as.Date(args$end_date) + days(2))
 ]
 obspack_observations <- bind_rows(mclapply(obspack_paths, function(path) {
   log_trace('Opening {path}')
@@ -99,17 +99,25 @@ tccon_soundings <- bind_rows(mclapply(tccon_paths, function(filename) {
 }, mc.cores = get_cores()))
 
 log_info('Loading OCO-2 SIF observations from {args$oco2_observations_sif}')
-control_sif <- fst::read_fst(args$control_sif, columns = c('observation_id', 'outlier'))
+control_sif <- fst::read_fst(args$control_sif, columns = c(
+  'observation_id',
+  'model_error',
+  'is_outlier'
+))
 oco2_observations_sif <- fst::read_fst(args$oco2_observations_sif) %>%
   left_join(control_sif, by = 'observation_id') %>%
   mutate(
     assimilate = case_when(
-      is.na(outlier) ~ 0,
-      outlier == FALSE ~ 1,
-      outlier == TRUE ~ 4
+      is.na(is_outlier) | count < 5 ~ 0,
+      is_outlier == FALSE & count >= 5 ~ 1,
+      is_outlier == TRUE ~ 4
     )
   ) %>%
-  select(-outlier)
+  select(-c(is_outlier, count))
+
+stopifnot(
+  length(intersect(oco2_soundings$sounding_id, oco2_observations_sif$observation_id)) == 0
+)
 
 log_info('Combining observations')
 observations <- bind_rows(
@@ -142,26 +150,26 @@ observations <- bind_rows(
     observation_type = factor(observation_type),
     overall_observation_mode = factor(case_when(
       observation_type == 'oco2'
-        ~ as.character(oco2_operation_mode),
+      ~ as.character(oco2_operation_mode),
       observation_type == 'tccon'
-        ~ 'TC',
+      ~ 'TC',
       TRUE
-        ~ 'IS'
+      ~ 'IS'
     )),
     observation_group = factor(case_when(
       overall_observation_mode == 'IS'
-        ~ stringr::str_split(observation_id, '~', simplify = TRUE)[, 2], # becomes '4_IS' later
+      ~ stringr::str_split(observation_id, '~', simplify = TRUE)[, 2], # becomes '4_IS' later
       overall_observation_mode %in% c('LN', 'LG')
-        ~ '1_LNLG',
+      ~ '1_LNLG',
       overall_observation_mode == 'OG'
-        ~ '2_OG',
+      ~ '2_OG',
       overall_observation_mode %in% c('LN_SIF', 'LG_SIF')
-        ~ '3_SIF',
+      ~ '3_SIF',
       TRUE
-        ~ as.character(overall_observation_mode)
+      ~ as.character(overall_observation_mode)
     )),
     error = sqrt(
-      model_error ^ 2 + measurement_error ^ 2
+      model_error^2 + measurement_error^2
     ),
     type = stringr::str_split(
       as.character(observation_group),
@@ -170,9 +178,9 @@ observations <- bind_rows(
     )[, 3],
     hyperparameter_group = case_when(
       overall_observation_mode == 'IS'
-        ~ stringr::str_split(type, '-', simplify = TRUE)[, 1],
+      ~ stringr::str_split(type, '-', simplify = TRUE)[, 1],
       TRUE
-        ~ as.character(observation_group)
+      ~ as.character(observation_group)
     )
   ) %>%
   select(-type)

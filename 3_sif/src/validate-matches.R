@@ -8,20 +8,20 @@ source("partials/display.R")
 region_sf <- readRDS('5_results/intermediates/region-sf.rds')
 
 oco2_observations <- fst::read_fst("3_sif/intermediates/observations-sif.fst")
-models <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()
 control_sif <- fst::read_fst("3_sif/intermediates/oco2-hourly-sif.fst")
 
-table(control_sif$outlier)
+table(control_sif$is_outlier)
 
 control <- oco2_observations %>% 
-  inner_join(control_sif, by = "observation_id")
-control  %>% as_tibble() %>% head()
-nrow(control)
+  inner_join(control_sif, by = "observation_id") %>%
+  rename(value = value.x, value_control = value.y) %>%
+  mutate(month = lubridate::month(time))
+control %>% glimpse()
 
 
 # How do the SIF values compare by month?
 p <- control %>% 
-  ggplot(aes(x = value.y, y = value.x)) +
+  ggplot(aes(x = value_control, y = value)) +
   geom_hex() +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   scale_fill_continuous_sequential(
@@ -40,11 +40,11 @@ ggsave_base(
 
 # Where and when are the outliers?
 p <- control %>% 
-  filter(outlier) %>% 
+  filter(is_outlier) %>% 
   ggplot(data = .) +
     geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
     geom_point(
-      aes(x = longitude.x, y = latitude.x),
+      aes(x = longitude, y = latitude),
       color = "red",
       shape = 1,
       size = 0.25,
@@ -61,27 +61,31 @@ ggsave_base(
 )
 
 
+# TODO: would be helpful to add the inventory data used in the fit to the
+# location scatter plots again (not just the matched control values)
+
 # How do the observations compare to the inventory relationship for 
 # a sample of pixel-month cases?
 plot_scatter_location <- function(nested_data, i, name) {
   row <- nested_data[i, ] 
-  match_data <- row %>% select(match_data) %>% unnest(cols = c(match_data))
-  fit_data <- row %>% select(fit_data) %>% unnest(cols = c(fit_data))
+  # match_data <- row %>% select(match_data) %>% unnest(cols = c(match_data))
+  # fit_data <- row %>% select(fit_data) %>% unnest(cols = c(fit_data))
+  data <- row %>% select(data) %>% unnest(cols = c(data))
 
-  if(length(unique(match_data$intercept)) != 1) {
+  if(length(unique(data$intercept)) != 1) {
     print("Intercept is not unique")
   }
-  if(length(unique(match_data$slope)) != 1) {
+  if(length(unique(data$slope)) != 1) {
     print("Slope is not unique")
   }
-  intercept <- match_data$intercept[1]
-  slope <- match_data$slope[1]
+  intercept <- data$intercept[1]
+  slope <- data$slope[1]
 
   p_location <- ggplot() +
     geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
     geom_point(
       data = row,
-      aes(x = longitude, y = latitude),
+      aes(x = model_longitude, y = model_latitude),
       color = "red",
       size = 3
     ) +
@@ -95,8 +99,8 @@ plot_scatter_location <- function(nested_data, i, name) {
   )
   p_data <- ggplot() +
     geom_hline(
-      data = match_data,
-      aes(yintercept = value.x, color = outlier),
+      data = data,
+      aes(yintercept = value, color = is_outlier),
       alpha = 0.4
     ) +
     scale_color_manual(
@@ -110,15 +114,15 @@ plot_scatter_location <- function(nested_data, i, name) {
         default.unit = "cm"
       )
     ) +
+    # geom_point(
+    #   data = data,
+    #   aes(x = assim, y = value_control, shape = "Full Inventory"),
+    #   color = "grey",
+    #   alpha = 0.4,
+    # ) +
     geom_point(
-      data = fit_data,
-      aes(x = assim, y = sif, shape = "Full Inventory"),
-      color = "grey",
-      alpha = 0.4,
-    ) +
-    geom_point(
-      data = match_data,
-      aes(x = assim_value, y = value.y, shape = "Matched Control")
+      data = data,
+      aes(x = model_assim, y = value_control, shape = "Matched Control")
     ) +
     scale_shape_manual(
       "SiB4",
@@ -145,7 +149,7 @@ plot_scatter_location <- function(nested_data, i, name) {
   fname <- paste0(
     "3_sif/figures/matching/",
     name,
-    "/scatter_overlay_",
+    "/scatter_overlay_update_",
     i
   )
   ggsave(
@@ -157,19 +161,21 @@ plot_scatter_location <- function(nested_data, i, name) {
 }
 
 set.seed(42)
-control_part <- control %>% 
-  nest(.by = c("longitude.y", "latitude.y", "month")) %>%
-  sample_n(30) %>%
-  rename(
-    longitude = longitude.y,
-    latitude = latitude.y,
-    match_data = data
-  ) %>%
-  left_join(models, by = c("longitude", "latitude", "month")) %>%
-  rename(
-    fit_data = data
-  )
+control_nested <- control %>% 
+  nest(.by = c("model_longitude", "model_latitude", "month")) %>%
+  sample_n(30)
+  
+  # %>%
+  # rename(
+  #   longitude = longitude.y,
+  #   latitude = latitude.y,
+  #   match_data = data
+  # ) %>%
+  # left_join(models, by = c("longitude", "latitude", "month")) %>%
+  # rename(
+  #   fit_data = data
+  # )
 
-for (i in seq_len(nrow(control_part))) {
-  plot_scatter_location(control_part, i, "no_filter")
+for (i in seq_len(nrow(control_nested))) {
+  plot_scatter_location(control_nested, i, "no_filter")
 }

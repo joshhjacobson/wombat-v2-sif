@@ -50,8 +50,23 @@ Findings:
 
 
 
-- Full first-stage fits
-- Rerun inversion
+-[x] Full first-stage fits
+-[x] Rerun inversion
 - Implement OSSE
 - Unfix SIF
 - Include SIF outliers?
+
+
+Hard-coded parameters for SIF:
+# data.frame(
+#   hyperparameter_group = '3_SIF',
+#   rho = 0.8,
+#   ell = 0.75,
+#   gamma = 0.6,
+#   ell_unit = 'mins'
+# )
+
+LNLGIS hyperparameters:
+
+
+LNLGISSIF hyperparameters:

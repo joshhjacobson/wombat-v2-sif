@@ -110,16 +110,16 @@ F_constraint <- rbind(
 g_constraint <- c(constraints$g_sign, constraints$g_residual)
 
 log_debug('Performing inversion')
-offset_parts <- lapply(part_indices, function(i) {
+offset_parts <- lapply(part_indices, function(part_i) {
   observations %>%
     filter(
-      component_name == args$component_name[i]
+      component_name == args$component_name[part_i]
     ) %>%
     pull(offset)
 })
-Sigma_epsilon_parts <- lapply(part_indices, function(i) {
-  log_trace('Construction Sigma_epsilon for {args$component_name[part_i]}')
-  name_i <- args$component_name[i]
+Sigma_epsilon_parts <- lapply(part_indices, function(part_i) {
+  log_trace('Constructing Sigma_epsilon for {args$component_name[part_i]}')
+  name_i <- args$component_name[part_i]
   observations_i <- observations %>%
     filter(component_name == name_i)
   FastDiagonal(x = observations_i$error ^ 2)
@@ -159,7 +159,7 @@ alpha_samples <- sampleHmcConstrained(
   pi / 2,
   nSamples = n_samples,
   debug = TRUE,
-  bounceLimit = 5000
+  bounceLimit = 10000
 )
 
 alpha_hat <- colMeans(alpha_samples)

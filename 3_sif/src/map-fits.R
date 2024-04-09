@@ -6,8 +6,8 @@ library(patchwork)
 
 source("partials/display.R")
 region_sf <- readRDS('5_results/intermediates/region-sf.rds')
-models <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()
-# models <- fst::read_fst('3_sif/intermediates/model-sif-assim.fst') %>% tidyr::as_tibble()
+# models <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()
+models <- fst::read_fst('3_sif/intermediates/model-sif-assim.fst') %>% tidyr::as_tibble()
 
 
 # p <- ggplot() +
@@ -92,7 +92,7 @@ models <- readRDS('3_sif/intermediates/models-data.rds') %>% tidyr::as_tibble()
 
 
 p <- ggplot() +
-  geom_raster(data = models, aes(x = longitude, y = latitude, fill = count)) +
+  geom_raster(data = models, aes(x = model_longitude, y = model_latitude, fill = model_count)) +
   geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
   coord_sf(
     crs = sf::st_crs(4326),
@@ -114,7 +114,7 @@ ggsave_base(
 
 
 p <- ggplot() +
-  geom_raster(data = models, aes(x = longitude, y = latitude, fill = intercept)) +
+  geom_raster(data = models, aes(x = model_longitude, y = model_latitude, fill = intercept)) +
   geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
   coord_sf(
     crs = sf::st_crs(4326),
@@ -138,7 +138,7 @@ ggsave_base(
 summary(models$slope)
 q95 <- quantile(models$slope, probs = 0.95)
 p <- ggplot() +
-  geom_raster(data = models, aes(x = longitude, y = latitude, fill = slope)) +
+  geom_raster(data = models, aes(x = model_longitude, y = model_latitude, fill = slope)) +
   geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
   coord_sf(
     crs = sf::st_crs(4326),
@@ -160,6 +160,27 @@ ggsave_base(
     height = 12
 )
 
+p <- ggplot() +
+  geom_raster(data = models, aes(x = model_longitude, y = model_latitude, fill = model_error)) +
+  geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
+  coord_sf(
+    crs = sf::st_crs(4326),
+    default_crs = sf::st_crs(4326)
+  ) +
+  scale_fill_continuous_sequential(
+    name = "Model Error",
+    palette = "BluYl",
+    na.value = "red"
+  ) +
+  labs(x = NULL, y = NULL) +
+  facet_wrap(~month, ncol = 3)
+p
+ggsave_base(
+    "3_sif/figures/modelling/model_error.png",
+    p,
+    width = 18,
+    height = 12
+)
 
 
 plot_scatter_location <- function(nested_data, i, name) {

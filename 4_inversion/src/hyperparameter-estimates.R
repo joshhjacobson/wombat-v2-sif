@@ -127,7 +127,7 @@ fits <- residuals %>%
   group_by(fit_group) %>%
   group_modify(~ {
     log_trace('Fitting {.y$fit_group}')
-    is_oco2 <- .y$fit_group %in% c('1_LNLG', '2_OG')
+    is_oco2 <- .y$fit_group %in% c('1_LNLG', '2_OG', '3_SIF')
 
     unit <- if (is_oco2) 'mins' else 'days'
 
@@ -202,19 +202,11 @@ fits <- residuals %>%
   ungroup() %>%
   select(hyperparameter_group, rho, ell, gamma, ell_unit)
 
-# TODO(jhj): hard-coding SIF hyperparameter group for now; need to update
 fits <- bind_rows(
   fits,
   fits %>%
     filter(hyperparameter_group == 'surface') %>%
-    mutate(hyperparameter_group = 'lauder'),
-  data.frame(
-    hyperparameter_group = '3_SIF',
-    rho = 0.8,
-    ell = 0.75,
-    gamma = 0.6,
-    ell_unit = 'mins'
-  )
+    mutate(hyperparameter_group = 'lauder')
 )
 
 log_debug('Saving to {args$output}')

@@ -112,13 +112,13 @@ p_scatter <- ggplot(output) +
     y = 'Residual SIF',
   )
 
-ggsave_base(
-  '6_results_sif/figures/sif-fitted-vs-residual.png',
-  p_scatter,
-  bg = 'white',
-  width = 12,
-  height = 12
-)
+# ggsave_base(
+#   '6_results_sif/figures/sif-fitted-vs-residual.png',
+#   p_scatter,
+#   bg = 'white',
+#   width = 12,
+#   height = 12
+# )
 
 p_hist <- ggplot(output) +
   geom_histogram(aes(x = residual), binwidth = 0.1) +

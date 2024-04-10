@@ -17,7 +17,7 @@ library(patchwork)
 
 args <- list(
   samples = '4_inversion/intermediates/samples-LNLGISSIF.rds',
-  output_base = '6_results_sif/figures/traceplots-LNLGISSIF'
+  output_base = '6_results_sif/figures/traceplots/traceplots-LNLGISSIF'
 )
 N_MCMC_WARM_UP <- 100
 N_MCMC_SAMPLES <- 200

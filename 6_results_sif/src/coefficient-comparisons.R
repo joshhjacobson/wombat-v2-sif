@@ -69,19 +69,19 @@ p1 <- ggplot(data = df_samples %>% filter(type %in% c('LNLGIS', 'LNLGISSIF'))) +
   ) +
   theme(axis.text.y = element_text(size = 6))
 
-p2 <- ggplot(data = df_net) +
-  geom_vline(xintercept = 0, linetype = 'dashed', colour = 'grey50') +
-  geom_point(aes(x = net_bio, y = basis_vector_str, colour = type, shape = type)) +
-  scale_y_discrete(limits = rev(levels(factor(df_net$basis_vector_str)))) +
-  scale_colour_brewer(name = 'Obs. Groups', palette = 'Dark2') +
-  scale_shape_manual(name = 'Obs. Groups', values = c(0, 1, 2, 5, 3, 4)) +
-  labs(
-    x = 'Sum of coefficient posterior means (GPP + Respiration)',
-    y = NULL
-  ) +
-  theme(axis.text.y = element_text(size = 6))
+# p2 <- ggplot(data = df_net) +
+#   geom_vline(xintercept = 0, linetype = 'dashed', colour = 'grey50') +
+#   geom_point(aes(x = net_bio, y = basis_vector_str, colour = type, shape = type)) +
+#   scale_y_discrete(limits = rev(levels(factor(df_net$basis_vector_str)))) +
+#   scale_colour_brewer(name = 'Obs. Groups', palette = 'Dark2') +
+#   scale_shape_manual(name = 'Obs. Groups', values = c(0, 1, 2, 5, 3, 4)) +
+#   labs(
+#     x = 'Sum of coefficient posterior means (GPP + Respiration)',
+#     y = NULL
+#   ) +
+#   theme(axis.text.y = element_text(size = 6))
 
-p <- p1 / p2
+# p <- p1 / p2
 
 # ggsave_base(args$output, p, width = 20, height = 100)
-ggsave_base(args$output, p, width = 20, height = 150, limitsize = FALSE)
+ggsave_base(args$output, p1, width = 20, height = 100, limitsize = FALSE)

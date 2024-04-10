@@ -23,7 +23,7 @@ args$samples_pair <- c(
   '4_inversion/intermediates/samples-LNLGIS.rds',
   '4_inversion/intermediates/samples-LNLGISSIF.rds'
 )
-args$year <- 2020
+args$year <- 2016
 # args$region_sf <- '5_results/intermediates/region-sf.rds'
 args$output_base <- '6_results_sif/figures'
 

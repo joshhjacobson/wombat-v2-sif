@@ -24,7 +24,7 @@ args$region <- 'global'
 args$output_base <- '6_results_sif/figures'
 
 observation_groups <- stringr::str_extract(args$samples, "(?<=-).*?(?=\\.rds)")
-output_path <- sprintf('%s/%s-fluxes-yearly-%s.pdf', args$output_base, args$region, observation_groups)
+output_path <- sprintf('%s/fluxes-%s-yearly-%s.pdf', args$output_base, args$region, observation_groups)
 
 with_nc_file(list(fn = args$area_1x1), {
   longitude_area <- as.vector(ncdf4::ncvar_get(fn, 'lon'))

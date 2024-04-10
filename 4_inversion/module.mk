@@ -45,10 +45,8 @@ SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 
 OSSE_BASE_CASES = zero wombatv2
 OSSE_CASES = zero zero-SIF wombatv2 wombatv2-SIF
-OSSE_OBSERVATIONS_BASE = 4_inversion/intermediates/osse-model
-OSSE_OBSERVATIONS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_CASES),$(OSSE_OBSERVATIONS_BASE)-$(OSSE_BASE_CASE).fst)
-OSSE_ERRORS_BASE = 4_inversion/intermediates/osse-errors
-OSSE_ERRORS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_ERRORS_BASE)-$(OSSE_BASE_CASE).fst)
+OSSE_OBSERVATIONS_BASE = 4_inversion/intermediates/osse-observations
+OSSE_OBSERVATIONS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_OBSERVATIONS_BASE)-$(OSSE_BASE_CASE).fst)
 OSSE_SAMPLES_BASE = 4_inversion/intermediates/osse-samples
 OSSE_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_SAMPLES_BASE)-$(OSSE_CASE).rds)
 
@@ -58,21 +56,21 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 	4_inversion/src/osse-observations.R \
 	$(OBSERVATIONS) \
 	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
 	$(PRIOR) \
 	2_matching/intermediates/runs/base/oco2-hourly.fst \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	3_sif/intermediates/oco2-hourly-sif.fst \
 	$(H_LNLG) \
 	$(H_IS) \
-	$(H_SIF) \
-	$(OSSE_ERRORS_BASE)-%.fst
+	$(H_SIF)
 	Rscript $< \
 		--case $* \
-		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
 		--prior $(PRIOR) \
 		--wombat-v2-alpha $(WOMBAT_V2_ALPHAS) \
-		--errors $(OSSE_ERRORS) \
+		--observations $(OBSERVATIONS) \
 		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
 		--control \
 			2_matching/intermediates/runs/base/oco2-hourly.fst \
@@ -80,18 +78,10 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 			3_sif/intermediates/oco2-hourly-sif.fst \
 		--component-name LNLG IS SIF \
 		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
-		--component-transport-matrix $(H_LNLG) $(H_IS) $(H_SIF) \
-		--output $@
-
-$(OSSE_ERRORS_BASE)-%.fst: \
-	4_inversion/src/osse-errors.R \
-	$(OBSERVATIONS) \
-	$(HYPERPARAMETER_ESTIMATES)
-	Rscript $< \
-		--case $* \
-		--observations $(OBSERVATIONS) \
-		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
-		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_IS) \
+			$(H_SIF) \
 		--output $@
 
 # Real-data inversions
@@ -116,7 +106,8 @@ $(SAMPLES_IS): \
 		    2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 		--component-name IS \
 		--component-parts IS \
-		--component-transport-matrix $(H_IS) \
+		--component-transport-matrix \
+			$(H_IS) \
 		--output $@
 
 $(SAMPLES_LNLG): \
@@ -139,7 +130,8 @@ $(SAMPLES_LNLG): \
 			2_matching/intermediates/runs/base/oco2-hourly.fst \
 		--component-name LNLG \
 		--component-parts "LN|LG" \
-		--component-transport-matrix $(H_LNLG) \
+		--component-transport-matrix \
+			$(H_LNLG) \
 		--output $@
 
 $(SAMPLES_LNLGIS): \
@@ -165,7 +157,9 @@ $(SAMPLES_LNLGIS): \
 		    2_matching/intermediates/runs/base/oco2-hourly.fst \
 		--component-name LNLG IS \
 		--component-parts "LN|LG" IS \
-		--component-transport-matrix $(H_LNLG) $(H_IS) \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_IS) \
 		--output $@
 
 $(SAMPLES_SIF): \
@@ -188,7 +182,8 @@ $(SAMPLES_SIF): \
 			3_sif/intermediates/oco2-hourly-sif.fst \
 		--component-name SIF \
 		--component-parts "LN_SIF|LG_SIF" \
-		--component-transport-matrix $(H_SIF) \
+		--component-transport-matrix \
+			$(H_SIF) \
 		--output $@
 
 $(SAMPLES_LNLGSIF): \
@@ -214,7 +209,9 @@ $(SAMPLES_LNLGSIF): \
 			3_sif/intermediates/oco2-hourly-sif.fst \
 		--component-name LNLG SIF \
 		--component-parts "LN|LG" "LN_SIF|LG_SIF" \
-		--component-transport-matrix $(H_LNLG) $(H_SIF) \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_SIF) \
 		--output $@
 
 $(SAMPLES_ISSIF): \
@@ -240,7 +237,9 @@ $(SAMPLES_ISSIF): \
 			3_sif/intermediates/oco2-hourly-sif.fst \
 		--component-name IS SIF \
 		--component-parts IS "LN_SIF|LG_SIF" \
-		--component-transport-matrix $(H_IS) $(H_SIF) \
+		--component-transport-matrix \
+			$(H_IS) \
+			$(H_SIF) \
 		--output $@
 
 $(SAMPLES_LNLGISSIF): \
@@ -269,7 +268,10 @@ $(SAMPLES_LNLGISSIF): \
 			3_sif/intermediates/oco2-hourly-sif.fst \
 		--component-name LNLG IS SIF \
 		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
-		--component-transport-matrix $(H_LNLG) $(H_IS) $(H_SIF) \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_IS) \
+			$(H_SIF) \
 		--output $@
 
 # Hyperparameter estimates

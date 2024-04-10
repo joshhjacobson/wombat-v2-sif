@@ -46,6 +46,8 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-ISSIF.rds --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-LNLGISSIF.rds --dry-run
 
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-observations-zero.fst --dry-run
+
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 5_results/figures/global-bottom-up.pdf --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 5_results/figures/flux-components-global.pdf --dry-run
 

@@ -25,7 +25,7 @@ args <- list(
   hyperparameter_estimates = '4_inversion/intermediates/hyperparameter-estimates.fst',
   basis_vectors = '4_inversion/intermediates/basis-vectors.fst',
   prior = '4_inversion/intermediates/prior.rds',
-  output = '4_inversion/intermediates/samples-LNLGSIF.rds'
+  output = '4_inversion/intermediates/samples-LNLGISSIF.rds'
 )
 
 # Then run each line in the file samples.R except for the ones that set up the args 

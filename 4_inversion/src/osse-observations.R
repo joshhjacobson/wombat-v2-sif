@@ -28,7 +28,7 @@ parser$add_argument('--case')
 parser$add_argument('--basis-vectors')
 parser$add_argument('--hyperparameter-estimates')
 parser$add_argument('--prior')
-parser$add_argument('--wombat-v2-alphas')
+parser$add_argument('--wombat-v2-alpha')
 parser$add_argument('--observations')
 parser$add_argument('--overall-observation-mode', nargs = '+')
 parser$add_argument('--control', nargs = '+')
@@ -37,6 +37,8 @@ parser$add_argument('--component-parts', nargs = '+')
 parser$add_argument('--component-transport-matrix', nargs = '+')
 parser$add_argument('--output')
 args <- parser$parse_args()
+
+stopifnot(args$case %in% c('zero', 'wombatv2'))
 
 SEED <- 20240403 + as.integer(
   factor(
@@ -198,6 +200,8 @@ error_parts <- lapply(hyperparameter_group_indices, function(i) {
 })
 
 osse_errors <- bind_rows(error_parts)
+stopifnot(!anyNA(osse_errors$epsilon))
+stopifnot(nrow(osse_errors) == nrow(observations))
 
 osse_observations <- observations %>%
   left_join(
@@ -208,11 +212,9 @@ osse_observations <- observations %>%
     value = value_control + epsilon
   )
 
-if (args$case == 'zero') {
-  log_debug('No peturbation for OSSE case `{args$case}`')
-} else if (args$case == 'wombat-v2') {
+if (args$case == 'wombatv2') {
   log_debug('Computing peturbation for OSSE case `{args$case}`')
-  alpha <- fst::read_fst(args$wombat_v2_alphas)
+  alpha <- fst::read_fst(args$wombat_v2_alpha)
   basis_vectors <- fst::read_fst(args$basis_vectors)
   prior <- readRDS(args$prior)
 
@@ -222,14 +224,13 @@ if (args$case == 'zero') {
     basis_vectors,
     !(inventory == 'bio_resp_tot' & component %in% c('intercept', 'trend'))
   )
-  stopifnot(length(alpha) == length(alpha_to_include))
+  stopifnot(nrow(alpha) == sum(alpha_to_include))
 
   log_trace('Loading transport matrices')
-  H_component_parts <- lapply(part_indices, function(part_i) {
-    log_trace('Loading {args$component_transport_matrix[part_i]}')
-    name_i <- args$component_name[part_i]
+  H_parts <- lapply(part_indices, function(i) {
+    log_trace('Loading {args$component_transport_matrix[i]}')
     observations_i <- observations %>%
-      filter(component_name == name_i)
+      filter(component_name == args$component_name[i])
     n_observations_i <- observations_i %>%
       nrow() %>%
       as.double()
@@ -237,7 +238,7 @@ if (args$case == 'zero') {
     n_i <- n_observations_i * n_all_alpha
     log_trace('Total size to load is {n_i} = {n_observations_i} x {n_all_alpha}')
 
-    fn <- pipe(sprintf('lz4 -v %s -', args$component_transport_matrix[part_i]), 'rb')
+    fn <- pipe(sprintf('lz4 -v %s -', args$component_transport_matrix[i]), 'rb')
     H_vec <- readBin(fn, 'double', n_i)
     close(fn)
     output <- matrix(H_vec, nrow = n_observations_i)
@@ -253,11 +254,11 @@ if (args$case == 'zero') {
         component_name == args$component_name[i]
       ) %>%
       mutate(
-        value = value + as.vector(H_parts[[i]] %*% alpha)
+        value = value + as.vector(H_parts[[i]] %*% alpha$value)
       )
   }))
 } else {
-  stop('OSSE case {args$case} not supported')
+  log_debug('No peturbation for OSSE case `{args$case}`')
 }
 
 log_debug('Saving to {args$output}')

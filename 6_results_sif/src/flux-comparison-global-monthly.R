@@ -27,7 +27,7 @@ args$samples_pair <- c(
 args$region <- 'global'
 args$output_base <- '6_results_sif/figures'
 
-output_path <- sprintf('%s/fluxes-monthly-sif-%s.pdf', args$output_base, args$region)
+output_path <- sprintf('%s/flux-comparison-%s-monthly.pdf', args$output_base, args$region)
 
 with_nc_file(list(fn = args$area_1x1), {
   longitude_area <- as.vector(ncdf4::ncvar_get(fn, 'lon'))

@@ -251,6 +251,12 @@ if (args$base_case == 'ALPHAV2') {
   log_debug('No peturbation for OSSE base case `{args$base_case}`')
 }
 
+osse_observations <- osse_observations %>%
+  select(-c(
+    component_name,
+    value_control
+  ))
+
 log_debug('Saving to {args$output}')
 fst::write_fst(osse_observations, args$output)
 

@@ -26,6 +26,7 @@ args <- list(
   basis_vectors = '4_inversion/intermediates/basis-vectors.fst',
   prior = '4_inversion/intermediates/prior.rds',
   wombat_v2_alpha = 'data/wombat-v2-alpha-LGLGIS.fst',
+  base_case = 'ALPHA0',
   output = '4_inversion/intermediates/samples-LNLGISSIF.rds'
 )
 

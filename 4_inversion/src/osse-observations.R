@@ -24,7 +24,7 @@ sample_normal_precision <- function(Q) {
 }
 
 parser <- ArgumentParser()
-parser$add_argument('--case')
+parser$add_argument('--base-case')
 parser$add_argument('--basis-vectors')
 parser$add_argument('--hyperparameter-estimates')
 parser$add_argument('--prior')
@@ -38,12 +38,12 @@ parser$add_argument('--component-transport-matrix', nargs = '+')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
-stopifnot(args$case %in% c('zero', 'wombatv2'))
+stopifnot(args$base_case %in% c('ALPHA0', 'ALPHAV2'))
 
 SEED <- 20240403 + as.integer(
   factor(
-    c('zero' = 'zero', 'wombatv2' = 'wombatv2')[args$case],
-    levels = c('zero', 'wombatv2')
+    c('ALPHA0' = 'ALPHA0', 'ALPHAV2' = 'ALPHAV2')[args$base_case],
+    levels = c('ALPHA0', 'ALPHAV2')
   )
 )
 set.seed(SEED)
@@ -87,16 +87,6 @@ stopifnot(all(
 stopifnot(nlevels(observations$observation_id) == nrow(observations))
 stopifnot(!anyNA(observations$error))
 
-basis_vectors <- read_fst(args$basis_vectors)
-prior <- readRDS(args$prior)
-
-n_all_alpha <- nrow(basis_vectors)
-# NOTE(mgnb): values of alpha fixed to zero are given infinite precision
-alpha_to_include <- is.finite(diag(prior$precision)) & with(
-  basis_vectors,
-  !(inventory == 'bio_resp_tot' & component %in% c('intercept', 'trend'))
-)
-
 part_indices <- seq_along(args$component_name)
 observations$component_name <- ''
 for (part_i in part_indices) {
@@ -135,7 +125,7 @@ observation_parts <- lapply(hyperparameter_group_indices, function(i) {
 hyperparameter_estimates <- read_fst(args$hyperparameter_estimates)
 
 log_debug('Simulating observation errors')
-error_parts <- lapply(hyperparameter_group_indices, function(i) {
+epsilon_parts <- lapply(hyperparameter_group_indices, function(i) {
   observations_i <- observation_parts[[i]]
 
   is_precision <- NA
@@ -188,32 +178,32 @@ error_parts <- lapply(hyperparameter_group_indices, function(i) {
 
   if (!is_precision) {
     # NOTE(mgnb): implicitly, we have a single WoodburyMatrix
-    epsilons <- rwnorm(n = 1, covariance = Sigma_epsilon_parts[[1]])
+    epsilon <- rwnorm(n = 1, covariance = Sigma_epsilon_parts[[1]])
   } else {
     # NOTE(mgnb): implicitly, we have a list of TridiagonalMatrix's
-    epsilons <- sample_normal_precision(bdiag_tridiagonal(Sigma_epsilon_parts))
+    epsilon <- sample_normal_precision(bdiag_tridiagonal(Sigma_epsilon_parts))
   }
-  stopifnot(length(epsilons) == nrow(observations_i))
+  stopifnot(length(epsilon) == nrow(observations_i))
   observations_i %>%
-    mutate(epsilon = epsilons) %>%
-    select(c(observation_id, epsilon))
+    select(observation_id) %>%
+    mutate(epsilon = epsilon)
 })
 
-osse_errors <- bind_rows(error_parts)
-stopifnot(!anyNA(osse_errors$epsilon))
-stopifnot(nrow(osse_errors) == nrow(observations))
+osse_epsilon <- bind_rows(epsilon_parts)
+stopifnot(!anyNA(osse_epsilon$epsilon))
+stopifnot(nrow(osse_epsilon) == nrow(observations))
 
 osse_observations <- observations %>%
   left_join(
-    osse_errors,
+    osse_epsilon,
     by = 'observation_id'
   ) %>%
   mutate(
     value = value_control + epsilon
   )
 
-if (args$case == 'wombatv2') {
-  log_debug('Computing peturbation for OSSE case `{args$case}`')
+if (args$base_case == 'ALPHAV2') {
+  log_debug('Computing peturbation for OSSE base case `{args$base_case}`')
   alpha <- fst::read_fst(args$wombat_v2_alpha)
   basis_vectors <- fst::read_fst(args$basis_vectors)
   prior <- readRDS(args$prior)
@@ -258,7 +248,7 @@ if (args$case == 'wombatv2') {
       )
   }))
 } else {
-  log_debug('No peturbation for OSSE case `{args$case}`')
+  log_debug('No peturbation for OSSE base case `{args$base_case}`')
 }
 
 log_debug('Saving to {args$output}')

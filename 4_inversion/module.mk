@@ -43,14 +43,74 @@ SAMPLES_LNLGSIF = 4_inversion/intermediates/samples-LNLGSIF.rds
 SAMPLES_ISSIF = 4_inversion/intermediates/samples-ISSIF.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 
-OSSE_BASE_CASES = zero wombatv2
-OSSE_CASES = zero zero-SIF wombatv2 wombatv2-SIF
+OSSE_BASE_CASES = ALPHA0 ALPHAV2
+OSSE_CASES = ALPHA0-WSIF ALPHA0-WOSIF ALPHAV2-WSIF ALPHAV2-WOSIF
 OSSE_OBSERVATIONS_BASE = 4_inversion/intermediates/osse-observations
 OSSE_OBSERVATIONS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_OBSERVATIONS_BASE)-$(OSSE_BASE_CASE).fst)
 OSSE_SAMPLES_BASE = 4_inversion/intermediates/osse-samples
 OSSE_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_SAMPLES_BASE)-$(OSSE_CASE).rds)
 
 # OSSE inversions
+
+$(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
+	4_inversion/src/samples.R \
+	$(OSSE_OBSERVATIONS_BASE)-%.fst \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	$(H_LNLG) \
+	$(H_IS)
+	Rscript $< \
+		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
+		--constraints $(CONSTRAINTS) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--overall-observation-mode LN LG IS \
+		--control \
+			2_matching/intermediates/runs/base/oco2-hourly.fst \
+			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+		--component-name LNLG IS \
+		--component-parts "LN|LG" IS \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_IS) \
+		--output $@
+
+$(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
+	4_inversion/src/samples.R \
+	$(OSSE_OBSERVATIONS_BASE)-%.fst \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	3_sif/intermediates/oco2-hourly-sif.fst \
+	$(H_LNLG) \
+	$(H_IS) \
+	$(H_SIF)
+	Rscript $< \
+		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
+		--constraints $(CONSTRAINTS) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
+		--control \
+			2_matching/intermediates/runs/base/oco2-hourly.fst \
+			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+			3_sif/intermediates/oco2-hourly-sif.fst \
+		--component-name LNLG IS SIF \
+		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_IS) \
+			$(H_SIF) \
+		--output $@
 
 $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 	4_inversion/src/osse-observations.R \
@@ -65,11 +125,11 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 	$(H_IS) \
 	$(H_SIF)
 	Rscript $< \
-		--case $* \
+		--base-case $* \
 		--basis-vectors $(BASIS_VECTORS) \
 		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
 		--prior $(PRIOR) \
-		--wombat-v2-alpha $(WOMBAT_V2_ALPHAS) \
+		--wombat-v2-alpha $(WOMBAT_V2_ALPHA) \
 		--observations $(OBSERVATIONS) \
 		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
 		--control \

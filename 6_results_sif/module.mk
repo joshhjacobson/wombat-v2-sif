@@ -11,6 +11,7 @@ CLIMATOLOGY_BY_REGION_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/climatology-by-re
 TREND_GRID_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/trend-grid.fst
 SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
 
+OSSE_RESULTS_TABLE = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-results-table.txt
 
 
 6_RESULTS_SIF_TARGETS += \
@@ -51,6 +52,16 @@ SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
 
 # $(6_RESULTS_SIF_FIGURES_DIR)/observation-map.pdf \
 # $(6_RESULTS_SIF_FIGURES_DIR)/traceplots.pdf
+
+
+$(OSSE_RESULTS_TABLE): \
+	$(6_RESULTS_SIF_SRC_DIR)/osse-results-table.R \
+	4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WSIF.rds \
+	4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WOSIF.rds
+	Rscript $< \
+		--flux-samples-alphav2-wsif 4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WSIF.rds \
+		--flux-samples-alphav2-wosif 4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WOSIF.rds \
+		--output $@
 
 ## Figures
 

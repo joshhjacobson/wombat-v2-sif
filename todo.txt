@@ -71,5 +71,5 @@ Original hard-coded parameters for SIF:
 OSSE Todo:
 -[] Fix ALPHA0 case?
   - Very large precision parameters for trend/seasonality component; numerical instability with essentially zero variance?
--[] General plots for OSSE samples (with comparisions)
--[] RMSE and CRPS (one table each): OSSE cases in rows and fluxes in columns (total, gpp, resp, etc)
+-[x] General plots for OSSE samples (with comparisions)
+-[x] RMSE and CRPS (one table each): OSSE cases in rows and fluxes in columns (total, gpp, resp, etc)

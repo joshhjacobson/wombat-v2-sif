@@ -95,4 +95,4 @@ flux_aggregates_samples <- bind_rows(
     ))
   )
 
-fst::write_fst(flux_aggregates_samples, args$output)
+saveRDS(flux_aggregates_samples, args$output)

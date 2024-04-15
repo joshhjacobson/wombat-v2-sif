@@ -1,3 +1,11 @@
+Overall todo:
+-[x] Full first-stage fits
+-[x] Rerun inversion
+-[x] Implement OSSE
+-[] Unfix SIF
+-[] Include SIF outliers?
+
+
 Plots to make for each set of samples
 
 [x]Trace plots
@@ -22,10 +30,10 @@ Findings:
 - there is some difference between estimates for, say, LNLGIS and LNLGISSIF, but estimates are very similar for GPP intercept and trend
 
 
-[] SIF residuals
+[x] SIF residuals
 
 
-[] Time series
+[x] Time series
 - global total flux per year
 - global total flux per month
 - same as above, but for GPP, respiration, and NEE
@@ -50,14 +58,7 @@ Findings:
 
 
 
--[x] Full first-stage fits
--[x] Rerun inversion
-- Implement OSSE
-- Unfix SIF
-- Include SIF outliers?
-
-
-Hard-coded parameters for SIF:
+Original hard-coded parameters for SIF:
 # data.frame(
 #   hyperparameter_group = '3_SIF',
 #   rho = 0.8,
@@ -66,7 +67,9 @@ Hard-coded parameters for SIF:
 #   ell_unit = 'mins'
 # )
 
-LNLGIS hyperparameters:
 
-
-LNLGISSIF hyperparameters:
+OSSE Todo:
+-[] Fix ALPHA0 case?
+  - Very large precision parameters for trend/seasonality component; numerical instability with essentially zero variance?
+-[] General plots for OSSE samples (with comparisions)
+-[] RMSE and CRPS (one table each): OSSE cases in rows and fluxes in columns (total, gpp, resp, etc)

@@ -19,12 +19,15 @@ source('partials/utils.R')
 args <- list()
 args$area_1x1 <- 'data/area-1x1.nc'
 args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
-args$samples <- '4_inversion/intermediates/samples-LNLGISSIF.rds'
+args$samples <- '4_inversion/intermediates/osse-samples-ALPHAV2-WOSIF.rds'
 args$region <- 'global'
-args$output_base <- '6_results_sif/figures'
+args$output_base <- '6_results_sif/figures/osse'
 
-observation_groups <- stringr::str_extract(args$samples, "(?<=-).*?(?=\\.rds)")
-output_path <- sprintf('%s/fluxes-%s-monthly-%s.pdf', args$output_base, args$region, observation_groups)
+# observation_groups <- stringr::str_extract(args$samples, "(?<=-).*?(?=\\.rds)")
+osse_case <- sub('osse-samples-(.*)\\.rds', '\\1', basename(args$samples))
+# output_path <- sprintf('%s/fluxes-%s-monthly-%s.pdf', args$output_base, args$region, observation_groups)
+output_path <- sprintf('%s/fluxes-%s-monthly-%s.pdf', args$output_base, args$region, osse_case)
+posterior_label <- osse_case
 
 with_nc_file(list(fn = args$area_1x1), {
   longitude_area <- as.vector(ncdf4::ncvar_get(fn, 'lon'))
@@ -124,7 +127,7 @@ prior_emissions <- perturbations_region %>%
 
 posterior_emissions <- prior_emissions %>%
   mutate(
-    output = sprintf('Posterior (%s)', observation_groups),
+    output = sprintf('Posterior (%s)', posterior_label),
     value_prior = value,
     value = value_prior + as.vector(
       X_region[, as.integer(samples$alpha_df$basis_vector)]

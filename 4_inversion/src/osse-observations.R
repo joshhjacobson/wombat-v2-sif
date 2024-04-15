@@ -203,7 +203,7 @@ osse_observations <- observations %>%
   )
 
 if (args$base_case == 'ALPHAV2') {
-  log_debug('Computing peturbation for OSSE base case `{args$base_case}`')
+  log_debug('Computing perturbation for OSSE base case `{args$base_case}`')
   alpha <- fst::read_fst(args$wombat_v2_alpha)
   basis_vectors <- fst::read_fst(args$basis_vectors)
   prior <- readRDS(args$prior)
@@ -248,7 +248,7 @@ if (args$base_case == 'ALPHAV2') {
       )
   }))
 } else {
-  log_debug('No peturbation for OSSE base case `{args$base_case}`')
+  log_debug('No perturbation for OSSE base case `{args$base_case}`')
 }
 
 osse_observations <- osse_observations %>%

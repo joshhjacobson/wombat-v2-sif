@@ -15,18 +15,18 @@ library(patchwork)
 # args <- parser$parse_args()
 
 args <- list(
-  samples_base = '4_inversion/intermediates/samples-',
-  output = '6_results_sif/figures/coefficient-comparisons.pdf'
+  samples_base = '4_inversion/intermediates/osse-samples-',
+  output = '6_results_sif/figures/osse/coefficient-comparisons.pdf'
 )
 N_MCMC_WARM_UP <- 100
 N_MCMC_SAMPLES <- 200
 
-samples_paths <- list.files(
+samples_paths_clean <- list.files(
   dirname(args$samples_base),
   pattern = basename(args$samples_base),
   full.names = TRUE
 )
-samples_paths_clean <- samples_paths[!grepl("\\d", basename(samples_paths))]
+# samples_paths_clean <- samples_paths[!grepl("\\d", basename(samples_paths))]
 
 
 df_samples <- bind_rows(lapply(samples_paths_clean, function(path) {
@@ -36,7 +36,9 @@ df_samples <- bind_rows(lapply(samples_paths_clean, function(path) {
     alpha_df$value_samples <- t(samples$alpha[(N_MCMC_WARM_UP + 1):N_MCMC_SAMPLES, ])
   }
 
-  sample_type <- sub('.*-(.*)\\..*', '\\1', basename(path))
+  # sample_type <- sub('.*-(.*)\\..*', '\\1', basename(path))
+  sample_type <- sub('osse-samples-(.*)\\.rds', '\\1', basename(path))
+  print(sample_type)
   alpha_df %>%
     filter(component != 'residual') %>%
     mutate(type = sample_type) %>%
@@ -47,7 +49,7 @@ df_samples <- bind_rows(lapply(samples_paths_clean, function(path) {
 
 df_net <- df_samples %>% 
   select(-c(value_samples, basis_vector, basis_vector_str)) %>%
-  filter(type %in% c('LNLGIS', 'LNLGISSIF')) %>%
+  # filter(type %in% c('LNLGIS', 'LNLGISSIF')) %>%
   tidyr::pivot_wider(names_from = inventory, values_from = value) %>%
   tidyr::drop_na() %>%
   mutate(
@@ -56,7 +58,11 @@ df_net <- df_samples %>%
   ) %>%
   arrange(type, component, region)
 
-p1 <- ggplot(data = df_samples %>% filter(type %in% c('LNLGIS', 'LNLGISSIF'))) +
+p1 <- ggplot(
+    data = df_samples 
+      # %>%
+      # filter(type %in% c('LNLGIS', 'LNLGISSIF'))
+  ) +
   geom_vline(xintercept = 0, linetype = 'dashed', colour = 'grey50') +
   geom_point(aes(x = value, y = basis_vector_str, colour = type, shape = type)) +
   scale_y_discrete(limits = rev(levels(factor(df_samples$basis_vector_str)))) +

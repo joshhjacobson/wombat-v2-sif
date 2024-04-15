@@ -1,7 +1,7 @@
 library(dplyr)
 library(ggplot2)
 
-observations <- fst::read_fst('4_inversion/intermediates/osse-observations-zero.fst')
+observations <- fst::read_fst('4_inversion/intermediates/osse-observations-ALPHAV2.fst')
 
 observations %>% glimpse
 

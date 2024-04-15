@@ -21,7 +21,7 @@ args <- list(
     '4_inversion/intermediates/H-IS.mat.lz4',
     '4_inversion/intermediates/H-SIF.mat.lz4'
   ),
-  observations = '4_inversion/intermediates/observations.fst',
+  observations = '4_inversion/intermediates/osse-observations-ALPHAV2.fst',
   hyperparameter_estimates = '4_inversion/intermediates/hyperparameter-estimates.fst',
   basis_vectors = '4_inversion/intermediates/basis-vectors.fst',
   prior = '4_inversion/intermediates/prior.rds',

@@ -26,7 +26,7 @@ GEOS_CHEM_RESTART_FILE = data/GEOSChem.Restart.20140901_0000z.nc4
 GEOS_2X25_GRID = data/geos.2x25.grid
 FOSSIL_INVENTORY_PATH = data/fossil-mipv10
 FIRES_INVENTORY_PATH = data/GFED4.1s_Aleya_hemco_080321
-WOMBAT_V2_ALPHA = data/wombat-v2-alpha-LGLGIS.fst
+WOMBAT_V2_ALPHA = data/wombat-v2-alpha-LNLGIS.fst
 
 all:
 	echo "Please refer to the README for instructions on how to run this project"

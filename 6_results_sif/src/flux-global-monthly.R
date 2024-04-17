@@ -20,6 +20,7 @@ args <- list()
 args$area_1x1 <- 'data/area-1x1.nc'
 args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
 args$samples <- '4_inversion/intermediates/osse-samples-ALPHAV2-WOSIF.rds'
+args$wombat_v2_alpha <- 'data/wombat-v2-alpha-LNLGIS.fst'
 args$region <- 'global'
 args$output_base <- '6_results_sif/figures/osse'
 
@@ -28,6 +29,7 @@ osse_case <- sub('osse-samples-(.*)\\.rds', '\\1', basename(args$samples))
 # output_path <- sprintf('%s/fluxes-%s-monthly-%s.pdf', args$output_base, args$region, observation_groups)
 output_path <- sprintf('%s/fluxes-%s-monthly-%s.pdf', args$output_base, args$region, osse_case)
 posterior_label <- osse_case
+base_case <- strsplit(osse_case, '-', fixed = TRUE)[[1]][1]
 
 with_nc_file(list(fn = args$area_1x1), {
   longitude_area <- as.vector(ncdf4::ncvar_get(fn, 'lon'))
@@ -125,9 +127,23 @@ prior_emissions <- perturbations_region %>%
   select(-inventory_time) %>%
   mutate(output = 'Bottom-up')
 
+true_emissions <- prior_emissions %>%
+  mutate(output = 'Truth')
+
+if (base_case == 'ALPHAV2') {
+  wombat_v2_alpha <- fst::read_fst(args$wombat_v2_alpha)
+  true_emissions <- true_emissions %>%
+    mutate(
+      value = value + as.vector(
+        X_region[, as.integer(wombat_v2_alpha$basis_vector)]
+        %*% wombat_v2_alpha$value
+      )
+    )
+}
+
 posterior_emissions <- prior_emissions %>%
   mutate(
-    output = sprintf('Posterior (%s)', posterior_label),
+    output = 'Posterior',
     value_prior = value,
     value = value_prior + as.vector(
       X_region[, as.integer(samples$alpha_df$basis_vector)]
@@ -143,7 +159,7 @@ posterior_emissions <- prior_emissions %>%
   select(-value_prior)
 
 emissions <- bind_rows(
-  prior_emissions,
+  true_emissions,
   posterior_emissions
 ) %>%
   {
@@ -221,9 +237,9 @@ output <- ggplot(
       ),
       alpha = 0.3
     ) +
-  scale_colour_manual(values = c('black', '#ff4444')) +
-  scale_fill_manual(values = c('black', '#ff4444')) +
-  scale_linetype_manual(values = c('41', 'solid')) +
+  scale_colour_manual(values = c('Truth' = 'black', 'Posterior' = '#ff4444')) +
+  scale_fill_manual(values = c('Truth' = 'black', 'Posterior' = '#ff4444')) +
+  scale_linetype_manual(values = c('Truth' = '41', 'Posterior' = 'solid')) +
   labs(x = 'Time', y = 'Flux [PgC/month]', colour = NULL, fill = NULL, linetype = NULL) +
   guides(fill = 'none') +
   ggtitle('Total natural fluxes')
@@ -253,9 +269,9 @@ output <- wrap_plots(
         ),
         alpha = 0.3
       ) +
-      scale_colour_manual(values = c('black', '#ff4444')) +
-      scale_fill_manual(values = c('black', '#ff4444')) +
-      scale_linetype_manual(values = c('41', 'solid')) +
+      scale_colour_manual(values = c('Truth' = 'black', 'Posterior' = '#ff4444')) +
+      scale_fill_manual(values = c('Truth' = 'black', 'Posterior' = '#ff4444')) +
+      scale_linetype_manual(values = c('Truth' = '41', 'Posterior' = 'solid')) +
       scale_x_date(date_breaks = '6 months', date_labels = '%Y-%m') +
       labs(x = 'Time', y = 'Flux [PgC/month]', colour = NULL, fill = NULL, linetype = NULL) +
       guides(fill = 'none') +
@@ -283,7 +299,7 @@ output <- wrap_plots(
 
 output <- output +
   plot_annotation(
-    title = sprintf('Monthly %s fluxes', plot_region$lowercase_title),
+    title = sprintf('Monthly %s fluxes, %s', plot_region$lowercase_title, posterior_label),
     theme = theme(
       plot.title = element_text(
         hjust = if (plot_region$in_supplement) 0.32 else 0.5,

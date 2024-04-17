@@ -41,7 +41,7 @@ include 6_results_sif/module.mk
 1_transport_targets: $(1_TRANSPORT_TARGETS)
 2_matching_targets: $(2_MATCHING_TARGETS)
 3_sif_targets: $(3_SIF_TARGETS)
-4_inversion_targets: $(4_inversion_TARGETS)
+4_inversion_targets: $(4_INVERSION_TARGETS)
 5_results_targets: $(5_RESULTS_TARGETS)
 6_results_sif_targets: $(6_RESULTS_SIF_TARGETS)
 

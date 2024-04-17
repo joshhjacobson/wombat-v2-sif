@@ -72,6 +72,15 @@ flux_aggregates_samples <- bind_rows(
     bind_rows(
       x,
       x %>%
+        filter(inventory %in% c('bio_assim', 'bio_resp_tot')) %>%
+        group_by(estimate, region, time) %>%
+        summarise(
+          flux_mean = sum(flux_mean),
+          flux_samples = t(colSums(flux_samples)),
+          .groups = 'drop'
+        ) %>%
+        mutate(inventory = 'nee'),
+      x %>%
         group_by(estimate, region, time) %>%
         summarise(
           flux_mean = sum(flux_mean),
@@ -85,11 +94,13 @@ flux_aggregates_samples <- bind_rows(
     inventory = factor(c(
       'bio_assim' = 'GPP',
       'bio_resp_tot' = 'Respiration',
+      'nee' = 'NEE',
       'ocean' = 'Ocean',
       'total' = 'Total'
     )[inventory], levels = c(
       'GPP',
       'Respiration',
+      'NEE',
       'Ocean',
       'Total'
     ))

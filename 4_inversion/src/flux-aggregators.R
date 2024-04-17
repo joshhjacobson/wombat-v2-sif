@@ -22,7 +22,7 @@ cell_area <- control_emissions %>%
   ) %>%
   select(-cell_height)
 
-flux_aggregator_base <- perturbations %>%
+flux_aggregators_base <- perturbations %>%
   add_basis_vector(basis_vectors) %>%
   mutate(
     inventory_region_time = interaction(
@@ -34,13 +34,13 @@ flux_aggregator_base <- perturbations %>%
   ) %>%
   left_join(cell_area, by = c('longitude', 'latitude'))
 
-flux_aggregator <- flux_aggregator_base %>%
+flux_aggregators <- flux_aggregators_base %>%
   group_by(inventory_region_time, basis_vector) %>%
   summarise(value = KG_M2_S_TO_PGC_MONTH * sum(area * value)) %>%
   left_join(
-    flux_aggregator_base %>%
+    flux_aggregators_base %>%
       distinct(inventory_region_time, inventory, region, time),
     by = 'inventory_region_time'
   )
 
-fst::write_fst(flux_aggregator, args$output)
+fst::write_fst(flux_aggregators, args$output)

@@ -16,8 +16,8 @@ library(patchwork)
 # args <- parser$parse_args()
 
 args <- list(
-  samples = '4_inversion/intermediates/osse-samples-ALPHAV2-WOSIF.rds',
-  output_base = '6_results_sif/figures/osse/traceplots/traceplots-ALPHAV2-WOSIF'
+  samples = '4_inversion/intermediates/osse-samples-ALPHA0-WSIF.rds',
+  output_base = '6_results_sif/figures/osse/traceplots/traceplots-ALPHA0-WSIF'
 )
 N_MCMC_WARM_UP <- 100
 N_MCMC_SAMPLES <- 200

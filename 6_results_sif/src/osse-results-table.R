@@ -8,12 +8,16 @@ source('partials/display.R')
 source('partials/utils.R')
 
 parser <- ArgumentParser()
+parser$add_argument('--flux-samples-alpha0-wsif')
+parser$add_argument('--flux-samples-alpha0-wosif')
 parser$add_argument('--flux-samples-alphav2-wsif')
 parser$add_argument('--flux-samples-alphav2-wosif')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
 args <- list(
+  flux_samples_alpha0_wsif = '4_inversion/intermediates/osse-flux-aggregates-samples-ALPHA0-WSIF.rds',
+  flux_samples_alpha0_wosif = '4_inversion/intermediates/osse-flux-aggregates-samples-ALPHA0-WOSIF.rds',
   flux_samples_alphav2_wsif = '4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WSIF.rds',
   flux_samples_alphav2_wosif = '4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WOSIF.rds'
 )
@@ -25,10 +29,30 @@ read_flux_samples <- function(filename, estimates = 'Posterior') {
 log_debug('Loading flux samples')
 flux_aggregates_samples <- bind_rows(
   read_flux_samples(
+    args$flux_samples_alpha0_wsif,
+    c('Truth', 'Posterior')
+  ) %>%
+    mutate(
+      case = 'ALPHA0',
+      estimate = ifelse(
+        estimate == 'Posterior',
+        'With SIF',
+        estimate
+      )
+    ),
+  read_flux_samples(
+    args$flux_samples_alpha0_wosif,
+  ) %>%
+    mutate(
+      case = 'ALPHA0',
+      estimate = 'Without SIF'
+    ),
+  read_flux_samples(
     args$flux_samples_alphav2_wsif,
     c('Truth', 'Posterior')
   ) %>%
     mutate(
+      case = 'ALPHAV2',
       estimate = ifelse(
         estimate == 'Posterior',
         'With SIF',
@@ -39,9 +63,12 @@ flux_aggregates_samples <- bind_rows(
     args$flux_samples_alphav2_wosif,
   ) %>%
     mutate(
+      case = 'ALPHAV2',
       estimate = 'Without SIF'
     )
 )
+
+flux_aggregates_samples %>% glimpse
 
 log_debug('Computing metrics')
 output <- flux_aggregates_samples %>%
@@ -49,10 +76,10 @@ output <- flux_aggregates_samples %>%
   left_join(
     flux_aggregates_samples %>%
       filter(estimate == 'Truth') %>%
-      select(inventory, region, time, flux_truth = flux_mean),
-    by = c('inventory', 'region', 'time')
+      select(case, inventory, region, time, flux_truth = flux_mean),
+    by = c('case', 'inventory', 'region', 'time')
   ) %>%
-  group_by(estimate, inventory) %>%
+  group_by(case, estimate, inventory) %>%
   summarise(
     rmse = sqrt(mean((flux_mean - flux_truth)^2)),
     mcrps = mean(scoringRules::crps_sample(
@@ -66,11 +93,11 @@ estimates <- unique(sort(output$estimate))
 inventories <- unique(sort(output$inventory))
 
 rmse_matrix <- output %>%
-  select(estimate, inventory, rmse) %>%
+  select(case, estimate, inventory, rmse) %>%
   pivot_wider(names_from = inventory, values_from = rmse)
 
 mcrps_matrix <- output %>%
-  select(estimate, inventory, mcrps) %>%
+  select(case, estimate, inventory, mcrps) %>%
   pivot_wider(names_from = inventory, values_from = mcrps)
 
   # %>%

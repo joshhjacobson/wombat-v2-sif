@@ -15,8 +15,8 @@ library(patchwork)
 # args <- parser$parse_args()
 
 args <- list(
-  samples_base = '4_inversion/intermediates/osse-samples-',
-  output = '6_results_sif/figures/osse/coefficient-comparisons.pdf'
+  samples_base = '4_inversion/intermediates/osse-samples-ALPHA0',
+  output = '6_results_sif/figures/osse/coefficient-comparisons-ALPHA0.pdf'
 )
 N_MCMC_WARM_UP <- 100
 N_MCMC_SAMPLES <- 200
@@ -38,7 +38,6 @@ df_samples <- bind_rows(lapply(samples_paths_clean, function(path) {
 
   # sample_type <- sub('.*-(.*)\\..*', '\\1', basename(path))
   sample_type <- sub('osse-samples-(.*)\\.rds', '\\1', basename(path))
-  print(sample_type)
   alpha_df %>%
     filter(component != 'residual') %>%
     mutate(type = sample_type) %>%

@@ -56,9 +56,13 @@ OSSE_RESULTS_TABLE = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-results-table.txt
 
 $(OSSE_RESULTS_TABLE): \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-results-table.R \
+	4_inversion/intermediates/osse-flux-aggregates-samples-ALPHA0-WSIF.rds \
+	4_inversion/intermediates/osse-flux-aggregates-samples-ALPHA0-WOSIF.rds \
 	4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WSIF.rds \
 	4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WOSIF.rds
 	Rscript $< \
+		--flux-samples-alpha0-wsif 4_inversion/intermediates/osse-flux-aggregates-samples-ALPHA0-WSIF.rds \
+		--flux-samples-alpha0-wosif 4_inversion/intermediates/osse-flux-aggregates-samples-ALPHA0-WOSIF.rds \
 		--flux-samples-alphav2-wsif 4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WSIF.rds \
 		--flux-samples-alphav2-wosif 4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WOSIF.rds \
 		--output $@

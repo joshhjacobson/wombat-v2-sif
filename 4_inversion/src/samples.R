@@ -529,9 +529,14 @@ w_bio_resid_samples[1, ] <- w_bio_resid_current
 gamma_samples[1, ] <- gamma_current
 
 rho_bio_clim_slice <- slice(0.1, max_evaluations = 1000)
+w_bio_clim_jump <- ifelse(
+  grepl('ALPHA0', args$observations, fixed = TRUE),
+  1,
+  0.1
+)
 w_bio_clim_slice <- list(
-  slice(0.1, max_evaluations = 1000),
-  slice(0.1, max_evaluations = 1000)
+  slice(w_bio_clim_jump, max_evaluations = 5000),
+  slice(w_bio_clim_jump, max_evaluations = 5000)
 )
 kappa_bio_resid_slice <- slice(0.1, max_evaluations = 1000)
 rho_bio_resid_slice <- slice(0.1, max_evaluations = 1000)

@@ -14,6 +14,7 @@ args <- list(
     '3_sif/intermediates/oco2-hourly-sif.fst'
   ),
   constraints = '4_inversion/intermediates/constraints.rds',
+  free_resp_linear = FALSE,
   component_name = c('LNLG', 'IS', 'SIF'),
   component_parts = c('LN|LG', 'IS', 'LN_SIF|LG_SIF'),
   component_transport_matrix = c(
@@ -26,7 +27,6 @@ args <- list(
   basis_vectors = '4_inversion/intermediates/basis-vectors.fst',
   prior = '4_inversion/intermediates/prior.rds',
   wombat_v2_alpha = 'data/wombat-v2-alpha-LGLGIS.fst',
-  base_case = 'ALPHA0',
   output = '4_inversion/intermediates/samples-LNLGISSIF.rds'
 )
 

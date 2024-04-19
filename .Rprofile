@@ -10,8 +10,14 @@ if (interactive() && Sys.getenv("TERM_PROGRAM") == "vscode") {
   }
 }
 
-options(languageserver.formatting_style = function(options) {
-  style <- styler::tidyverse_style()
-  style$token$fix_quotes <- NULL
-  style
-})
+options(
+  languageserver.formatting_style = function(options) {
+    style <- styler::tidyverse_style()
+    style$token$fix_quotes <- NULL
+    style
+  },
+  lintr.linters = lintr::linters_with_defaults(
+    line_length_linter = NULL,
+    quotes_linter = NULL
+  )
+)

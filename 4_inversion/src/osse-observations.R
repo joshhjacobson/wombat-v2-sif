@@ -24,7 +24,6 @@ sample_normal_precision <- function(Q) {
 }
 
 parser <- ArgumentParser()
-parser$add_argument('--base-case')
 parser$add_argument('--basis-vectors')
 parser$add_argument('--hyperparameter-estimates')
 parser$add_argument('--prior')
@@ -38,14 +37,7 @@ parser$add_argument('--component-transport-matrix', nargs = '+')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
-stopifnot(args$base_case %in% c('ALPHA0', 'ALPHAV2'))
-
-SEED <- 20240403 + as.integer(
-  factor(
-    c('ALPHA0' = 'ALPHA0', 'ALPHAV2' = 'ALPHAV2')[args$base_case],
-    levels = c('ALPHA0', 'ALPHAV2')
-  )
-)
+SEED <- 20240403 + as.integer(is.null(args$wombat_v2_alpha))
 set.seed(SEED)
 
 log_debug('Loading control')
@@ -202,8 +194,8 @@ osse_observations <- observations %>%
     value = value_control + epsilon
   )
 
-if (args$base_case == 'ALPHAV2') {
-  log_debug('Computing perturbation for OSSE base case `{args$base_case}`')
+if (!is.null(args$wombat_v2_alpha)) {
+  log_debug('Computing perturbations with WOMBAT v2 alpha')
   alpha <- fst::read_fst(args$wombat_v2_alpha)
   basis_vectors <- fst::read_fst(args$basis_vectors)
   prior <- readRDS(args$prior)
@@ -248,7 +240,7 @@ if (args$base_case == 'ALPHAV2') {
       )
   }))
 } else {
-  log_debug('No perturbation for OSSE base case `{args$base_case}`')
+  log_debug('No perturbation when alpha is zero')
 }
 
 osse_observations <- osse_observations %>%

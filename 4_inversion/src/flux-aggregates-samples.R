@@ -5,19 +5,19 @@ library(dplyr, warn.conflicts = FALSE)
 source(Sys.getenv('UTILS_PARTIAL'))
 
 parser <- ArgumentParser()
-parser$add_argument('--case')
 parser$add_argument('--samples')
 parser$add_argument('--flux-aggregators')
 parser$add_argument('--wombat-v2-alpha')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
-base_case <- strsplit(args$case, '-', fixed = TRUE)[[1]][1]
-stopifnot(base_case %in% c('ALPHA0', 'ALPHAV2'))
-
 samples <- readRDS(args$samples)
 flux_aggregators <- fst::read_fst(args$flux_aggregators)
-wombat_v2_alpha <- fst::read_fst(args$wombat_v2_alpha)
+wombat_v2_alpha <- if(!is.null(args$wombat_v2_alpha)) {
+  fst::read_fst(args$wombat_v2_alpha)
+} else {
+  NULL
+}
 
 
 X_aggregators <- with(flux_aggregators, sparseMatrix(
@@ -36,7 +36,7 @@ prior_emissions <- flux_aggregators %>%
 true_emissions <- prior_emissions %>%
   mutate(estimate = 'Truth')
 
-if (base_case == 'ALPHAV2') {
+if (!is.null(wombat_v2_alpha)) {
   true_emissions <- true_emissions %>%
     mutate(
       flux_mean = flux_mean + as.vector(

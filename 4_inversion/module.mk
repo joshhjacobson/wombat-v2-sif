@@ -58,15 +58,16 @@ OSSE_FLUX_AGGREGATES_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_FL
 
 # OSSE inversions
 
+OSSE_FLAGS_SAMPLES_ALPHA0 = --bio-clim-slice-w 1
+OSSE_FLAGS_BASE_ALPHAV2 = --wombat-v2-alpha $(WOMBAT_V2_ALPHA)
+
 $(OSSE_FLUX_AGGREGATES_SAMPLES_BASE)-%.rds: \
 	4_inversion/src/flux-aggregates-samples.R \
 	$(OSSE_SAMPLES_BASE)-%.rds \
 	$(FLUX_AGGREGATORS)
-	Rscript $< \
-		--case $* \
+	Rscript $< $(OSSE_FLAGS_BASE_$(findstring ALPHAV2, $*)) \
 		--samples $(OSSE_SAMPLES_BASE)-$*.rds \
 		--flux-aggregators $(FLUX_AGGREGATORS) \
-		--wombat-v2-alpha $(WOMBAT_V2_ALPHA) \
 		--output $@
 
 $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
@@ -80,7 +81,7 @@ $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	$(H_LNLG) \
 	$(H_IS)
-	Rscript $< \
+	Rscript $< $(OSSE_FLAGS_SAMPLES_$*) \
 		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
@@ -110,7 +111,7 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 	$(H_LNLG) \
 	$(H_IS) \
 	$(H_SIF)
-	Rscript $< \
+	Rscript $< $(OSSE_FLAGS_SAMPLES_$*) \
 		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
@@ -141,12 +142,10 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 	$(H_LNLG) \
 	$(H_IS) \
 	$(H_SIF)
-	Rscript $< \
-		--base-case $* \
+	Rscript $< $(OSSE_FLAGS_BASE_$*) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
 		--prior $(PRIOR) \
-		--wombat-v2-alpha $(WOMBAT_V2_ALPHA) \
 		--observations $(OBSERVATIONS) \
 		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
 		--control \

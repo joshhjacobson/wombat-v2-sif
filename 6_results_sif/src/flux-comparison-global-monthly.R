@@ -21,13 +21,13 @@ args$area_1x1 <- 'data/area-1x1.nc'
 args$observations <- '4_inversion/intermediates/observations.fst'
 args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
 args$samples_pair <- c(
-  '4_inversion/intermediates/samples-LNLGIS.rds',
-  '4_inversion/intermediates/samples-LNLGISSIF.rds'
+  '4_inversion/intermediates/samples-LNLGISSIF.rds',
+  '4_inversion/intermediates/samples-free-resp-LNLGISSIF.rds'
 )
 args$region <- 'global'
 args$output_base <- '6_results_sif/figures'
 
-output_path <- sprintf('%s/flux-comparison-%s-monthly.pdf', args$output_base, args$region)
+output_path <- sprintf('%s/flux-comparison-free-resp-%s-monthly.pdf', args$output_base, args$region)
 
 with_nc_file(list(fn = args$area_1x1), {
   longitude_area <- as.vector(ncdf4::ncvar_get(fn, 'lon'))
@@ -176,7 +176,7 @@ compute_posterior <- function(samples_path) {
 }
 
 emissions <- bind_rows(lapply(args$samples_pair, function(samples_path) {
-  samples_type <- stringr::str_extract(samples_path, "(?<=-).*?(?=\\.rds)")
+  samples_type <- sub('samples-(.*)\\.rds', '\\1', basename(samples_path))
   compute_posterior(samples_path) %>%
     bind_rows(
       prior_emissions

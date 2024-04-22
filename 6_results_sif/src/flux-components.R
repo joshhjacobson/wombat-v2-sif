@@ -21,9 +21,10 @@ args$area_1x1 <- 'data/area-1x1.nc'
 args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
 args$samples <- '4_inversion/intermediates/samples-LNLGISSIF.rds'
 args$region <- 'global'
+args$free_resp_linear <- FALSE
 args$output_base <- '6_results_sif/figures'
 
-observation_groups <- stringr::str_extract(args$samples, "(?<=-).*?(?=\\.rds)")
+observation_groups <- sub('samples-(.*)\\.rds', '\\1', basename(args$samples))
 output_path <- sprintf('%s/flux-components-%s-%s.pdf', args$output_base, args$region, observation_groups)
 
 with_nc_file(list(fn = args$area_1x1), {
@@ -125,6 +126,17 @@ posterior_emissions <- prior_emissions %>%
   ) %>%
   select(-value_prior)
 
+filter_inventory_components <- function(.data) {
+  if (args$free_resp_linear) {
+    .data %>% filter(!(inventory == 'ocean' & minor_component %in% c('linear', 'periodic') & output == 'Posterior'))
+  } else {
+    .data %>% filter(!(
+      (inventory == 'bio_resp_tot' & minor_component == 'linear' & output == 'Posterior')
+      | (inventory == 'ocean' & minor_component %in% c('linear', 'periodic') & output == 'Posterior')
+    ))
+  }
+}
+
 emissions <- bind_rows(
   prior_emissions,
   posterior_emissions
@@ -149,10 +161,7 @@ emissions <- bind_rows(
         )
     )
   } %>%
-  filter(!(
-    (inventory == 'bio_resp_tot' & minor_component == 'linear' & output == 'Posterior')
-    | (inventory == 'ocean' & minor_component %in% c('linear', 'periodic') & output == 'Posterior')
-  )) %>%
+  filter_inventory_components(.) %>%
   mutate(
     inventory = factor(c(
       'bio_assim' = 'GPP',

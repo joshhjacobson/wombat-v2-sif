@@ -16,8 +16,9 @@ library(patchwork)
 # args <- parser$parse_args()
 
 args <- list(
-  samples = '4_inversion/intermediates/osse-samples-ALPHA0-WSIF.rds',
-  output_base = '6_results_sif/figures/osse/traceplots/traceplots-ALPHA0-WSIF'
+  samples = '4_inversion/intermediates/samples-free-resp-LNLGISSIF.rds',
+  free_resp_linear = TRUE,
+  output_base = '6_results_sif/figures/traceplots/traceplots-free-resp-LNLGISSIF'
 )
 N_MCMC_WARM_UP <- 100
 N_MCMC_SAMPLES <- 200
@@ -128,20 +129,36 @@ ggsave_base(
 )
 
 # Linear Components
-inventories <- c('bio_assim')
 components <- c('intercept', 'trend')
 
 traces <- list()
-for (r in 1:11) {
-  for (j in seq_along(components)) {
-    r_j <- as.integer(r + (j - 1) * 11)
-    region <- sprintf('Region%02d', r)
-    traces[[r_j]] <- plot_traces(
-      samples$alpha[, sprintf('%s.%s.%s', inventories, components[j], region)],
-      'gpp'
-    ) +
-      ggtitle(bquote(alpha[.(sprintf('c,%01d,%01d', j - 1, r))])) +
-      scale_assim_inventory
+if (args$free_resp_linear) {
+  inventories <- c('bio_assim', 'bio_resp_tot')
+  for (r in 1:11) {
+    for (j in seq_along(components)) {
+      r_j <- as.integer(r + (j - 1) * 11)
+      region <- sprintf('Region%02d', r)
+      traces[[r_j]] <- plot_traces(
+        samples$alpha[, sprintf('%s.%s.%s', inventories, components[j], region)],
+        c('gpp', 'resp')
+      ) +
+        ggtitle(bquote(alpha[.(sprintf('c,%01d,%01d', j - 1, r))])) +
+        scale_bio_inventory
+    }
+  }
+} else {
+  inventories <- c('bio_assim')
+  for (r in 1:11) {
+    for (j in seq_along(components)) {
+      r_j <- as.integer(r + (j - 1) * 11)
+      region <- sprintf('Region%02d', r)
+      traces[[r_j]] <- plot_traces(
+        samples$alpha[, sprintf('%s.%s.%s', inventories, components[j], region)],
+        'gpp'
+      ) +
+        ggtitle(bquote(alpha[.(sprintf('c,%01d,%01d', j - 1, r))])) +
+        scale_assim_inventory
+    }
   }
 }
 traces_intercept_slope <- wrap_plots(traces, ncol = 2, byrow = FALSE)

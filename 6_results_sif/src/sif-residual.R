@@ -11,15 +11,14 @@ source('partials/utils.R')
 args <- list()
 args$observations <- '4_inversion/intermediates/observations.fst'
 args$control_sif <- '3_sif/intermediates/oco2-hourly-sif.fst'
-# args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
 args$basis_vectors <- '4_inversion/intermediates/basis-vectors.fst'
 args$prior <- '4_inversion/intermediates/prior.rds'
-args$samples <- '4_inversion/intermediates/samples-LNLGISSIF.rds'
+args$samples <- '4_inversion/intermediates/samples-free-resp-LNLGISSIF.rds'
 args$region_sf <- '5_results/intermediates/region-sf.rds'
+args$free_resp_linear <- TRUE
 
 observations <- read_fst(args$observations)
 control_sif <- read_fst(args$control_sif)
-# perturbations_base <- read_fst(args$perturbations_augmented)
 basis_vectors <- read_fst(args$basis_vectors)
 prior <- readRDS(args$prior)
 samples <- readRDS(args$samples)
@@ -68,10 +67,14 @@ output <- observations %>%
 n_observations <- nrow(output)
 n_alpha <- nrow(basis_vectors)
 n_mat <- n_observations * n_alpha
-alpha_to_include <- is.finite(diag(prior$precision)) & with(
-  basis_vectors,
-  !(inventory == 'bio_resp_tot' & component %in% c('intercept', 'trend'))
-)
+alpha_to_include <- if (args$free_resp_linear) {
+  is.finite(diag(prior$precision))
+} else {
+  is.finite(diag(prior$precision)) & with(
+    basis_vectors,
+    !(inventory == 'bio_resp_tot' & component %in% c('intercept', 'trend'))
+  )
+}
 
 fn <- pipe(sprintf('lz4 -v %s -', '4_inversion/intermediates/H-SIF.mat.lz4'), 'rb')
 H_vec <- readBin(fn, 'double', n_mat)
@@ -128,7 +131,7 @@ p_hist <- ggplot(output) +
   )
 
 ggsave_base(
-  '6_results_sif/figures/sif-fitted-vs-residual-with-hist.png',
+  '6_results_sif/figures/sif-fitted-vs-residual-with-hist_free-resp.png',
   (p_scatter + p_hist) + plot_annotation(
     title = 'SIF residuals (2014-09 to 2020-12)'
   ),
@@ -207,7 +210,7 @@ p <- ggplot(output_global_monthly) +
   )
 
 ggsave_base(
-  '6_results_sif/figures/sif-components-global.pdf',
+  '6_results_sif/figures/sif-components-global_free-resp.pdf',
   p,
   width = 18,
   height = 12
@@ -257,7 +260,7 @@ p <- ggplot(output) +
   )
 
 ggsave_base(
-  '6_results_sif/figures/sif-residuals-map.png',
+  '6_results_sif/figures/sif-residuals-map_free-resp.png',
   p,
   bg = 'white',
   width = 20,
@@ -318,7 +321,7 @@ p <- ggplot(output_seasons) +
   )
 
 ggsave_base(
-  '6_results_sif/figures/sif-residuals-map-seasons.png',
+  '6_results_sif/figures/sif-residuals-map-seasons_free-resp.png',
   p,
   bg = 'white',
   width = 30,

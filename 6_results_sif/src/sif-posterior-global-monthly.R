@@ -14,7 +14,7 @@ args <- list()
 args$inventory <- '3_sif/intermediates/sib4-monthly-sif-2x25.nc'
 args$model <- '3_sif/intermediates/model-sif-assim.fst'
 args$perturbations <- '5_results/intermediates/perturbations-augmented.fst'
-args$samples <- '4_inversion/intermediates/samples-LNLGISSIF.rds'
+args$samples <- '4_inversion/intermediates/samples-free-resp-LNLGISSIF.rds'
 
 
 model <- read_fst(args$model)
@@ -152,7 +152,7 @@ output <- ggplot(posterior_sif, aes(time)) +
 
 
 ggsave_base(
-  '6_results_sif/figures/sif-posterior-global-monthly.pdf',
+  '6_results_sif/figures/sif-posterior-global-monthly-free-resp-LNLGISSIF.pdf',
   output,
   width = 17,
   height = 11

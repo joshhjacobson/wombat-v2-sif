@@ -42,6 +42,7 @@ SAMPLES_SIF = 4_inversion/intermediates/samples-SIF.rds
 SAMPLES_LNLGSIF = 4_inversion/intermediates/samples-LNLGSIF.rds
 SAMPLES_ISSIF = 4_inversion/intermediates/samples-ISSIF.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
+SAMPLES_FREE_RESP_LNLGISSIF = 4_inversion/intermediates/samples-free-resp-LNLGISSIF.rds
 
 FLUX_AGGREGATORS = 4_inversion/intermediates/flux-aggregators.fst
 
@@ -332,6 +333,39 @@ $(SAMPLES_LNLGISSIF): \
 	$(H_IS) \
 	$(H_SIF)
 	Rscript $< \
+		--observations $(OBSERVATIONS) \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
+		--constraints $(CONSTRAINTS) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
+		--control \
+			2_matching/intermediates/runs/base/oco2-hourly.fst \
+			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+			3_sif/intermediates/oco2-hourly-sif.fst \
+		--component-name LNLG IS SIF \
+		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_IS) \
+			$(H_SIF) \
+		--output $@
+
+$(SAMPLES_FREE_RESP_LNLGISSIF): \
+	4_inversion/src/samples.R \
+	$(OBSERVATIONS) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	3_sif/intermediates/oco2-hourly-sif.fst \
+	$(H_LNLG) \
+	$(H_IS) \
+	$(H_SIF)
+	Rscript $< \
+		--free-resp-linear \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \

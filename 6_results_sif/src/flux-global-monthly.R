@@ -19,7 +19,7 @@ source('partials/utils.R')
 args <- list()
 args$area_1x1 <- 'data/area-1x1.nc'
 args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
-args$samples <- '4_inversion/intermediates/samples-free-resp-LNLGISSIF.rds'
+args$samples <- '4_inversion/intermediates/samples-LNLGISSIF-FREERESP.rds'
 args$alpha <- 'data/wombat-v2-alpha-LNLGIS.fst'
 args$region <- 'global'
 args$output_base <- '6_results_sif/figures'

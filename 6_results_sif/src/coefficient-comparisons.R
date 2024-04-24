@@ -15,8 +15,8 @@ library(patchwork)
 # args <- parser$parse_args()
 
 args <- list(
-  samples_base = '4_inversion/intermediates/osse-samples-ALPHA0',
-  output = '6_results_sif/figures/osse/coefficient-comparisons-ALPHA0.pdf'
+  samples_base = '4_inversion/intermediates/samples-LNLGISSIF',
+  output = '6_results_sif/figures/coefficient-comparisons-free-resp.pdf'
 )
 N_MCMC_WARM_UP <- 100
 N_MCMC_SAMPLES <- 200
@@ -28,6 +28,11 @@ samples_paths_clean <- list.files(
 )
 # samples_paths_clean <- samples_paths[!grepl("\\d", basename(samples_paths))]
 
+samples_paths_clean <- list(
+  '4_inversion/intermediates/samples-free-resp-LNLGISSIF.rds',
+  '4_inversion/intermediates/samples-LNLGISSIF.rds'
+)
+
 
 df_samples <- bind_rows(lapply(samples_paths_clean, function(path) {
   samples <- readRDS(path)
@@ -36,8 +41,8 @@ df_samples <- bind_rows(lapply(samples_paths_clean, function(path) {
     alpha_df$value_samples <- t(samples$alpha[(N_MCMC_WARM_UP + 1):N_MCMC_SAMPLES, ])
   }
 
-  # sample_type <- sub('.*-(.*)\\..*', '\\1', basename(path))
-  sample_type <- sub('osse-samples-(.*)\\.rds', '\\1', basename(path))
+  sample_type <- sub('samples-(.*)\\.rds', '\\1', basename(path))
+  # sample_type <- sub('osse-samples-(.*)\\.rds', '\\1', basename(path))
   alpha_df %>%
     filter(component != 'residual') %>%
     mutate(type = sample_type) %>%
@@ -58,7 +63,7 @@ df_net <- df_samples %>%
   arrange(type, component, region)
 
 p1 <- ggplot(
-    data = df_samples 
+    data = df_samples
       # %>%
       # filter(type %in% c('LNLGIS', 'LNLGISSIF'))
   ) +

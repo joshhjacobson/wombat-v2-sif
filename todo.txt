@@ -7,7 +7,7 @@ Overall todo:
 -[] Include SIF outliers?
 
 -[] run LNLGIS inversion with resp free
--[] plot fluxes for individual transcoms to see whether any are especially large
+-[x] plot fluxes for individual transcoms to see whether any are especially large
 -[] create new alpha by changing the assim and resp linear components by about 20%, constrained so that NEE will be the same
 -[] plot boxplots for metrics over regions and then months
 

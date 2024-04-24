@@ -20,7 +20,7 @@ args <- list()
 args$area_1x1 <- 'data/area-1x1.nc'
 args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
 args$samples <- '4_inversion/intermediates/samples-free-resp-LNLGISSIF.rds'
-args$wombat_v2_alpha <- 'data/wombat-v2-alpha-LNLGIS.fst'
+args$alpha <- 'data/wombat-v2-alpha-LNLGIS.fst'
 args$region <- 'global'
 args$output_base <- '6_results_sif/figures'
 
@@ -131,12 +131,12 @@ prior_emissions <- perturbations_region %>%
 #   mutate(output = 'Truth')
 
 # if (base_case == 'ALPHAV2') {
-#   wombat_v2_alpha <- fst::read_fst(args$wombat_v2_alpha)
+#   alpha <- fst::read_fst(args$alpha)
 #   true_emissions <- true_emissions %>%
 #     mutate(
 #       value = value + as.vector(
-#         X_region[, as.integer(wombat_v2_alpha$basis_vector)]
-#         %*% wombat_v2_alpha$value
+#         X_region[, as.integer(alpha$basis_vector)]
+#         %*% alpha$value
 #       )
 #     )
 # }

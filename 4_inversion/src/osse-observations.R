@@ -24,10 +24,12 @@ sample_normal_precision <- function(Q) {
 }
 
 parser <- ArgumentParser()
+parser$add_argument('--seed', type = 'integer', default = 0)
+parser$add_argument('--free-resp-linear', action = 'store_true', default = FALSE)
+parser$add_argument('--true-alpha')
 parser$add_argument('--basis-vectors')
 parser$add_argument('--hyperparameter-estimates')
 parser$add_argument('--prior')
-parser$add_argument('--wombat-v2-alpha')
 parser$add_argument('--observations')
 parser$add_argument('--overall-observation-mode', nargs = '+')
 parser$add_argument('--control', nargs = '+')
@@ -35,10 +37,9 @@ parser$add_argument('--component-name', nargs = '+')
 parser$add_argument('--component-parts', nargs = '+')
 parser$add_argument('--component-transport-matrix', nargs = '+')
 parser$add_argument('--output')
-args <- parser$parse_args()
+args <- parser$parse_known_args()[[1]]
 
-SEED <- 20240403 + as.integer(is.null(args$wombat_v2_alpha))
-set.seed(SEED)
+set.seed(20240403 + args$seed)
 
 log_debug('Loading control')
 control <- bind_rows(lapply(args$control, read_fst)) %>%
@@ -194,19 +195,13 @@ osse_observations <- observations %>%
     value = value_control + epsilon
   )
 
-if (!is.null(args$wombat_v2_alpha)) {
-  log_debug('Computing perturbations with WOMBAT v2 alpha')
-  alpha <- fst::read_fst(args$wombat_v2_alpha)
+if (!is.null(args$true_alpha)) {
+  log_debug('Computing perturbations with true alpha from {args$true_alpha}')
+  true_alpha <- fst::read_fst(args$true_alpha)
   basis_vectors <- fst::read_fst(args$basis_vectors)
   prior <- readRDS(args$prior)
 
   n_all_alpha <- nrow(basis_vectors)
-  # NOTE(mgnb): values of alpha fixed to zero are given infinite precision
-  alpha_to_include <- is.finite(diag(prior$precision)) & with(
-    basis_vectors,
-    !(inventory == 'bio_resp_tot' & component %in% c('intercept', 'trend'))
-  )
-  stopifnot(nrow(alpha) == sum(alpha_to_include))
 
   log_trace('Loading transport matrices')
   H_parts <- lapply(part_indices, function(i) {
@@ -225,7 +220,7 @@ if (!is.null(args$wombat_v2_alpha)) {
     close(fn)
     output <- matrix(H_vec, nrow = n_observations_i)
     gc()
-    output[, alpha_to_include]
+    output[, as.integer(true_alpha$basis_vector)]
   })
   gc()
 
@@ -236,11 +231,11 @@ if (!is.null(args$wombat_v2_alpha)) {
         component_name == args$component_name[i]
       ) %>%
       mutate(
-        value = value + as.vector(H_parts[[i]] %*% alpha$value)
+        value = value + as.vector(H_parts[[i]] %*% true_alpha$value)
       )
   }))
 } else {
-  log_debug('No perturbation when alpha is zero')
+  log_debug('No perturbation when true alpha is zero')
 }
 
 osse_observations <- osse_observations %>%

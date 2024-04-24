@@ -20,7 +20,7 @@ args <- list()
 args$area_1x1 <- 'data/area-1x1.nc'
 args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
 args$samples <- '4_inversion/intermediates/samples-LNLGISSIF.rds'
-args$region <- 'global'
+args$region <- 'n-tropical'
 args$free_resp_linear <- FALSE
 args$output_base <- '6_results_sif/figures'
 

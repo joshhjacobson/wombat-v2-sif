@@ -5,19 +5,15 @@ library(dplyr, warn.conflicts = FALSE)
 source(Sys.getenv('UTILS_PARTIAL'))
 
 parser <- ArgumentParser()
+parser$add_argument('--true-alpha')
 parser$add_argument('--samples')
 parser$add_argument('--flux-aggregators')
-parser$add_argument('--wombat-v2-alpha')
 parser$add_argument('--output')
-args <- parser$parse_args()
+args <- parser$parse_known_args()[[1]]
 
 samples <- readRDS(args$samples)
 flux_aggregators <- fst::read_fst(args$flux_aggregators)
-wombat_v2_alpha <- if(!is.null(args$wombat_v2_alpha)) {
-  fst::read_fst(args$wombat_v2_alpha)
-} else {
-  NULL
-}
+true_alpha <- if (!is.null(args$true_alpha)) fst::read_fst(args$true_alpha) else NULL
 
 
 X_aggregators <- with(flux_aggregators, sparseMatrix(
@@ -36,12 +32,12 @@ prior_emissions <- flux_aggregators %>%
 true_emissions <- prior_emissions %>%
   mutate(estimate = 'Truth')
 
-if (!is.null(wombat_v2_alpha)) {
+if (!is.null(true_alpha)) {
   true_emissions <- true_emissions %>%
     mutate(
       flux_mean = flux_mean + as.vector(
-        X_aggregators[, as.integer(wombat_v2_alpha$basis_vector)]
-        %*% wombat_v2_alpha$value
+        X_aggregators[, as.integer(true_alpha$basis_vector)]
+        %*% true_alpha$value
       )
     )
 }

@@ -98,6 +98,8 @@ dmvnorm <- function(x, mean, covariance, precision, log = FALSE) {
 parser <- ArgumentParser()
 parser$add_argument('--free-resp-linear', action = 'store_true', default = FALSE)
 parser$add_argument('--bio-clim-slice-w', type = 'double', default = 0.1)
+parser$add_argument('--n-samples', type = 'integer', default = N_MCMC_SAMPLES)
+parser$add_argument('--n-warm-up', type = 'integer', default = N_MCMC_WARM_UP)
 parser$add_argument('--basis-vectors')
 parser$add_argument('--control', nargs = '+')
 parser$add_argument('--constraints')
@@ -109,7 +111,7 @@ parser$add_argument('--component-name', nargs = '+')
 parser$add_argument('--component-parts', nargs = '+')
 parser$add_argument('--component-transport-matrix', nargs = '+')
 parser$add_argument('--output')
-args <- parser$parse_args()
+args <- parser$parse_known_args()[[1]]
 
 log_debug('Loading control')
 control <- bind_rows(lapply(args$control, read_fst)) %>%
@@ -159,7 +161,7 @@ n_all_alpha <- nrow(basis_vectors)
 alpha_to_include <- if(args$free_resp_linear) {
   log_info('Respiration linear component is free')
   is.finite(diag(prior$precision))
-} else{
+} else {
   is.finite(diag(prior$precision)) & with(
     basis_vectors,
     !(inventory == 'bio_resp_tot' & component %in% c('intercept', 'trend'))
@@ -545,13 +547,13 @@ if (!is.null(args$constraints)) {
 
 n_hyperparameter_groups <- nrow(hyperparameter_groups)
 
-alpha_samples <- matrix(NA, nrow = N_MCMC_SAMPLES, ncol = n_alpha)
-rho_bio_clim_samples <- rep(NA, N_MCMC_SAMPLES)
-w_bio_clim_samples <- matrix(NA, nrow = N_MCMC_SAMPLES, ncol = 2)
-kappa_bio_resid_samples <- rep(NA, N_MCMC_SAMPLES)
-rho_bio_resid_samples <- rep(NA, N_MCMC_SAMPLES)
-w_bio_resid_samples <- matrix(NA, nrow = N_MCMC_SAMPLES, ncol = 2)
-gamma_samples <- matrix(NA, nrow = N_MCMC_SAMPLES, ncol = n_hyperparameter_groups)
+alpha_samples <- matrix(NA, nrow = args$n_samples, ncol = n_alpha)
+rho_bio_clim_samples <- rep(NA, args$n_samples)
+w_bio_clim_samples <- matrix(NA, nrow = args$n_samples, ncol = 2)
+kappa_bio_resid_samples <- rep(NA, args$n_samples)
+rho_bio_resid_samples <- rep(NA, args$n_samples)
+w_bio_resid_samples <- matrix(NA, nrow = args$n_samples, ncol = 2)
+gamma_samples <- matrix(NA, nrow = args$n_samples, ncol = n_hyperparameter_groups)
 
 # NOTE(mgnb): this starting value satisfies the initial condition
 alpha_current <- rep(0, n_alpha)
@@ -583,8 +585,8 @@ w_bio_resid_slice <- list(
 )
 
 log_debug('Starting MCMC')
-for (iteration in 2 : N_MCMC_SAMPLES) {
-  log_trace('[{iteration} / {N_MCMC_SAMPLES}] Sampling alpha')
+for (iteration in 2 : args$n_samples) {
+  log_trace('[{iteration} / {args$n_samples}] Sampling alpha')
   alpha_prior_precision_current <- get_alpha_prior_precision(
     rho_bio_clim_current,
     w_bio_clim_current,
@@ -624,40 +626,40 @@ for (iteration in 2 : N_MCMC_SAMPLES) {
     )
   }
 
-  log_trace('[{iteration} / {N_MCMC_SAMPLES}] Sampling rho_bio_clim (current = {format(rho_bio_clim_current)})')
+  log_trace('[{iteration} / {args$n_samples}] Sampling rho_bio_clim (current = {format(rho_bio_clim_current)})')
   rho_bio_clim_current <- rho_bio_clim_slice(rho_bio_clim_current, function(rho) {
     log_pdf_climatology_bio(rho, w_bio_clim_current)
-  }, learn = iteration <= N_MCMC_WARM_UP)
+  }, learn = iteration <= args$n_warm_up)
 
-  log_trace('[{iteration} / {N_MCMC_SAMPLES}] Sampling w_bio_clim (current = {paste0(format(w_bio_clim_current), collapse = ", ")})')
+  log_trace('[{iteration} / {args$n_samples}] Sampling w_bio_clim (current = {paste0(format(w_bio_clim_current), collapse = ", ")})')
   for (i in c(1, 2)) {
     w_bio_clim_current[i] <- w_bio_clim_slice[[i]](w_bio_clim_current[i], function(w_i) {
       w <- w_bio_clim_current
       w[i] <- w_i
       log_pdf_climatology_bio(rho_bio_clim_current, w)
-    }, learn = iteration <= N_MCMC_WARM_UP)
+    }, learn = iteration <= args$n_warm_up)
   }
 
-  log_trace('[{iteration} / {N_MCMC_SAMPLES}] Sampling kappa_bio_resid (current = {format(kappa_bio_resid_current)})')
+  log_trace('[{iteration} / {args$n_samples}] Sampling kappa_bio_resid (current = {format(kappa_bio_resid_current)})')
   kappa_bio_resid_current <- kappa_bio_resid_slice(kappa_bio_resid_current, function(kappa) {
     log_pdf_residual_bio(kappa, rho_bio_resid_current, w_bio_resid_current, alpha_current)
-  }, learn = iteration <= N_MCMC_WARM_UP)
+  }, learn = iteration <= args$n_warm_up)
 
-  log_trace('[{iteration} / {N_MCMC_SAMPLES}] Sampling rho_bio_resid (current = {format(rho_bio_resid_current)})')
+  log_trace('[{iteration} / {args$n_samples}] Sampling rho_bio_resid (current = {format(rho_bio_resid_current)})')
   rho_bio_resid_current <- rho_bio_resid_slice(rho_bio_resid_current, function(rho) {
     log_pdf_residual_bio(kappa_bio_resid_current, rho, w_bio_resid_current, alpha_current)
-  }, learn = iteration <= N_MCMC_WARM_UP)
+  }, learn = iteration <= args$n_warm_up)
 
-  log_trace('[{iteration} / {N_MCMC_SAMPLES}] Sampling w_bio_resid (current = {paste0(format(w_bio_resid_current), collapse = ", ")})')
+  log_trace('[{iteration} / {args$n_samples}] Sampling w_bio_resid (current = {paste0(format(w_bio_resid_current), collapse = ", ")})')
   for (i in c(1, 2)) {
     w_bio_resid_current[i] <- w_bio_resid_slice[[i]](w_bio_resid_current[i], function(w_i) {
       w <- w_bio_resid_current
       w[i] <- w_i
       log_pdf_residual_bio(kappa_bio_resid_current, rho_bio_resid_current, w, alpha_current)
-    }, learn = iteration <= N_MCMC_WARM_UP)
+    }, learn = iteration <= args$n_warm_up)
   }
 
-  log_trace('[{iteration} / {N_MCMC_SAMPLES}] Sampling gamma (current = {paste0(format(gamma_current), collapse = ", ")})')
+  log_trace('[{iteration} / {args$n_samples}] Sampling gamma (current = {paste0(format(gamma_current), collapse = ", ")})')
   for (i in seq_len(n_hyperparameter_groups)) {
     gamma_current[i] <- rgamma(
       1,
@@ -688,10 +690,10 @@ log_debug('Saving to {args$output}')
 alpha_df <- cbind(
   basis_vectors[alpha_to_include, ],
   data.frame(
-    value = colMeans(tail(alpha_samples, N_MCMC_SAMPLES - N_MCMC_WARM_UP))
+    value = colMeans(tail(alpha_samples, args$n_samples - args$n_warm_up))
   )
 )
-alpha_df$value_samples <- t(tail(alpha_samples, N_MCMC_SAMPLES - N_MCMC_WARM_UP))
+alpha_df$value_samples <- t(tail(alpha_samples, args$n_samples - args$n_warm_up))
 
 output <- list(
   alpha = alpha_samples,
@@ -701,7 +703,9 @@ output <- list(
   kappa_bio_resid = kappa_bio_resid_samples,
   rho_bio_resid = rho_bio_resid_samples,
   w_bio_resid = w_bio_resid_samples,
-  gamma = gamma_samples
+  gamma = gamma_samples,
+  n_samples = args$n_samples,
+  n_warm_up = args$n_warm_up
 )
 
 saveRDS(output, args$output)

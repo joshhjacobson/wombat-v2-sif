@@ -2,8 +2,14 @@ Overall todo:
 -[x] Full first-stage fits
 -[x] Rerun inversion
 -[x] Implement OSSE
--[] Unfix SIF
+-[x] Unfix SIF
+-[] Fix resp linear in certain regions?
 -[] Include SIF outliers?
+
+-[] run LNLGIS inversion with resp free
+-[] plot fluxes for individual transcoms to see whether any are especially large
+-[] create new alpha by changing the assim and resp linear components by about 20%, constrained so that NEE will be the same
+-[] plot boxplots for metrics over regions and then months
 
 
 Plots to make for each set of samples
@@ -69,7 +75,7 @@ Original hard-coded parameters for SIF:
 
 
 OSSE Todo:
--[] Fix ALPHA0 case?
+-[x] Fix ALPHA0 case?
   - Very large precision parameters for trend/seasonality component; numerical instability with essentially zero variance?
 -[x] General plots for OSSE samples (with comparisions)
 -[x] RMSE and CRPS (one table each): OSSE cases in rows and fluxes in columns (total, gpp, resp, etc)

@@ -35,6 +35,7 @@ RESIDUAL_1ST_STAGE = 4_inversion/intermediates/residual-1st-stage.fst
 HYPERPARAMETER_ESTIMATES = 4_inversion/intermediates/hyperparameter-estimates.fst
 
 # NOTE(jhj): setup sample cases if keeping most of these?
+SAMPLES_BASE = 4_inversion/intermediates/samples
 SAMPLES_IS = 4_inversion/intermediates/samples-IS.rds
 SAMPLES_LNLG = 4_inversion/intermediates/samples-LNLG.rds
 SAMPLES_LNLGIS = 4_inversion/intermediates/samples-LNLGIS.rds
@@ -42,12 +43,27 @@ SAMPLES_SIF = 4_inversion/intermediates/samples-SIF.rds
 SAMPLES_LNLGSIF = 4_inversion/intermediates/samples-LNLGSIF.rds
 SAMPLES_ISSIF = 4_inversion/intermediates/samples-ISSIF.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
-SAMPLES_FREE_RESP_LNLGISSIF = 4_inversion/intermediates/samples-free-resp-LNLGISSIF.rds
+SAMPLES_LNLGIS_FREERESP = 4_inversion/intermediates/samples-LNLGIS-FREERESP.rds
+SAMPLES_LNLGISSIF_FREERESP = 4_inversion/intermediates/samples-LNLGISSIF-FREERESP.rds
 
+SAMPLES_FLAGS_FREERESP = --free-resp-linear
+SAMPLES_FLAGS = $(SAMPLES_FLAGS_$(findstring FREERESP, $*))
+
+ALPHA_ALL = 4_inversion/intermediates/osse-alpha.fst
 FLUX_AGGREGATORS = 4_inversion/intermediates/flux-aggregators.fst
 
-OSSE_BASE_CASES = ALPHA0 ALPHAV2
-OSSE_CASES = ALPHA0-WSIF ALPHA0-WOSIF ALPHAV2-WSIF ALPHAV2-WOSIF
+
+OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHAALL
+OSSE_CASES = ALPHA0-WSIF \
+	ALPHA0-WOSIF \
+	ALPHAV2-WSIF \
+	ALPHAV2-WOSIF \
+	ALPHAALL-WSIF \
+	ALPHAALL-WOSIF
+OSSE_FLAGS_ALPHA0 = --seed 0 --bio-clim-slice-w 1
+OSSE_FLAGS_ALPHAV2 = --seed 1 --true-alpha $(ALPHA_WOMBAT_V2)
+OSSE_FLAGS_ALPHAALL = --seed 2 --free-resp-linear --true-alpha $(ALPHA_ALL)
+OSSE_FLAGS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_FLAGS_$(findstring $(OSSE_BASE_CASE), $*)))
 OSSE_OBSERVATIONS_BASE = 4_inversion/intermediates/osse-observations
 OSSE_OBSERVATIONS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_OBSERVATIONS_BASE)-$(OSSE_BASE_CASE).fst)
 OSSE_SAMPLES_BASE = 4_inversion/intermediates/osse-samples
@@ -59,14 +75,11 @@ OSSE_FLUX_AGGREGATES_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_FL
 
 # OSSE inversions
 
-OSSE_FLAGS_SAMPLES_ALPHA0 = --bio-clim-slice-w 1
-OSSE_FLAGS_BASE_ALPHAV2 = --wombat-v2-alpha $(WOMBAT_V2_ALPHA)
-
 $(OSSE_FLUX_AGGREGATES_SAMPLES_BASE)-%.rds: \
 	4_inversion/src/flux-aggregates-samples.R \
 	$(OSSE_SAMPLES_BASE)-%.rds \
 	$(FLUX_AGGREGATORS)
-	Rscript $< $(OSSE_FLAGS_BASE_$(findstring ALPHAV2, $*)) \
+	Rscript $< $(OSSE_FLAGS_CASES) \
 		--samples $(OSSE_SAMPLES_BASE)-$*.rds \
 		--flux-aggregators $(FLUX_AGGREGATORS) \
 		--output $@
@@ -82,7 +95,10 @@ $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	$(H_LNLG) \
 	$(H_IS)
-	Rscript $< $(OSSE_FLAGS_SAMPLES_$*) \
+	Rscript $< $(OSSE_FLAGS_CASES) \
+		--free-resp-linear \
+		--n-samples 200 \
+		--n-warm-up 100 \
 		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
@@ -112,7 +128,10 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 	$(H_LNLG) \
 	$(H_IS) \
 	$(H_SIF)
-	Rscript $< $(OSSE_FLAGS_SAMPLES_$*) \
+	Rscript $< $(OSSE_FLAGS_CASES) \
+		--free-resp-linear \
+		--n-samples 200 \
+		--n-warm-up 100 \
 		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
@@ -143,7 +162,7 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 	$(H_LNLG) \
 	$(H_IS) \
 	$(H_SIF)
-	Rscript $< $(OSSE_FLAGS_BASE_$*) \
+	Rscript $< $(OSSE_FLAGS_$*) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
 		--prior $(PRIOR) \
@@ -159,6 +178,12 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 			$(H_LNLG) \
 			$(H_IS) \
 			$(H_SIF) \
+		--output $@
+
+$(ALPHA_ALL): \
+	4_inversion/src/osse-alpha.R
+	Rscript $< \
+		--alpha-wombat-v2 $(ALPHA_WOMBAT_V2) \
 		--output $@
 
 # Real-data inversions
@@ -211,7 +236,7 @@ $(SAMPLES_LNLG): \
 			$(H_LNLG) \
 		--output $@
 
-$(SAMPLES_LNLGIS): \
+$(SAMPLES_BASE)-LNLGIS%: \
 	4_inversion/src/samples.R \
 	$(OBSERVATIONS) \
 	$(BASIS_VECTORS) \
@@ -222,7 +247,7 @@ $(SAMPLES_LNLGIS): \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	$(H_LNLG) \
 	$(H_IS)
-	Rscript $< \
+	Rscript $< $(SAMPLES_FLAGS) \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
@@ -319,7 +344,7 @@ $(SAMPLES_ISSIF): \
 			$(H_SIF) \
 		--output $@
 
-$(SAMPLES_LNLGISSIF): \
+$(SAMPLES_BASE)-LNLGISSIF%: \
 	4_inversion/src/samples.R \
 	$(OBSERVATIONS) \
 	$(BASIS_VECTORS) \
@@ -332,7 +357,7 @@ $(SAMPLES_LNLGISSIF): \
 	$(H_LNLG) \
 	$(H_IS) \
 	$(H_SIF)
-	Rscript $< \
+	Rscript $< $(SAMPLES_FLAGS) \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
@@ -351,38 +376,6 @@ $(SAMPLES_LNLGISSIF): \
 			$(H_SIF) \
 		--output $@
 
-$(SAMPLES_FREE_RESP_LNLGISSIF): \
-	4_inversion/src/samples.R \
-	$(OBSERVATIONS) \
-	$(BASIS_VECTORS) \
-	$(HYPERPARAMETER_ESTIMATES) \
-	$(CONSTRAINTS) \
-	$(PRIOR) \
-	2_matching/intermediates/runs/base/oco2-hourly.fst \
-	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-	3_sif/intermediates/oco2-hourly-sif.fst \
-	$(H_LNLG) \
-	$(H_IS) \
-	$(H_SIF)
-	Rscript $< \
-		--free-resp-linear \
-		--observations $(OBSERVATIONS) \
-		--basis-vectors $(BASIS_VECTORS) \
-		--prior $(PRIOR) \
-		--constraints $(CONSTRAINTS) \
-		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
-		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
-		--control \
-			2_matching/intermediates/runs/base/oco2-hourly.fst \
-			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-			3_sif/intermediates/oco2-hourly-sif.fst \
-		--component-name LNLG IS SIF \
-		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
-		--component-transport-matrix \
-			$(H_LNLG) \
-			$(H_IS) \
-			$(H_SIF) \
-		--output $@
 
 # Hyperparameter estimates
 $(HYPERPARAMETER_ESTIMATES): \

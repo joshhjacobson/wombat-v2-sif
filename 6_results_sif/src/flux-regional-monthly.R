@@ -18,13 +18,13 @@ source('partials/utils.R')
 
 args <- list()
 args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
-# args$samples <- '4_inversion/intermediates/samples-LNLGISSIF.rds'
-args$samples <- '/data/wombat-v2-workflow/3_inversion/intermediates/samples-LNLGIS.rds'
+args$samples <- '4_inversion/intermediates/samples-LNLGIS-FREERESP.rds'
+# args$samples <- '/data/wombat-v2-workflow/3_inversion/intermediates/samples-LNLGIS.rds'
 args$output_base <- '6_results_sif/figures'
 
-observation_groups <- sub('samples-(.*)\\.rds', '\\1', basename(args$samples))
-output_path <- sprintf('%s/fluxes-regional-monthly-%s.pdf', args$output_base, observation_groups)
-posterior_label <- observation_groups
+samples_type <- sub('samples-(.*)\\.rds', '\\1', basename(args$samples))
+output_path <- sprintf('%s/fluxes-regional-monthly-%s.pdf', args$output_base, samples_type)
+posterior_label <- samples_type
 
 samples <- readRDS(args$samples)
 perturbations_base <- fst::read_fst(args$perturbations_augmented)

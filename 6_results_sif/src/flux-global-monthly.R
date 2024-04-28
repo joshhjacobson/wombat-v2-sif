@@ -19,17 +19,17 @@ source('partials/utils.R')
 args <- list()
 args$area_1x1 <- 'data/area-1x1.nc'
 args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
-args$samples <- '4_inversion/intermediates/samples-LNLGISSIF-FREERESP.rds'
+args$samples <- '4_inversion/intermediates/samples-LNLGIS-FREERESP.rds'
 args$alpha <- 'data/wombat-v2-alpha-LNLGIS.fst'
 args$region <- 'global'
 args$output_base <- '6_results_sif/figures'
 
-observation_groups <- sub('samples-(.*)\\.rds', '\\1', basename(args$samples))
-output_path <- sprintf('%s/fluxes-%s-monthly-%s.pdf', args$output_base, args$region, observation_groups)
+samples_type <- sub('samples-(.*)\\.rds', '\\1', basename(args$samples))
+output_path <- sprintf('%s/fluxes-%s-monthly-%s.pdf', args$output_base, args$region, samples_type)
 # osse_case <- sub('osse-samples-(.*)\\.rds', '\\1', basename(args$samples))
 # base_case <- strsplit(osse_case, '-', fixed = TRUE)[[1]][1]
 # output_path <- sprintf('%s/fluxes-%s-monthly-%s.pdf', args$output_base, args$region, osse_case)
-posterior_label <- observation_groups
+posterior_label <- samples_type
 
 with_nc_file(list(fn = args$area_1x1), {
   longitude_area <- as.vector(ncdf4::ncvar_get(fn, 'lon'))

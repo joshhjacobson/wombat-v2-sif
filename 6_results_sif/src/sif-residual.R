@@ -11,19 +11,22 @@ source('partials/utils.R')
 args <- list()
 args$observations <- '4_inversion/intermediates/observations.fst'
 args$control_sif <- '3_sif/intermediates/oco2-hourly-sif.fst'
+args$perturbations <- '4_inversion/intermediates/perturbations.fst'
 args$basis_vectors <- '4_inversion/intermediates/basis-vectors.fst'
 args$prior <- '4_inversion/intermediates/prior.rds'
-args$samples <- '4_inversion/intermediates/samples-free-resp-LNLGISSIF.rds'
+args$samples <- '4_inversion/intermediates/samples-LNLGISSIF.rds'
 args$region_sf <- '5_results/intermediates/region-sf.rds'
-args$free_resp_linear <- TRUE
+args$free_resp_linear <- FALSE
+
+samples_type <- sub('samples-(.*)\\.rds', '\\1', basename(args$samples))
 
 observations <- read_fst(args$observations)
 control_sif <- read_fst(args$control_sif)
+perturbations <- read_fst(args$perturbations)
 basis_vectors <- read_fst(args$basis_vectors)
 prior <- readRDS(args$prior)
 samples <- readRDS(args$samples)
 region_sf <- readRDS(args$region_sf)
-
 
 output <- observations %>%
   filter(
@@ -43,9 +46,20 @@ output <- observations %>%
       )),
     by = 'observation_id'
   ) %>%
+  left_join(
+    perturbations %>%
+      distinct(
+        model_longitude = longitude,
+        model_latitude = latitude,
+        region
+      ),
+    by = c('model_longitude', 'model_latitude')
+  ) %>%
   mutate(
     offset = value - value_control
   )
+
+# NOTE: missing regions are indeed NA
 
 # perturbations_sif <- perturbations_base %>%
 #   filter(
@@ -139,6 +153,30 @@ ggsave_base(
   width = 24,
   height = 12
 )
+
+
+output_fit_obs_regional <- ggplot(
+  output %>% filter(region %in% c(sprintf('Region%02d', 1:11), 'RegionNZ'))
+) +
+  geom_point(aes(x = fitted, y = value), shape = 1, alpha = 0.1) +
+  geom_abline(intercept = 0, slope = 1, colour = 'grey50', linetype = 'dashed') +
+  coord_equal() +
+  facet_wrap(~region, ncol = 4) +
+  labs(
+    x = expression('Fitted SIF [W' * m^-2 * µm^-1 * sr^-1 * ']'),
+    y = expression('Observed SIF [W' * m^-2 * µm^-1 * sr^-1 * ']'),
+    title = sprintf('Fitted vs. Observed SIF by region, %s', samples_type)
+  )
+
+ggsave_base(
+  sprintf('6_results_sif/figures/sif-fitted-vs-observed-regional-%s.png', samples_type),
+  output_fit_obs_regional,
+  bg = 'white',
+  width = 14,
+  height = 14
+)
+
+
 
 output_global_monthly <- output %>%
   filter(

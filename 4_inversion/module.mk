@@ -1,5 +1,8 @@
 $(shell mkdir -p 4_inversion/intermediates)
 
+SIB4_CLIMATOLOGY_ASSIM_2X25 = 4_inversion/intermediates/sib4-climatology-assim-2x25.nc
+SIB4_CLIMATOLOGY_RESP_TOT_2X25 = 4_inversion/intermediates/sib4-climatology-resp-tot-2x25.nc
+
 CONTROL_EMISSIONS = 4_inversion/intermediates/control-emissions.fst
 PERTURBATIONS = 4_inversion/intermediates/perturbations.fst
 OBSERVATIONS = 4_inversion/intermediates/observations.fst
@@ -49,20 +52,19 @@ SAMPLES_LNLGISSIF_FREERESP = 4_inversion/intermediates/samples-LNLGISSIF-FREERES
 SAMPLES_FLAGS_FREERESP = --free-resp-linear
 SAMPLES_FLAGS = $(SAMPLES_FLAGS_$(findstring FREERESP, $*))
 
-ALPHA_ALL = 4_inversion/intermediates/osse-alpha.fst
+ALPHA_FREE = 4_inversion/intermediates/osse-alpha.fst
 FLUX_AGGREGATORS = 4_inversion/intermediates/flux-aggregators.fst
 
-
-OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHAALL
+OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHAFREE
 OSSE_CASES = ALPHA0-WSIF \
 	ALPHA0-WOSIF \
 	ALPHAV2-WSIF \
 	ALPHAV2-WOSIF \
-	ALPHAALL-WSIF \
-	ALPHAALL-WOSIF
+	ALPHAFREE-WSIF \
+	ALPHAFREE-WOSIF
 OSSE_FLAGS_ALPHA0 = --seed 0 --bio-clim-slice-w 1
 OSSE_FLAGS_ALPHAV2 = --seed 1 --true-alpha $(ALPHA_WOMBAT_V2)
-OSSE_FLAGS_ALPHAALL = --seed 2 --free-resp-linear --true-alpha $(ALPHA_ALL)
+OSSE_FLAGS_ALPHAFREE = --seed 2 --free-resp-linear --true-alpha $(ALPHA_FREE)
 OSSE_FLAGS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_FLAGS_$(findstring $(OSSE_BASE_CASE), $*)))
 OSSE_OBSERVATIONS_BASE = 4_inversion/intermediates/osse-observations
 OSSE_OBSERVATIONS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_OBSERVATIONS_BASE)-$(OSSE_BASE_CASE).fst)
@@ -180,9 +182,19 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 			$(H_SIF) \
 		--output $@
 
-$(ALPHA_ALL): \
-	4_inversion/src/osse-alpha.R
+$(ALPHA_FREE): \
+	4_inversion/src/osse-alpha.R \
+	$(REGION_MASK) \
+	$(SIB4_CLIMATOLOGY_ASSIM_2X25) \
+	$(SIB4_CLIMATOLOGY_RESP_TOT_2X25) \
+	$(BASIS_VECTORS) \
+	$(CONTROL_EMISSIONS)
 	Rscript $< \
+		--region-mask $(REGION_MASK) \
+		--sib4-climatology-assim $(SIB4_CLIMATOLOGY_ASSIM_2X25) \
+		--sib4-climatology-resp-tot $(SIB4_CLIMATOLOGY_RESP_TOT_2X25) \
+		--basis-vectors $(BASIS_VECTORS) \
+		--control-emissions $(CONTROL_EMISSIONS) \
 		--alpha-wombat-v2 $(ALPHA_WOMBAT_V2) \
 		--output $@
 
@@ -591,3 +603,15 @@ $(CONTROL_EMISSIONS): \
 	Rscript $< \
 		--matched-runs 2_matching/intermediates/runs \
 		--output $@
+
+$(SIB4_CLIMATOLOGY_ASSIM_2X25): \
+	$(GEOS_2X25_GRID) \
+	$(SIB4_CLIMATOLOGY_ASSIM)
+	cdo -f nc2 remapcon,$(GEOS_2X25_GRID) $(SIB4_CLIMATOLOGY_ASSIM) $@
+	ncks -A -v variable $(SIB4_CLIMATOLOGY_ASSIM) $@
+
+$(SIB4_CLIMATOLOGY_RESP_TOT_2X25): \
+	$(GEOS_2X25_GRID) \
+	$(SIB4_CLIMATOLOGY_RESP_TOT)
+	cdo -f nc2 remapcon,$(GEOS_2X25_GRID) $(SIB4_CLIMATOLOGY_RESP_TOT) $@
+	ncks -A -v variable $(SIB4_CLIMATOLOGY_RESP_TOT) $@

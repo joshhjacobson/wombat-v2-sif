@@ -15,16 +15,6 @@ parser$add_argument('--alpha-wombat-v2')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
-# args <- list(
-#   region_mask = '1_transport/intermediates/region-mask.rds',
-#   sib4_climatology_assim = '5_results/intermediates/sib4-climatology-assim-2x25.nc',
-#   sib4_climatology_resp_tot = '5_results/intermediates/sib4-climatology-resp-tot-2x25.nc',
-#   basis_vectors = '4_inversion/intermediates/basis-vectors.fst',
-#   control_emissions = '4_inversion/intermediates/control-emissions.fst',
-#   alpha_wombat_v2 = 'data/wombat-v2-alpha-LNLGIS.fst',
-#   output = '4_inversion/intermediates/osse-alpha.fst'
-# )
-
 set.seed(20240425)
 
 basis_vectors <- fst::read_fst(args$basis_vectors)
@@ -90,9 +80,9 @@ alpha_bio_assim_linear <- alpha %>%
     component %in% c('intercept', 'trend')
   ) %>%
   mutate(
-    # value = (1 + rnorm(nrow(.), sd = 0.2)) * value
-    value = (1 + 5) * value,
-    alpha_adjusted = 5 * value
+    delta = rnorm(n(), mean = 5, sd = 1),
+    alpha_adjusted = delta * value,
+    value = (1 + delta) * value
   ) %>%
   select(c(basis_vector, inventory, component, region, value, alpha_adjusted))
 

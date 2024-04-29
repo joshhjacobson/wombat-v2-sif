@@ -37,7 +37,9 @@ H_SIF = 4_inversion/intermediates/H-SIF.mat.lz4
 RESIDUAL_1ST_STAGE = 4_inversion/intermediates/residual-1st-stage.fst
 HYPERPARAMETER_ESTIMATES = 4_inversion/intermediates/hyperparameter-estimates.fst
 
-# NOTE(jhj): setup sample cases if keeping most of these?
+SAMPLES_FLAGS_FREERESP = --free-resp-linear
+SAMPLES_FLAGS = $(SAMPLES_FLAGS_$(findstring FREERESP, $*))
+
 SAMPLES_BASE = 4_inversion/intermediates/samples
 SAMPLES_IS = 4_inversion/intermediates/samples-IS.rds
 SAMPLES_LNLG = 4_inversion/intermediates/samples-LNLG.rds
@@ -48,9 +50,6 @@ SAMPLES_ISSIF = 4_inversion/intermediates/samples-ISSIF.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 SAMPLES_LNLGIS_FREERESP = 4_inversion/intermediates/samples-LNLGIS-FREERESP.rds
 SAMPLES_LNLGISSIF_FREERESP = 4_inversion/intermediates/samples-LNLGISSIF-FREERESP.rds
-
-SAMPLES_FLAGS_FREERESP = --free-resp-linear
-SAMPLES_FLAGS = $(SAMPLES_FLAGS_$(findstring FREERESP, $*))
 
 ALPHA_FREE = 4_inversion/intermediates/osse-alpha.fst
 FLUX_AGGREGATORS = 4_inversion/intermediates/flux-aggregators.fst

@@ -14,7 +14,7 @@ args <- list(
     '3_sif/intermediates/oco2-hourly-sif.fst'
   ),
   constraints = '4_inversion/intermediates/constraints.rds',
-  free_resp_linear = FALSE,
+  fix_resp_linear = 'None',
   component_name = c('LNLG', 'IS', 'SIF'),
   component_parts = c('LN|LG', 'IS', 'LN_SIF|LG_SIF'),
   component_transport_matrix = c(

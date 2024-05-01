@@ -25,7 +25,6 @@ sample_normal_precision <- function(Q) {
 
 parser <- ArgumentParser()
 parser$add_argument('--seed', type = 'integer', default = 0)
-parser$add_argument('--free-resp-linear', action = 'store_true', default = FALSE)
 parser$add_argument('--true-alpha')
 parser$add_argument('--basis-vectors')
 parser$add_argument('--hyperparameter-estimates')

@@ -12,6 +12,7 @@ parser$add_argument('--sib4-climatology-resp-tot')
 parser$add_argument('--basis-vectors')
 parser$add_argument('--control-emissions')
 parser$add_argument('--alpha-wombat-v2')
+parser$add_argument('--fix-resp-linear')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
@@ -20,6 +21,10 @@ set.seed(20240425)
 basis_vectors <- fst::read_fst(args$basis_vectors)
 control_emissions <- fst::read_fst(args$control_emissions)
 alpha <- fst::read_fst(args$alpha_wombat_v2)
+
+regions_land <- sprintf('Region%02d', 1:11)
+regions_free <- setdiff(regions_land, args$fix_resp_linear)
+stopifnot(length(regions_free) > 0)
 
 region_list <- readRDS(args$region_mask)
 region_values <- region_list[[1]]
@@ -56,7 +61,7 @@ climatology_linear <- bind_rows(
     region_grid,
     by = c('longitude', 'latitude')
   ) %>%
-  filter(region %in% sprintf('Region%02d', 1:11)) %>%
+  filter(region %in% regions_free) %>%
   left_join(
     control_emissions %>% distinct(longitude, latitude, area),
     by = c('longitude', 'latitude')

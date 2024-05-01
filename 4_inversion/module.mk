@@ -37,7 +37,7 @@ H_SIF = 4_inversion/intermediates/H-SIF.mat.lz4
 RESIDUAL_1ST_STAGE = 4_inversion/intermediates/residual-1st-stage.fst
 HYPERPARAMETER_ESTIMATES = 4_inversion/intermediates/hyperparameter-estimates.fst
 
-SAMPLES_FLAGS_FREERESP = --free-resp-linear
+SAMPLES_FLAGS_FREERESP = --fix-resp-linear Region03
 SAMPLES_FLAGS = $(SAMPLES_FLAGS_$(findstring FREERESP, $*))
 
 SAMPLES_BASE = 4_inversion/intermediates/samples
@@ -63,7 +63,7 @@ OSSE_CASES = ALPHA0-WSIF \
 	ALPHAFREE-WOSIF
 OSSE_FLAGS_ALPHA0 = --seed 0 --bio-clim-slice-w 1
 OSSE_FLAGS_ALPHAV2 = --seed 1 --true-alpha $(ALPHA_WOMBAT_V2)
-OSSE_FLAGS_ALPHAFREE = --seed 2 --free-resp-linear --true-alpha $(ALPHA_FREE)
+OSSE_FLAGS_ALPHAFREE = --seed 2 --true-alpha $(ALPHA_FREE)
 OSSE_FLAGS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_FLAGS_$(findstring $(OSSE_BASE_CASE), $*)))
 OSSE_OBSERVATIONS_BASE = 4_inversion/intermediates/osse-observations
 OSSE_OBSERVATIONS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_OBSERVATIONS_BASE)-$(OSSE_BASE_CASE).fst)
@@ -97,9 +97,9 @@ $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 	$(H_LNLG) \
 	$(H_IS)
 	Rscript $< $(OSSE_FLAGS_CASES) \
-		--free-resp-linear \
 		--n-samples 200 \
 		--n-warm-up 100 \
+		--fix-resp-linear Region03 \
 		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
@@ -130,9 +130,9 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 	$(H_IS) \
 	$(H_SIF)
 	Rscript $< $(OSSE_FLAGS_CASES) \
-		--free-resp-linear \
 		--n-samples 200 \
 		--n-warm-up 100 \
+		--fix-resp-linear Region03 \
 		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
@@ -195,6 +195,7 @@ $(ALPHA_FREE): \
 		--basis-vectors $(BASIS_VECTORS) \
 		--control-emissions $(CONTROL_EMISSIONS) \
 		--alpha-wombat-v2 $(ALPHA_WOMBAT_V2) \
+		--fix-resp-linear Region03 \
 		--output $@
 
 # Real-data inversions

@@ -92,7 +92,8 @@ alpha_bio_assim_linear <- alpha %>%
   select(c(basis_vector, inventory, component, region, value, alpha_adjusted))
 
 log_debug('Computing adjusted linear component for bio_resp_tot')
-# NOTE(jhj): This construction ensures that the implied linear component for NEE is unchanged
+# NOTE(jhj): This construction ensures that the implied linear component for NEE
+# is unchanged at regional scales or larger
 alpha_bio_resp_tot_linear <- perturbations %>%
   left_join(
     alpha_bio_assim_linear %>% select(

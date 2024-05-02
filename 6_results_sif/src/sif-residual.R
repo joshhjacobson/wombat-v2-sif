@@ -16,7 +16,6 @@ args$basis_vectors <- '4_inversion/intermediates/basis-vectors.fst'
 args$prior <- '4_inversion/intermediates/prior.rds'
 args$samples <- '4_inversion/intermediates/samples-LNLGISSIF.rds'
 args$region_sf <- '5_results/intermediates/region-sf.rds'
-args$free_resp_linear <- FALSE
 
 samples_type <- sub('samples-(.*)\\.rds', '\\1', basename(args$samples))
 
@@ -81,21 +80,13 @@ output <- observations %>%
 n_observations <- nrow(output)
 n_alpha <- nrow(basis_vectors)
 n_mat <- n_observations * n_alpha
-alpha_to_include <- if (args$free_resp_linear) {
-  is.finite(diag(prior$precision))
-} else {
-  is.finite(diag(prior$precision)) & with(
-    basis_vectors,
-    !(inventory == 'bio_resp_tot' & component %in% c('intercept', 'trend'))
-  )
-}
 
 fn <- pipe(sprintf('lz4 -v %s -', '4_inversion/intermediates/H-SIF.mat.lz4'), 'rb')
 H_vec <- readBin(fn, 'double', n_mat)
 close(fn)
 H_sif <- matrix(H_vec, nrow = n_observations)
 gc()
-H_sif <- H_sif[, alpha_to_include]
+H_sif <- H_sif[, samples$alpha_df$basis_vector]
 gc()
 
 output <- output %>%
@@ -241,14 +232,14 @@ p <- ggplot(output_global_monthly) +
     y = expression('SIF [W' * m^-2 * µm^-1 * sr^-1 * ']'),
     colour = NULL,
     linetype = NULL,
-    title = 'Monthly SIF: mean across observation locations'
+    title = sprintf('Monthly SIF: mean across observation locations, %s', samples_type)
   ) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1, colour = '#23373b')
   )
 
 ggsave_base(
-  '6_results_sif/figures/sif-components-global_free-resp.pdf',
+  sprintf('6_results_sif/figures/sif-components-global-%s.pdf', samples_type),
   p,
   width = 18,
   height = 12

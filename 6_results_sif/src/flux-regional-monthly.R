@@ -18,8 +18,7 @@ source('partials/utils.R')
 
 args <- list()
 args$perturbations_augmented <- '5_results/intermediates/perturbations-augmented.fst'
-args$samples <- '4_inversion/intermediates/samples-LNLGIS-FREERESP.rds'
-# args$samples <- '/data/wombat-v2-workflow/3_inversion/intermediates/samples-LNLGIS.rds'
+args$samples <- '4_inversion/intermediates/samples-LNLGISSIF-FREERESP.rds'
 args$output_base <- '6_results_sif/figures'
 
 samples_type <- sub('samples-(.*)\\.rds', '\\1', basename(args$samples))

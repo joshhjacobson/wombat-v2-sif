@@ -16,12 +16,9 @@ library(patchwork)
 # args <- parser$parse_args()
 
 args <- list(
-  samples = '4_inversion/intermediates/samples-free-resp-LNLGISSIF.rds',
-  free_resp_linear = TRUE,
-  output_base = '6_results_sif/figures/traceplots/traceplots-free-resp-LNLGISSIF'
+  samples = '4_inversion/intermediates/samples-LNLGIS-FREERESP.rds',
+  output_base = '6_results_sif/figures/traceplots/traceplots-LNLGIS-FREERESP'
 )
-N_MCMC_WARM_UP <- 100
-N_MCMC_SAMPLES <- 200
 
 
 samples <- readRDS(args$samples)
@@ -29,14 +26,14 @@ samples <- readRDS(args$samples)
 plot_traces <- function(x, names) {
   is_matrix <- is.matrix(x)
   if (!is_matrix) x <- t(t(x))
-  iterations <- (N_MCMC_WARM_UP + 1) : N_MCMC_SAMPLES
+  iterations <- (samples$n_warm_up + 1) : samples$n_samples
   df <- data.frame(
     iteration = rep(iterations, ncol(x)),
     value = as.vector(x[iterations, ])
   )
 
   if (!missing(names)) {
-    df$name <- rep(names, each = N_MCMC_SAMPLES - N_MCMC_WARM_UP)
+    df$name <- rep(names, each = samples$n_samples - samples$n_warm_up)
 
     output <- ggplot(mapping = aes(iteration, value, colour = name))
   } else {
@@ -47,7 +44,7 @@ plot_traces <- function(x, names) {
     geom_line(data = df)
 
   if (!missing(names)) {
-    label_iteration <- round((N_MCMC_WARM_UP + 1 + N_MCMC_SAMPLES) / 2)
+    label_iteration <- round((samples$n_warm_up + 1 + samples$n_samples) / 2)
     df <- data.frame(
       name = names,
       iteration = label_iteration
@@ -130,9 +127,12 @@ ggsave_base(
 
 # Linear Components
 components <- c('intercept', 'trend')
-
 traces <- list()
-if (args$free_resp_linear) {
+if (
+  samples$alpha_df %>%
+    filter(inventory == 'bio_resp_tot', component %in% components) %>%
+    nrow() > 0
+) {
   inventories <- c('bio_assim', 'bio_resp_tot')
   for (r in 1:11) {
     for (j in seq_along(components)) {

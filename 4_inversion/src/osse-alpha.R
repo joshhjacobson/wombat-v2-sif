@@ -82,7 +82,8 @@ log_debug('Simulating adjusted linear component for bio_assim')
 alpha_bio_assim_linear <- alpha %>%
   filter(
     inventory == 'bio_assim',
-    component %in% c('intercept', 'trend')
+    component %in% c('intercept', 'trend'),
+    region %in% regions_free
   ) %>%
   mutate(
     delta = rnorm(n(), mean = 5, sd = 1),
@@ -133,7 +134,11 @@ output <- bind_rows(
   alpha_bio_linear,
   alpha %>%
     filter(
-      !(inventory == 'bio_assim' & component %in% c('intercept', 'trend'))
+      !(
+        inventory == 'bio_assim' &
+          component %in% c('intercept', 'trend') &
+          region %in% regions_free
+      )
     )
 ) %>%
   mutate(

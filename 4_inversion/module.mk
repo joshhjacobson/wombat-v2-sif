@@ -162,7 +162,8 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 	3_sif/intermediates/oco2-hourly-sif.fst \
 	$(H_LNLG) \
 	$(H_IS) \
-	$(H_SIF)
+	$(H_SIF) \
+	$(ALPHA_FREE)
 	Rscript $< $(OSSE_FLAGS_$*) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \

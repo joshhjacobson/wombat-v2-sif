@@ -23,8 +23,8 @@ args <- list(
   flux_samples_alpha0_wosif = '4_inversion/intermediates/osse-flux-aggregates-samples-ALPHA0-WOSIF.rds',
   flux_samples_alphav2_wsif = '4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WSIF.rds',
   flux_samples_alphav2_wosif = '4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WOSIF.rds',
-  flux_samples_alphav2_wsif = '4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAFREE-WSIF.rds',
-  flux_samples_alphav2_wosif = '4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAFREE-WOSIF.rds'
+  flux_samples_alphafree_wsif = '4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAFREE-WSIF.rds',
+  flux_samples_alphafree_wosif = '4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAFREE-WOSIF.rds'
 )
 
 read_flux_samples <- function(filename, estimates = 'Posterior') {
@@ -70,26 +70,26 @@ flux_aggregates_samples <- bind_rows(
     mutate(
       case = 'ALPHAV2',
       estimate = 'Without SIF'
+    ),
+  read_flux_samples(
+    args$flux_samples_alphafree_wsif,
+    c('Truth', 'Posterior')
+  ) %>%
+    mutate(
+      case = 'ALPHAFREE',
+      estimate = ifelse(
+        estimate == 'Posterior',
+        'With SIF',
+        estimate
+      )
+    ),
+  read_flux_samples(
+    args$flux_samples_alphafree_wosif,
+  ) %>%
+    mutate(
+      case = 'ALPHAFREE',
+      estimate = 'Without SIF'
     )
-  # read_flux_samples(
-  #   args$flux_samples_alphafree_wsif,
-  #   c('Truth', 'Posterior')
-  # ) %>%
-  #   mutate(
-  #     case = 'ALPHAFREE',
-  #     estimate = ifelse(
-  #       estimate == 'Posterior',
-  #       'With SIF',
-  #       estimate
-  #     )
-  #   ),
-  # read_flux_samples(
-  #   args$flux_samples_alphafree_wosif,
-  # ) %>%
-  #   mutate(
-  #     case = 'ALPHAFREE',
-  #     estimate = 'Without SIF'
-  #   )
 )
 
 flux_aggregates_samples %>% glimpse
@@ -114,7 +114,7 @@ metrics_region <- bind_rows(
   osse_fluxes %>%
     filter(
       inventory %in% c('GPP', 'Respiration', 'NEE'),
-      region %in% sprintf('Region%02d', 1:11)
+      region %in% sprintf('T%02d', 1:11)
     ) %>%
     group_by(case, estimate, inventory, region) %>%
     summarise(
@@ -125,7 +125,7 @@ metrics_region <- bind_rows(
   osse_fluxes %>%
     filter(
       inventory %in% c('GPP', 'Respiration', 'NEE'),
-      region %in% sprintf('Region%02d', 1:11)
+      region %in% sprintf('T%02d', 1:11)
     ) %>%
     group_by(case, estimate, inventory, region) %>%
     summarise(
@@ -170,14 +170,14 @@ metrics_overall <- osse_fluxes %>%
     .groups = 'drop'
   )
 
-estimates <- unique(sort(output$estimate))
-inventories <- unique(sort(output$inventory))
+estimates <- unique(sort(metrics_overall$estimate))
+inventories <- unique(sort(metrics_overall$inventory))
 
-rmse_matrix <- output %>%
+rmse_matrix <- metrics_overall %>%
   select(case, estimate, inventory, rmse) %>%
   pivot_wider(names_from = inventory, values_from = rmse)
 
-mcrps_matrix <- output %>%
+mcrps_matrix <- metrics_overall %>%
   select(case, estimate, inventory, mcrps) %>%
   pivot_wider(names_from = inventory, values_from = mcrps)
 
@@ -215,20 +215,26 @@ plot_regions <- function(df) {
     aes(x = region, colour = estimate, order = estimate)
   ) +
     geom_hline(yintercept = 0, colour = 'black') +
-    geom_pointrange(
-      aes(
-        y = value,
-        ymin = q025,
-        ymax = q975,
-        shape = case
-      ),
-      fatten = 2,
+    geom_point(
+      aes(y = value, shape = case),
+      size = 1.5,
       position = position_dodge(width = 0.75)
     ) +
+    # geom_pointrange(
+    #   aes(
+    #     y = value,
+    #     ymin = q025,
+    #     ymax = q975,
+    #     shape = case
+    #   ),
+    #   fatten = 2,
+    #   position = position_dodge(width = 0.75)
+    # ) +
     facet_wrap(~ inventory, scales = 'free_y', nrow = 3) +
     scale_colour_manual(
       name = 'Posterior',
-      values = c('Without SIF' = 'grey70', 'With SIF' = '#fb8b00')
+      values = c('Without SIF' = 'grey70', 'With SIF' = '#fb8b00'),
+      guide = guide_legend(order = 1)
     ) +
     scale_shape_manual(
       name = 'Truth',
@@ -241,7 +247,8 @@ plot_regions <- function(df) {
         'Bottom-up',
         'WOMBAT v2',
         'WOMBAT v2, modified'
-      )
+      ),
+      guide = guide_legend(order = 2)
     )
 }
 

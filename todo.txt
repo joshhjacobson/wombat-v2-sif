@@ -3,13 +3,12 @@ Overall todo:
 -[x] Rerun inversion
 -[x] Implement OSSE
 -[x] Unfix SIF
--[] Fix resp linear in certain regions?
--[] Include SIF outliers?
+-[x] Fix resp linear in certain regions?
 
 -[x] run LNLGIS inversion with resp free
 -[x] plot fluxes for individual transcoms to see whether any are especially large
--[] create new alpha by changing the assim and resp linear components by about 20%, constrained so that NEE will be the same
--[] plot boxplots for metrics over regions and then months
+-[x] create new alpha by changing the assim and resp linear components by about 20%, constrained so that NEE will be the same
+-[x] plot boxplots for metrics over regions and then months
 
 
 Plots to make for each set of samples
@@ -79,3 +78,29 @@ OSSE Todo:
   - Very large precision parameters for trend/seasonality component; numerical instability with essentially zero variance?
 -[x] General plots for OSSE samples (with comparisions)
 -[x] RMSE and CRPS (one table each): OSSE cases in rows and fluxes in columns (total, gpp, resp, etc)
+
+
+Results to include:
+- discuss ability to unfix the resp linear component as a minor extension of v2
+
+OSSE:
+- metrics table
+- metrics by month and region for ALPHAFREE (others in supplement)
+
+Real-data:
+With resp. linear free in all cases...
+- monthly posterior fluxes with and without SIF (global and regional)
+  - average seasonal cycle across all years for GPP and resp.; any changes with SIF?
+  - can difference with and without SIF be shown to be significant? (eg Shiga et al 2018, Fig 3)
+- map changes in average GPP and resp.; without SIF - with SIF (see Fig 3 in Bryne et al 2018 for good comparison with diff)
+  - maybe also map average of residuals during el nino period; without SIF vs with SIF
+  - map average GPP and resp. by season (average over all years)?
+- percent uncertainty reduction with SIF (map, latitudes, time, etc.)
+- emissions during el nino 2015/2016?
+- Bayesian learning? posterior - prior vs (prior, time, latitude)
+  - map of average annual difference (eg Fig 1, Macbean et al 2018)
+- fitted and residual SIF?; time series and maps
+- Parameter values and distributions? Similar length-scales for OCO-2 XCO2 and SIF
+
+
+Is there some special feature we can find when SIF is included?

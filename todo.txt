@@ -82,10 +82,12 @@ OSSE Todo:
 
 Results to include:
 - discuss ability to unfix the resp linear component as a minor extension of v2
+- maps of total emissions by grid cell for each obs type (IS, LNLG, and SIF); time series of observations by month for each type
 
 OSSE:
 - metrics table
 - metrics by month and region for ALPHAFREE (others in supplement)
+- QQ plots to comparing the true quantiles to the estimated ones?
 
 Real-data:
 With resp. linear free in all cases...

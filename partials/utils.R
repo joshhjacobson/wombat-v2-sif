@@ -511,6 +511,21 @@ REGION_PLOT_SETTINGS <- list(
   )
 )
 
+OSSE_PLOT_SETTINGS <- list(
+  'ALPHA0' = list(
+    posterior_name = 'Bottom-up',
+    in_supplement = TRUE
+  ),
+  'ALPHAV2' = list(
+    posterior_name = 'WOMBAT v2',
+    in_supplement = TRUE
+  ),
+  'ALPHAFREE' = list(
+    posterior_name = 'WOMBAT v2, modified',
+    in_supplement = FALSE
+  )
+)
+
 # These are from the WOMBATv1 paper
 W_PRIOR <- list(
   shape = 0.3542832,

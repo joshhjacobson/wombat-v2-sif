@@ -19,8 +19,9 @@ SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAFREE.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHA0.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHAV2.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHAFREE.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/observation-map.pdf
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHAFREE.pdf
+	
+	# $(6_RESULTS_SIF_FIGURES_DIR)/observation-map.pdf
 
 
 ## Products
@@ -43,6 +44,26 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \
 		--flux-samples-alphav2-wosif 4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAV2-WOSIF.rds \
 		--flux-samples-alphafree-wsif 4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAFREE-WSIF.rds \
 		--flux-samples-alphafree-wosif 4_inversion/intermediates/osse-flux-aggregates-samples-ALPHAFREE-WOSIF.rds \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-%.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/osse-metrics-monthly.R \
+	4_inversion/intermediates/osse-flux-aggregates-samples-%-WSIF.rds \
+	4_inversion/intermediates/osse-flux-aggregates-samples-%-WOSIF.rds
+	Rscript $< \
+		--flux-samples-wsif 4_inversion/intermediates/osse-flux-aggregates-samples-$*-WSIF.rds \
+		--flux-samples-wosif 4_inversion/intermediates/osse-flux-aggregates-samples-$*-WOSIF.rds \
+		--osse-base-case $* \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-%.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/osse-metrics-regional.R \
+	4_inversion/intermediates/osse-flux-aggregates-samples-%-WSIF.rds \
+	4_inversion/intermediates/osse-flux-aggregates-samples-%-WOSIF.rds
+	Rscript $< \
+		--flux-samples-wsif 4_inversion/intermediates/osse-flux-aggregates-samples-$*-WSIF.rds \
+		--flux-samples-wosif 4_inversion/intermediates/osse-flux-aggregates-samples-$*-WOSIF.rds \
+		--osse-base-case $* \
 		--output $@
 
 ## Intermediates

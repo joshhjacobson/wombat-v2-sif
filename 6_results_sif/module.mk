@@ -19,9 +19,8 @@ SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAFREE.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHA0.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHAV2.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHAFREE.pdf
-	
-	# $(6_RESULTS_SIF_FIGURES_DIR)/observation-map.pdf
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHAFREE.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf
 
 
 ## Products
@@ -29,6 +28,7 @@ SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
 
 ## Figures
 
+# TODO: convert to \textbf{}
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-metrics-table.R \
 	4_inversion/intermediates/osse-flux-aggregates-samples-ALPHA0-WSIF.rds \
@@ -49,7 +49,8 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-%.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-metrics-monthly.R \
 	4_inversion/intermediates/osse-flux-aggregates-samples-%-WSIF.rds \
-	4_inversion/intermediates/osse-flux-aggregates-samples-%-WOSIF.rds
+	4_inversion/intermediates/osse-flux-aggregates-samples-%-WOSIF.rds \
+	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--flux-samples-wsif 4_inversion/intermediates/osse-flux-aggregates-samples-$*-WSIF.rds \
 		--flux-samples-wosif 4_inversion/intermediates/osse-flux-aggregates-samples-$*-WOSIF.rds \
@@ -59,11 +60,20 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-%.pdf: \
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-%.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-metrics-regional.R \
 	4_inversion/intermediates/osse-flux-aggregates-samples-%-WSIF.rds \
-	4_inversion/intermediates/osse-flux-aggregates-samples-%-WOSIF.rds
+	4_inversion/intermediates/osse-flux-aggregates-samples-%-WOSIF.rds \
+	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--flux-samples-wsif 4_inversion/intermediates/osse-flux-aggregates-samples-$*-WSIF.rds \
 		--flux-samples-wosif 4_inversion/intermediates/osse-flux-aggregates-samples-$*-WOSIF.rds \
 		--osse-base-case $* \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/observation-count.R \
+	$(OBSERVATIONS) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--observations $(OBSERVATIONS) \
 		--output $@
 
 ## Intermediates

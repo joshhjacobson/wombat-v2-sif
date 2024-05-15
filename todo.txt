@@ -82,7 +82,8 @@ OSSE Todo:
 
 Results to include:
 - discuss ability to unfix the resp linear component as a minor extension of v2
-- maps of total emissions by grid cell for each obs type (IS, LNLG, and SIF); time series of observations by month for each type
+- maps of total number of obs by grid cell for each obs type (IS, LNLG, and SIF); time series of observations by month for each type
+  - also see Bryne 2023 Fig 3
 
 OSSE:
 - metrics table

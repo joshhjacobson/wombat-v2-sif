@@ -37,19 +37,10 @@ H_SIF = 4_inversion/intermediates/H-SIF.mat.lz4
 RESIDUAL_1ST_STAGE = 4_inversion/intermediates/residual-1st-stage.fst
 HYPERPARAMETER_ESTIMATES = 4_inversion/intermediates/hyperparameter-estimates.fst
 
-SAMPLES_FLAGS_FREERESP = --fix-resp-linear Region03
-SAMPLES_FLAGS = $(SAMPLES_FLAGS_$(findstring FREERESP, $*))
-
-SAMPLES_BASE = 4_inversion/intermediates/samples
 SAMPLES_IS = 4_inversion/intermediates/samples-IS.rds
 SAMPLES_LNLG = 4_inversion/intermediates/samples-LNLG.rds
 SAMPLES_LNLGIS = 4_inversion/intermediates/samples-LNLGIS.rds
-SAMPLES_SIF = 4_inversion/intermediates/samples-SIF.rds
-SAMPLES_LNLGSIF = 4_inversion/intermediates/samples-LNLGSIF.rds
-SAMPLES_ISSIF = 4_inversion/intermediates/samples-ISSIF.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
-SAMPLES_LNLGIS_FREERESP = 4_inversion/intermediates/samples-LNLGIS-FREERESP.rds
-SAMPLES_LNLGISSIF_FREERESP = 4_inversion/intermediates/samples-LNLGISSIF-FREERESP.rds
 
 ALPHA_FREE = 4_inversion/intermediates/osse-alpha.fst
 FLUX_AGGREGATORS = 4_inversion/intermediates/flux-aggregators.fst
@@ -99,7 +90,6 @@ $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 	Rscript $< $(OSSE_FLAGS_CASES) \
 		--n-samples 200 \
 		--n-warm-up 100 \
-		--fix-resp-linear Region03 \
 		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
@@ -249,7 +239,7 @@ $(SAMPLES_LNLG): \
 			$(H_LNLG) \
 		--output $@
 
-$(SAMPLES_BASE)-LNLGIS%: \
+$(SAMPLES_LNLGIS): \
 	4_inversion/src/samples.R \
 	$(OBSERVATIONS) \
 	$(BASIS_VECTORS) \
@@ -260,7 +250,7 @@ $(SAMPLES_BASE)-LNLGIS%: \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	$(H_LNLG) \
 	$(H_IS)
-	Rscript $< $(SAMPLES_FLAGS) \
+	Rscript $< \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
@@ -277,87 +267,9 @@ $(SAMPLES_BASE)-LNLGIS%: \
 			$(H_IS) \
 		--output $@
 
-$(SAMPLES_SIF): \
-	4_inversion/src/samples.R \
-	$(OBSERVATIONS) \
-	$(BASIS_VECTORS) \
-	$(HYPERPARAMETER_ESTIMATES) \
-	$(CONSTRAINTS) \
-	$(PRIOR) \
-	3_sif/intermediates/oco2-hourly-sif.fst \
-	$(H_SIF)
-	Rscript $< \
-		--observations $(OBSERVATIONS) \
-		--basis-vectors $(BASIS_VECTORS) \
-		--prior $(PRIOR) \
-		--constraints $(CONSTRAINTS) \
-		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
-		--overall-observation-mode LN_SIF LG_SIF \
-		--control \
-			3_sif/intermediates/oco2-hourly-sif.fst \
-		--component-name SIF \
-		--component-parts "LN_SIF|LG_SIF" \
-		--component-transport-matrix \
-			$(H_SIF) \
-		--output $@
-
-$(SAMPLES_LNLGSIF): \
-	4_inversion/src/samples.R \
-	$(OBSERVATIONS) \
-	$(BASIS_VECTORS) \
-	$(HYPERPARAMETER_ESTIMATES) \
-	$(CONSTRAINTS) \
-	$(PRIOR) \
-	2_matching/intermediates/runs/base/oco2-hourly.fst \
-	3_sif/intermediates/oco2-hourly-sif.fst \
-	$(H_LNLG) \
-	$(H_SIF)
-	Rscript $< \
-		--observations $(OBSERVATIONS) \
-		--basis-vectors $(BASIS_VECTORS) \
-		--prior $(PRIOR) \
-		--constraints $(CONSTRAINTS) \
-		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
-		--overall-observation-mode LN LG LN_SIF LG_SIF \
-		--control \
-			2_matching/intermediates/runs/base/oco2-hourly.fst \
-			3_sif/intermediates/oco2-hourly-sif.fst \
-		--component-name LNLG SIF \
-		--component-parts "LN|LG" "LN_SIF|LG_SIF" \
-		--component-transport-matrix \
-			$(H_LNLG) \
-			$(H_SIF) \
-		--output $@
-
-$(SAMPLES_ISSIF): \
-	4_inversion/src/samples.R \
-	$(OBSERVATIONS) \
-	$(BASIS_VECTORS) \
-	$(HYPERPARAMETER_ESTIMATES) \
-	$(CONSTRAINTS) \
-	$(PRIOR) \
-	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-	3_sif/intermediates/oco2-hourly-sif.fst \
-	$(H_IS) \
-	$(H_SIF)
-	Rscript $< \
-		--observations $(OBSERVATIONS) \
-		--basis-vectors $(BASIS_VECTORS) \
-		--prior $(PRIOR) \
-		--constraints $(CONSTRAINTS) \
-		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
-		--overall-observation-mode IS LN_SIF LG_SIF \
-		--control \
-			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-			3_sif/intermediates/oco2-hourly-sif.fst \
-		--component-name IS SIF \
-		--component-parts IS "LN_SIF|LG_SIF" \
-		--component-transport-matrix \
-			$(H_IS) \
-			$(H_SIF) \
-		--output $@
-
-$(SAMPLES_BASE)-LNLGISSIF%: \
+# NOTE(jhj): In the inversion with SIF data, we fix the respiration linear component
+# for Region03 only; in other inversions, the default is to fix it for all land regions.
+$(SAMPLES_LNLGISSIF): \
 	4_inversion/src/samples.R \
 	$(OBSERVATIONS) \
 	$(BASIS_VECTORS) \
@@ -370,7 +282,8 @@ $(SAMPLES_BASE)-LNLGISSIF%: \
 	$(H_LNLG) \
 	$(H_IS) \
 	$(H_SIF)
-	Rscript $< $(SAMPLES_FLAGS) \
+	Rscript $< \
+		--fix-resp-linear Region03
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \

@@ -7,7 +7,8 @@ $(shell mkdir -p $(6_RESULTS_SIF_INTERMEDIATES_DIR))
 $(shell mkdir -p $(6_RESULTS_SIF_FIGURES_DIR))
 $(shell mkdir -p $(6_RESULTS_SIF_PRODUCTS_DIR))
 
-
+# Intermediates
+PERTURBATIONS_AUGMENTED_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/perturbations-augmented.fst
 CLIMATOLOGY_BY_REGION_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/climatology-by-region.rds
 TREND_GRID_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/trend-grid.fst
 SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
@@ -20,7 +21,8 @@ SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHA0.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHAV2.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHAFREE.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf
+	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf
 
 
 ## Products
@@ -76,6 +78,18 @@ $(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf: \
 		--observations $(OBSERVATIONS) \
 		--output $@
 
+$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/flux-net-global.R \
+	$(PERTURBATIONS_AUGMENTED_SIF) \
+	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_LNLGISSIF) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
+		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
+		--output $@
+
 ## Intermediates
 
 $(SIX_YEAR_AVERAGE_SIF): \
@@ -122,4 +136,15 @@ $(CLIMATOLOGY_BY_REGION_SIF): \
 		--sib4-climatology-assim $(SIB4_CLIMATOLOGY_ASSIM_2X25) \
 		--sib4-climatology-resp-tot $(SIB4_CLIMATOLOGY_RESP_TOT_2X25) \
 		--landschutzer-climatology $(LANDSCHUTZER_CLIMATOLOGY_2X25) \
+		--output $@
+
+$(PERTURBATIONS_AUGMENTED_SIF): \
+	$(6_RESULTS_SIF_SRC_DIR)/perturbations-augmented.R \
+	$(BASIS_VECTORS) \
+	$(CONTROL_EMISSIONS) \
+	$(PERTURBATIONS)
+	Rscript $< \
+		--basis-vectors $(BASIS_VECTORS) \
+		--control-emissions $(CONTROL_EMISSIONS) \
+		--perturbations $(PERTURBATIONS) \
 		--output $@

@@ -465,6 +465,7 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = 90,
     lowercase_title = 'global',
     titlecase_title = 'Global',
+    numeric_title = 'Global',
     in_supplement = FALSE
   ),
   'n-boreal' = list(
@@ -472,6 +473,7 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = 90,
     lowercase_title = 'northern boreal (50°N-90°N)',
     titlecase_title = 'Northern boreal (50°N-90°N)',
+    numeric_title = '50°N-90°N',
     in_supplement = TRUE
   ),
   'n-temperate' = list(
@@ -479,6 +481,7 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = 50,
     lowercase_title = 'northern temperate (23°N-50°N)',
     titlecase_title = 'Northern temperate (23°N-50°N)',
+    numeric_title = '23°N-50°N',
     in_supplement = TRUE
   ),
   'tropical' = list(
@@ -486,6 +489,7 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = 23,
     lowercase_title = 'tropical (23°S-23°N)',
     titlecase_title = 'Tropical (23°S-23°N)',
+    numeric_title = '23°S-23°N',
     in_supplement = TRUE
   ),
   'n-tropical' = list(
@@ -493,6 +497,7 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = 23,
     lowercase_title = 'northern tropical (0°-23°N)',
     titlecase_title = 'Northern tropical (0°-23°N)',
+    numeric_title = '0°-23°N',
     in_supplement = TRUE
   ),
   's-tropical' = list(
@@ -500,6 +505,7 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = 0,
     lowercase_title = 'southern tropical (23°S-0°)',
     titlecase_title = 'Southern tropical (23°S-0°)',
+    numeric_title = '23°S-0°',
     in_supplement = TRUE
   ),
   's-extratropical' = list(
@@ -507,6 +513,7 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = -23,
     lowercase_title = 'southern extratropical (90°S-23°S)',
     titlecase_title = 'Southern extratropical (90°S-23°S)',
+    numeric_title = '90°S-23°S',
     in_supplement = TRUE
   )
 )

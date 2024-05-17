@@ -23,8 +23,9 @@ paste_columns_min_bold <- function(x, digits = 3) {
   } else {
     min_x <- min(x)
     paste0(
-      ifelse(x == min_x, '\\bfseries ', ''),
+      ifelse(x == min_x, '\\textbf{', ''),
       sprintf(paste0('%.', digits, 'f'), x),
+      ifelse(x == min_x, '}', ''),
       collapse = ' & '
     )
   }

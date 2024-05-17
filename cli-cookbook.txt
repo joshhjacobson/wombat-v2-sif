@@ -44,9 +44,7 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/residua
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/hyperparameter-estimates.fst --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-LNLGIS.rds --dry-run
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-LNLGIS-FREERESP.rds --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-LNLGISSIF.rds --dry-run
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/samples-LNLGISSIF-FREERESP.rds --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-alpha.fst --dry-run
 
@@ -56,6 +54,8 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-sa
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHA0-WSIF.rds --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHA0-WOSIF.rds --dry-run
 
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHAFREE-WOSIF.rds |& tee osse-samples-ALPHAFREE-WOSIF.txt
+
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/flux-aggregators.fst --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-flux-aggregates-samples-ALPHA0-WOSIF.rds --dry-run
 
@@ -64,3 +64,5 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion_targets --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif_targets --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-metrics-table.tex --dry-run
+
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/perturbations-augmented.fst --dry-run

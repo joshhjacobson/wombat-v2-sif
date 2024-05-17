@@ -22,7 +22,8 @@ SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHAV2.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHAFREE.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf
+	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-regional.pdf
 
 
 ## Products
@@ -30,7 +31,6 @@ SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
 
 ## Figures
 
-# TODO: convert to \textbf{}
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-metrics-table.R \
 	4_inversion/intermediates/osse-flux-aggregates-samples-ALPHA0-WSIF.rds \
@@ -85,6 +85,20 @@ $(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf: \
 	$(SAMPLES_LNLGISSIF) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
+		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
+		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-regional.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/flux-net-regional.R \
+	$(AREA_1X1) \
+	$(PERTURBATIONS_AUGMENTED_SIF) \
+	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_LNLGISSIF) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--area-1x1 $(AREA_1X1) \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
 		--samples-LNLGIS $(SAMPLES_LNLGIS) \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \

@@ -22,6 +22,9 @@ bash 4_inversion/modify-timestamps.sh
 rsync -azP $(find /data/wombat-v2-workflow/3_inversion/intermediates/sensitivities-* -not -regex '.*\(lauder\).*') 4_inversion/intermediates
 rsync -azP /data/wombat-v2-workflow/3_inversion/intermediates/samples-LNLGIS.rds 4_inversion/intermediates
 
+# Sync results with local machine
+rsync -azP --exclude archive jj829@hpc.niasra.uow.edu.au:wombat-v2-sif/6_results_sif/figures/ "/Users/joshjacobson/OneDrive - University of Wollongong/Document_Prep/Papers/acp_JJ_MB_AZM_AS_NC/figures"
+
 # Individual targets:
 
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/observations-sif.fst

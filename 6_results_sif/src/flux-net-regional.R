@@ -185,7 +185,7 @@ emissions_zonal <- lapply(REGION_PLOT_SETTINGS, function(zonal_band) {
     ),
     zone = factor(
       zone,
-      levels = sapply(REGION_PLOT_SETTINGS, function(zonal_band) zonal_band$metric_title)
+      levels = sapply(REGION_PLOT_SETTINGS, function(zonal_band) zonal_band$numeric_title)
     )
   )
 

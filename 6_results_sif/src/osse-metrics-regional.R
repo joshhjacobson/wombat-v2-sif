@@ -24,7 +24,7 @@ flux_aggregates_samples <- bind_rows(
     c('Truth', 'Posterior')
   ) %>%
     mutate(
-      estimate = ifelse(
+      estimate = if_else(
         estimate == 'Posterior',
         'With SIF',
         estimate

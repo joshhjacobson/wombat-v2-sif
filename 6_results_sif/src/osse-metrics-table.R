@@ -42,7 +42,7 @@ flux_aggregates_samples <- bind_rows(
   ) %>%
     mutate(
       truth = 'Bottom-up',
-      estimate = ifelse(
+      estimate = if_else(
         estimate == 'Posterior',
         'With SIF',
         estimate
@@ -61,7 +61,7 @@ flux_aggregates_samples <- bind_rows(
   ) %>%
     mutate(
       truth = 'WOMBAT v2',
-      estimate = ifelse(
+      estimate = if_else(
         estimate == 'Posterior',
         'With SIF',
         estimate
@@ -80,7 +80,7 @@ flux_aggregates_samples <- bind_rows(
   ) %>%
     mutate(
       truth = 'WOMBAT v2, adjusted',
-      estimate = ifelse(
+      estimate = if_else(
         estimate == 'Posterior',
         'With SIF',
         estimate

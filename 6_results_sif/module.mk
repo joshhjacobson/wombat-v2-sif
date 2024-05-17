@@ -8,10 +8,13 @@ $(shell mkdir -p $(6_RESULTS_SIF_FIGURES_DIR))
 $(shell mkdir -p $(6_RESULTS_SIF_PRODUCTS_DIR))
 
 # Intermediates
+FLUX_AGGREGATORS = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/flux-aggregators.fst
+OSSE_FLUX_AGGREGATES_SAMPLES_BASE = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples
+OSSE_FLUX_AGGREGATES_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_FLUX_AGGREGATES_SAMPLES_BASE)-$(OSSE_CASE).rds)
+
 PERTURBATIONS_AUGMENTED_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/perturbations-augmented.fst
-CLIMATOLOGY_BY_REGION_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/climatology-by-region.rds
-TREND_GRID_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/trend-grid.fst
-SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
+SIX_YEAR_AVERAGE_LNLGIS = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average-LNLGIS.fst
+SIX_YEAR_AVERAGE_LNLGISSIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average-LNLGISSIF.fst
 
 6_RESULTS_SIF_TARGETS += \
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex \
@@ -23,7 +26,8 @@ SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-regional-ALPHAFREE.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-regional.pdf
+	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-regional.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/average-map.pdf
 
 
 ## Products
@@ -104,56 +108,55 @@ $(6_RESULTS_SIF_FIGURES_DIR)/flux-net-regional.pdf: \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
 		--output $@
 
+$(6_RESULTS_SIF_FIGURES_DIR)/average-map.pdf: \
+	$(5_RESULTS_SRC_DIR)/average-map.R \
+	$(SIX_YEAR_AVERAGE_LNLGIS) \
+	$(SIX_YEAR_AVERAGE_LNLGISSIF) \
+	$(REGION_SF) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--six-year-average-LNLGIS $(SIX_YEAR_AVERAGE_LNLGIS) \
+		--six-year-average-LNLGISSIF $(SIX_YEAR_AVERAGE_LNLGISSIF) \
+		--region-sf $(REGION_SF) \
+		--output $@
+
 ## Intermediates
 
-$(SIX_YEAR_AVERAGE_SIF): \
-	$(5_RESULTS_SRC_DIR)/six-year-average.R \
+$(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average-%.fst: \
+	$(6_RESULTS_SIF_SRC_DIR)/six-year-average.R \
 	$(CONTROL_EMISSIONS) \
-	$(PERTURBATIONS_AUGMENTED) \
-	$(SAMPLES_LNLGISSIF) \
+	$(PERTURBATIONS_AUGMENTED_SIF) \
+	4_inversion/intermediates/samples-%.rds \
 	$(UTILS_PARTIAL)
 	Rscript $< \
 		--control-emissions $(CONTROL_EMISSIONS) \
-		--samples $(SAMPLES_LNLGISSIF) \
-		--perturbations-augmented $(PERTURBATIONS_AUGMENTED) \
-		--output $@
-
-$(TREND_GRID_SIF): \
-	$(5_RESULTS_SRC_DIR)/trend-grid.R \
-	$(CONTROL_EMISSIONS) \
-	$(REGION_GRID) \
-	$(SAMPLES_LNLGISSIF) \
-	$(SIB4_CLIMATOLOGY_ASSIM_2X25) \
-	$(SIB4_CLIMATOLOGY_RESP_TOT_2X25) \
-	$(UTILS_PARTIAL)
-	Rscript $< \
-		--control-emissions $(CONTROL_EMISSIONS) \
-		--region-grid $(REGION_GRID) \
-		--samples $(SAMPLES_LNLGISSIF) \
-		--sib4-climatology-assim $(SIB4_CLIMATOLOGY_ASSIM_2X25) \
-		--sib4-climatology-resp-tot $(SIB4_CLIMATOLOGY_RESP_TOT_2X25) \
-		--output $@
-
-$(CLIMATOLOGY_BY_REGION_SIF): \
-	$(5_RESULTS_SRC_DIR)/climatology-by-region.R \
-	$(CONTROL_EMISSIONS) \
-	$(REGION_GRID) \
-	$(SAMPLES_LNLGISSIF) \
-	$(SIB4_CLIMATOLOGY_ASSIM_2X25) \
-	$(SIB4_CLIMATOLOGY_RESP_TOT_2X25) \
-	$(LANDSCHUTZER_CLIMATOLOGY_2X25) \
-	$(UTILS_PARTIAL)
-	Rscript $< \
-		--control-emissions $(CONTROL_EMISSIONS) \
-		--region-grid $(REGION_GRID) \
-		--samples $(SAMPLES_LNLGISSIF) \
-		--sib4-climatology-assim $(SIB4_CLIMATOLOGY_ASSIM_2X25) \
-		--sib4-climatology-resp-tot $(SIB4_CLIMATOLOGY_RESP_TOT_2X25) \
-		--landschutzer-climatology $(LANDSCHUTZER_CLIMATOLOGY_2X25) \
+		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
+		--samples 4_inversion/intermediates/samples-$*.rds \
 		--output $@
 
 $(PERTURBATIONS_AUGMENTED_SIF): \
 	$(6_RESULTS_SIF_SRC_DIR)/perturbations-augmented.R \
+	$(BASIS_VECTORS) \
+	$(CONTROL_EMISSIONS) \
+	$(PERTURBATIONS)
+	Rscript $< \
+		--basis-vectors $(BASIS_VECTORS) \
+		--control-emissions $(CONTROL_EMISSIONS) \
+		--perturbations $(PERTURBATIONS) \
+		--output $@
+
+# TODO: should metric calcs be truncated between 2015 and 2020?
+$(OSSE_FLUX_AGGREGATES_SAMPLES_BASE)-%.rds: \
+	$(6_RESULTS_SIF_SRC_DIR)/flux-aggregates-samples.R \
+	$(OSSE_SAMPLES_BASE)-%.rds \
+	$(FLUX_AGGREGATORS)
+	Rscript $< $(OSSE_FLAGS_CASES) \
+		--samples $(OSSE_SAMPLES_BASE)-$*.rds \
+		--flux-aggregators $(FLUX_AGGREGATORS) \
+		--output $@
+
+$(FLUX_AGGREGATORS): \
+	$(6_RESULTS_SIF_SRC_DIR)/flux-aggregators.R \
 	$(BASIS_VECTORS) \
 	$(CONTROL_EMISSIONS) \
 	$(PERTURBATIONS)

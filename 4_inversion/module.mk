@@ -43,7 +43,6 @@ SAMPLES_LNLGIS = 4_inversion/intermediates/samples-LNLGIS.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 
 ALPHA_FREE = 4_inversion/intermediates/osse-alpha.fst
-FLUX_AGGREGATORS = 4_inversion/intermediates/flux-aggregators.fst
 
 OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHAFREE
 OSSE_CASES = ALPHA0-WSIF \
@@ -60,21 +59,9 @@ OSSE_OBSERVATIONS_BASE = 4_inversion/intermediates/osse-observations
 OSSE_OBSERVATIONS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_OBSERVATIONS_BASE)-$(OSSE_BASE_CASE).fst)
 OSSE_SAMPLES_BASE = 4_inversion/intermediates/osse-samples
 OSSE_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_SAMPLES_BASE)-$(OSSE_CASE).rds)
-OSSE_FLUX_AGGREGATES_SAMPLES_BASE = 4_inversion/intermediates/osse-flux-aggregates-samples
-OSSE_FLUX_AGGREGATES_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_FLUX_AGGREGATES_SAMPLES_BASE)-$(OSSE_CASE).rds)
 
-4_INVERSION_TARGETS = $(OSSE_FLUX_AGGREGATES_SAMPLES_CASES)
 
 # OSSE inversions
-
-$(OSSE_FLUX_AGGREGATES_SAMPLES_BASE)-%.rds: \
-	4_inversion/src/flux-aggregates-samples.R \
-	$(OSSE_SAMPLES_BASE)-%.rds \
-	$(FLUX_AGGREGATORS)
-	Rscript $< $(OSSE_FLAGS_CASES) \
-		--samples $(OSSE_SAMPLES_BASE)-$*.rds \
-		--flux-aggregators $(FLUX_AGGREGATORS) \
-		--output $@
 
 $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 	4_inversion/src/samples.R \
@@ -449,17 +436,6 @@ $(SENSITIVITIES_BASE_PART_1) &: \
 			4_inversion/intermediates/sensitivities-base-obspack-daily-assim-0
 
 ## Preliminaries
-
-$(FLUX_AGGREGATORS): \
-	4_inversion/src/flux-aggregators.R \
-	$(BASIS_VECTORS) \
-	$(CONTROL_EMISSIONS) \
-	$(PERTURBATIONS)
-	Rscript $< \
-		--basis-vectors $(BASIS_VECTORS) \
-		--control-emissions $(CONTROL_EMISSIONS) \
-		--perturbations $(PERTURBATIONS) \
-		--output $@
 
 $(CONSTRAINTS): \
 	4_inversion/src/constraints.R \

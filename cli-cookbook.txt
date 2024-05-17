@@ -69,3 +69,4 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif_targets --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-metrics-table.tex --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/perturbations-augmented.fst --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/six-year-average-LNLGIS.fst --dry-run

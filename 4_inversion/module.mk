@@ -45,16 +45,25 @@ SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 ALPHA_FREE = 4_inversion/intermediates/osse-alpha.fst
 
 OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHAFREE
-OSSE_CASES = ALPHA0-WSIF \
-	ALPHA0-WOSIF \
-	ALPHAV2-WSIF \
-	ALPHAV2-WOSIF \
-	ALPHAFREE-WSIF \
-	ALPHAFREE-WOSIF
+OSSE_CASES = ALPHA0-FIXRESP-WSIF \
+	ALPHA0-FIXRESP-WOSIF \
+	ALPHA0-FREERESP-WSIF \
+	ALPHA0-FREERESP-WOSIF \
+	ALPHAV2-FIXRESP-WSIF \
+	ALPHAV2-FIXRESP-WOSIF \
+	ALPHAV2-FREERESP-WSIF \
+	ALPHAV2-FREERESP-WOSIF \
+	ALPHAFREE-FIXRESP-WSIF \
+	ALPHAFREE-FIXRESP-WOSIF \
+	ALPHAFREE-FREERESP-WSIF \
+	ALPHAFREE-FREERESP-WOSIF
 OSSE_FLAGS_ALPHA0 = --seed 0 --bio-clim-slice-w 1
 OSSE_FLAGS_ALPHAV2 = --seed 1 --true-alpha $(ALPHA_WOMBAT_V2)
 OSSE_FLAGS_ALPHAFREE = --seed 2 --true-alpha $(ALPHA_FREE)
-OSSE_FLAGS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_FLAGS_$(findstring $(OSSE_BASE_CASE), $*)))
+OSSE_FLAGS_ALPHA = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_FLAGS_$(findstring $(OSSE_BASE_CASE), $*)))
+OSSE_FLAGS_FREERESP = --fix-resp-linear Region03
+OSSE_FLAGS_RESP = $(OSSE_FLAGS_$(findstring FREERESP, $*))
+OSSE_FLAGS = $(OSSE_FLAGS_ALPHA) $(OSSE_FLAGS_RESP)
 OSSE_OBSERVATIONS_BASE = 4_inversion/intermediates/osse-observations
 OSSE_OBSERVATIONS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_OBSERVATIONS_BASE)-$(OSSE_BASE_CASE).fst)
 OSSE_SAMPLES_BASE = 4_inversion/intermediates/osse-samples
@@ -65,7 +74,7 @@ OSSE_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_SAMPLES_BASE)-$(OS
 
 $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 	4_inversion/src/samples.R \
-	$(OSSE_OBSERVATIONS_BASE)-%.fst \
+	$(OSSE_OBSERVATIONS_CASES) \
 	$(BASIS_VECTORS) \
 	$(HYPERPARAMETER_ESTIMATES) \
 	$(CONSTRAINTS) \
@@ -74,10 +83,10 @@ $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	$(H_LNLG) \
 	$(H_IS)
-	Rscript $< $(OSSE_FLAGS_CASES) \
+	Rscript $< $(OSSE_FLAGS) \
 		--n-samples 200 \
 		--n-warm-up 100 \
-		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
+		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
 		--constraints $(CONSTRAINTS) \
@@ -95,7 +104,7 @@ $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 
 $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 	4_inversion/src/samples.R \
-	$(OSSE_OBSERVATIONS_BASE)-%.fst \
+	$(OSSE_OBSERVATIONS_CASES) \
 	$(BASIS_VECTORS) \
 	$(HYPERPARAMETER_ESTIMATES) \
 	$(CONSTRAINTS) \
@@ -106,11 +115,10 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 	$(H_LNLG) \
 	$(H_IS) \
 	$(H_SIF)
-	Rscript $< $(OSSE_FLAGS_CASES) \
+	Rscript $< $(OSSE_FLAGS) \
 		--n-samples 200 \
 		--n-warm-up 100 \
-		--fix-resp-linear Region03 \
-		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
+		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
 		--constraints $(CONSTRAINTS) \

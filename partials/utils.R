@@ -525,11 +525,11 @@ OSSE_PLOT_SETTINGS <- list(
   ),
   'ALPHAV2' = list(
     posterior_name = 'WOMBAT v2',
-    in_supplement = TRUE
+    in_supplement = FALSE
   ),
   'ALPHAFREE' = list(
-    posterior_name = 'WOMBAT v2, modified',
-    in_supplement = FALSE
+    posterior_name = 'WOMBAT v2, adj.',
+    in_supplement = TRUE
   )
 )
 

@@ -12,6 +12,13 @@ parser$add_argument('--osse-base-case')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
+# args <- list(
+#   flux_samples_wsif = '6_results_sif/intermediates/osse-flux-aggregates-zonal-samples-ALPHA0-FREERESP-WSIF.rds',
+#   flux_samples_wosif = '6_results_sif/intermediates/osse-flux-aggregates-zonal-samples-ALPHA0-FREERESP-WOSIF.rds',
+#   osse_base_case = 'ALPHA0',
+#   output = '6_results_sif/figures/osse-metrics-zonal-ALPHA0.pdf'
+# )
+
 read_flux_samples <- function(filename, estimates = 'Posterior') {
   readRDS(filename) %>% filter(estimate %in% estimates)
 }
@@ -43,18 +50,18 @@ osse_fluxes <- flux_aggregates_samples %>%
   left_join(
     flux_aggregates_samples %>%
       filter(estimate == 'Truth') %>%
-      select(inventory, region, time, flux_truth = flux_mean),
-    by = c('inventory', 'region', 'time')
+      select(inventory, zone, time, flux_truth = flux_mean),
+    by = c('inventory', 'zone', 'time')
   ) %>%
   mutate(
     estimate = factor(estimate, levels = c('Without SIF', 'With SIF'))
   )
 
-metrics_monthly <- osse_fluxes %>%
+metrics_zonal <- osse_fluxes %>%
   filter(
     inventory %in% c('GPP', 'Respiration', 'NEE')
   ) %>%
-  group_by(inventory, estimate, time) %>%
+  group_by(inventory, estimate, zone) %>%
   summarise(
     rmse = sqrt(mean((flux_mean - flux_truth)^2)),
     mcrps = mean(scoringRules::crps_sample(flux_truth, flux_samples)),
@@ -76,34 +83,35 @@ metrics_monthly <- osse_fluxes %>%
   )
 
 output <- ggplot(
-  metrics_monthly,
-  aes(x = time, order = estimate)
+  data = metrics_zonal %>% filter(zone != 'Global'),
+  mapping = aes(
+    x = value,
+    y = reorder(zone, desc(zone)),
+    fill = estimate
+  )
 ) +
-  geom_line(
-    aes(
-      y = value,
-      colour = estimate
-    )
+  geom_col(
+    width = 0.65,
+    position = position_dodge2(padding = 0, reverse = TRUE)
   ) +
-  ggh4x::facet_grid2(
+  facet_grid(
     inventory ~ metric,
-    scales = 'free_y',
-    independent = 'y',
+    scales = 'free_x',
+    switch = 'x'
   ) +
-  ylim(0, NA) +
-  # scale_y_continuous(n.breaks = 3, limits = c(0, NA)) +
-  scale_colour_manual(
+  scale_fill_manual(
     values = c('Without SIF' = 'grey50', 'With SIF' = '#fb8b00')
   ) +
   theme(
     plot.title = element_blank(),
     axis.title = element_blank(),
-    axis.text.x = element_text(size = 8),
-    axis.text.y = element_text(size = 7),
+    axis.text.x = element_text(size = 7),
+    axis.text.y = element_text(size = 8),
     strip.text.x = element_text(size = 9),
     strip.text.y = element_text(size = 8),
+    strip.placement = 'outside',
     legend.position = if (osse_base_case$in_supplement) 'right' else 'bottom',
-    legend.margin = margin(t = 0, r = 1, b = 0, l = 0, unit = 'mm'),
+    legend.margin = margin(t = 0, r = 1, b = 1, l = 0, unit = 'mm'),
     legend.text = element_text(size = 8),
     legend.title = element_blank(),
   )
@@ -116,5 +124,5 @@ ggsave_base(
   } else {
     DISPLAY_SETTINGS$full_width
   },
-  height = if (osse_base_case$in_supplement) 5.7 else 6.94
+  height = if (osse_base_case$in_supplement) 9.2 else 10.44
 )

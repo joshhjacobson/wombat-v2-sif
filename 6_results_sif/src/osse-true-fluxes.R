@@ -10,12 +10,14 @@ parser <- ArgumentParser()
 parser$add_argument('--flux-aggregators')
 parser$add_argument('--alpha-v2')
 parser$add_argument('--alpha-free')
+parser$add_argument('--alpha-free-large')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
 flux_aggregators <- fst::read_fst(args$flux_aggregators)
 alpha_v2 <- fst::read_fst(args$alpha_v2)
 alpha_free <- fst::read_fst(args$alpha_free)
+alpha_free_large <- fst::read_fst(args$alpha_free_large)
 
 perturbations_base <- flux_aggregators %>%
   filter(
@@ -63,17 +65,27 @@ true_emissions_alpha_v2 <- bottom_up %>%
 
 true_emissions_alpha_free <- bottom_up %>%
   mutate(
-    output = 'WOMBAT v2, adj.',
+    output = 'WOMBAT v2, adj. small',
     value = value + as.vector(
       X_global[, as.integer(alpha_free$basis_vector)]
       %*% alpha_free$value
     )
   )
 
+true_emissions_alpha_free_large <- bottom_up %>%
+  mutate(
+    output = 'WOMBAT v2, adj. large',
+    value = value + as.vector(
+      X_global[, as.integer(alpha_free_large$basis_vector)]
+      %*% alpha_free_large$value
+    )
+  )
+
 emissions <- bind_rows(
   bottom_up,
   true_emissions_alpha_v2,
-  true_emissions_alpha_free
+  true_emissions_alpha_free,
+  true_emissions_alpha_free_large
 ) %>%
   {
     x <- .
@@ -113,12 +125,12 @@ emissions <- bind_rows(
     )),
     output = factor(
       output,
-      levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, adj.')
+      levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, adj. small', 'WOMBAT v2, adj. large')
     )
   )
 
-colour_key <- c('Bottom-up' = 'grey50', 'WOMBAT v2' = '#4053d3', 'WOMBAT v2, adj.' = '#ddb310')
-linetype_key <- c('Bottom-up' = '11', 'WOMBAT v2' = '41', 'WOMBAT v2, adj.' = '1131')
+colour_key <- c('Bottom-up' = 'black', 'WOMBAT v2' = '#5954d6', 'WOMBAT v2, adj. small' = '#00c6f8', 'WOMBAT v2, adj. large' = '#008cf9')
+linetype_key <- c('Bottom-up' = '41', 'WOMBAT v2' = '2212', 'WOMBAT v2, adj. small' = '1131', 'WOMBAT v2, adj. large' = '11')
 
 output <- ggplot(
   emissions %>% filter(inventory != 'Total'),
@@ -130,9 +142,10 @@ output <- ggplot(
       colour = output,
       linetype = output
     ),
-    linewidth = 0.4
+    linewidth = 0.6
   ) +
   facet_wrap(~ inventory, scales = 'free_y', nrow = 2) +
+  scale_x_date(date_labels = '%Y-%m') +
   scale_colour_manual(values = colour_key) +
   scale_linetype_manual(values = linetype_key) +
   labs(x = 'Time', y = 'Flux [PgC per month]', colour = NULL, linetype = NULL) +

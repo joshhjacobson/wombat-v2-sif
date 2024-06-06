@@ -7,16 +7,25 @@ source(Sys.getenv('UTILS_PARTIAL'))
 parser <- ArgumentParser()
 parser$add_argument('--true-alpha')
 parser$add_argument('--samples')
-parser$add_argument('--flux-aggregators-zonal')
+parser$add_argument('--perturbations-augmented-zonal')
 parser$add_argument('--output')
 args <- parser$parse_known_args()[[1]]
 
-flux_aggregators_zonal <- fst::read_fst(args$flux_aggregators_zonal)
+perturbations_augmented_zonal <- fst::read_fst(args$perturbations_augmented_zonal)
 samples <- readRDS(args$samples)
 true_alpha <- if (!is.null(args$true_alpha)) fst::read_fst(args$true_alpha) else NULL
 
+perturbations_augmented_zonal <- perturbations_augmented_zonal %>%
+  mutate(
+    inventory_time = interaction(
+      inventory,
+      time,
+      drop = TRUE
+    )
+  )
+
 flux_aggregates_samples_zonal <- lapply(REGION_PLOT_SETTINGS, function(zonal_band) {
-  perturbations_zone <- flux_aggregators_zonal %>%
+  perturbations_zone <- perturbations_augmented_zonal %>%
     filter(
       latitude_bottom >= zonal_band$latitude_lower,
       latitude_bottom < zonal_band$latitude_upper
@@ -27,7 +36,7 @@ flux_aggregates_samples_zonal <- lapply(REGION_PLOT_SETTINGS, function(zonal_ban
       .groups = 'drop'
     ) %>%
     left_join(
-      flux_aggregators_zonal %>%
+      perturbations_augmented_zonal %>%
         distinct(inventory_time, inventory, time),
       by = 'inventory_time'
     )

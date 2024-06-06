@@ -7,14 +7,32 @@ source(Sys.getenv('UTILS_PARTIAL'))
 parser <- ArgumentParser()
 parser$add_argument('--true-alpha')
 parser$add_argument('--samples')
-parser$add_argument('--flux-aggregators')
+parser$add_argument('--perturbations-augmented')
 parser$add_argument('--output')
 args <- parser$parse_known_args()[[1]]
 
 samples <- readRDS(args$samples)
-flux_aggregators <- fst::read_fst(args$flux_aggregators)
+perturbations_augmented <- fst::read_fst(args$perturbations_augmented)
 true_alpha <- if (!is.null(args$true_alpha)) fst::read_fst(args$true_alpha) else NULL
 
+perturbations_augmented <- perturbations_augmented %>%
+  mutate(
+    inventory_region_time = interaction(
+      inventory,
+      region,
+      time,
+      drop = TRUE
+    )
+  )
+
+flux_aggregators <- perturbations_augmented %>%
+  group_by(inventory_region_time, basis_vector) %>%
+  summarise(value = KG_M2_S_TO_PGC_MONTH * sum(area * value)) %>%
+  left_join(
+    perturbations_augmented %>%
+      distinct(inventory_region_time, inventory, region, time),
+    by = 'inventory_region_time'
+  )
 
 X_aggregators <- with(flux_aggregators, sparseMatrix(
   i = as.integer(inventory_region_time),

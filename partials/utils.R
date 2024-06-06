@@ -407,6 +407,25 @@ read_climatology <- function(filename) {
     )
 }
 
+compute_posterior <- function(prior, design_matrix, samples, posterior_name) {
+  prior %>%
+    mutate(
+      estimate = posterior_name,
+      value_prior = value,
+      value = value_prior + as.vector(
+        design_matrix[, as.integer(samples$alpha_df$basis_vector)]
+        %*% samples$alpha_df$value
+      ),
+      value_samples = value_prior + as.matrix(
+        design_matrix[, as.integer(samples$alpha_df$basis_vector)]
+        %*% samples$alpha_df$value_samples
+      ),
+      value_q025 = matrixStats::rowQuantiles(value_samples, probs = 0.025),
+      value_q975 = matrixStats::rowQuantiles(value_samples, probs = 0.975)
+    ) %>%
+    select(-value_prior)
+}
+
 discretise_by_breaks <- function(y, breaks, limits) {
   full_breaks <- c(limits[1], breaks, limits[2])
   midpoints <- (head(full_breaks, -1) + tail(full_breaks, -1)) / 2

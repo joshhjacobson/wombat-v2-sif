@@ -7,29 +7,13 @@ source(Sys.getenv('UTILS_PARTIAL'))
 source(Sys.getenv('DISPLAY_PARTIAL'))
 
 parser <- ArgumentParser()
-parser$add_argument('--area-1x1')
-parser$add_argument('--perturbations-augmented')
+parser$add_argument('--perturbations-augmented-zonal')
 parser$add_argument('--samples-LNLGIS')
 parser$add_argument('--samples-LNLGISSIF')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
-with_nc_file(list(fn = args$area_1x1), {
-  longitude_area <- as.vector(ncdf4::ncvar_get(fn, 'lon'))
-  latitude_area <- as.vector(ncdf4::ncvar_get(fn, 'lat'))
-  area <- ncdf4::ncvar_get(fn, 'cell_area')
-  area_1x1 <- expand.grid(
-    longitude = longitude_area,
-    latitude = latitude_area
-  ) %>%
-    mutate(area = as.vector(area))
-})
-
-area_495 <- (area_1x1 %>% filter(latitude == 49.5) %>% pull(area))[1]
-area_505 <- (area_1x1 %>% filter(latitude == 50.5) %>% pull(area))[1]
-area_both <- area_495 + area_505
-
-perturbations_base <- fst::read_fst(args$perturbations_augmented)
+perturbations_zonal <- fst::read_fst(args$perturbations_augmented_zonal)
 samples_LNLGIS <- readRDS(args$samples_LNLGIS)
 samples_LNLGISSIF <- readRDS(args$samples_LNLGISSIF)
 
@@ -42,7 +26,7 @@ samples_LNLGIS$alpha_df$value_samples <- samples_LNLGIS$alpha_df$value_samples[
 study_start <- as.Date('2015-01-01')
 study_end <- as.Date('2021-01-01')
 
-perturbations_base <- perturbations_base %>%
+perturbations_zonal <- perturbations_zonal %>%
   filter(
     between(time, study_start, study_end)
   ) %>%
@@ -53,61 +37,8 @@ perturbations_base <- perturbations_base %>%
     )
   )
 
-# Splits grid cells that cross boundaries
-perturbations_split <- bind_rows(
-  perturbations_base %>%
-    filter(latitude != 0),
-  perturbations_base %>%
-    filter(latitude == 0) %>%
-    mutate(
-      latitude = -0.5,
-      latitude_bottom = -1,
-      area = area / 2
-    ),
-  perturbations_base %>%
-    filter(latitude == 0) %>%
-    mutate(
-      latitude = 0.5,
-      latitude_bottom = 0,
-      area = area / 2
-    ),
-  perturbations_base %>%
-    filter(latitude == 50) %>%
-    mutate(
-      latitude = 49.5,
-      latitude_bottom = 49,
-      area = area * area_495 / area_both
-    ),
-  perturbations_base %>%
-    filter(latitude == 50) %>%
-    mutate(
-      latitude = 50.5,
-      latitude_bottom = 50,
-      area = area * area_505 / area_both
-    )
-)
-
-compute_posterior <- function(prior, design_matrix, samples, posterior_name) {
-  prior %>%
-    mutate(
-      name = posterior_name,
-      value_prior = value,
-      value = value_prior + as.vector(
-        design_matrix[, as.integer(samples$alpha_df$basis_vector)]
-        %*% samples$alpha_df$value
-      ),
-      value_samples = value_prior + as.matrix(
-        design_matrix[, as.integer(samples$alpha_df$basis_vector)]
-        %*% samples$alpha_df$value_samples
-      ),
-      value_q025 = matrixStats::rowQuantiles(value_samples, probs = 0.025),
-      value_q975 = matrixStats::rowQuantiles(value_samples, probs = 0.975)
-    ) %>%
-    select(-value_prior)
-}
-
 emissions_zonal <- lapply(REGION_PLOT_SETTINGS, function(zonal_band) {
-  perturbations_zone <- perturbations_split %>%
+  perturbations_zone <- perturbations_zonal %>%
     filter(
       latitude_bottom >= zonal_band$latitude_lower,
       latitude_bottom < zonal_band$latitude_upper
@@ -118,7 +49,7 @@ emissions_zonal <- lapply(REGION_PLOT_SETTINGS, function(zonal_band) {
       .groups = 'drop'
     ) %>%
     left_join(
-      perturbations_split %>%
+      perturbations_zonal %>%
         distinct(inventory_time, inventory, time),
       by = 'inventory_time'
     )
@@ -134,7 +65,7 @@ emissions_zonal <- lapply(REGION_PLOT_SETTINGS, function(zonal_band) {
     group_by(inventory_time, inventory, time) %>%
     summarise(value = sum(value), .groups = 'drop') %>%
     select(-inventory_time) %>%
-    mutate(name = 'Bottom-up')
+    mutate(estimate = 'Bottom-up')
 
   posterior_emissions_LNLGIS <- compute_posterior(prior_emissions, X_zone, samples_LNLGIS, 'Without SIF')
   posterior_emissions_LNLGISSIF <- compute_posterior(prior_emissions, X_zone, samples_LNLGISSIF, 'With SIF')
@@ -151,7 +82,7 @@ emissions_zonal <- lapply(REGION_PLOT_SETTINGS, function(zonal_band) {
         x,
         x %>%
           filter(inventory %in% c('bio_assim', 'bio_resp_tot')) %>%
-          group_by(name, time) %>%
+          group_by(estimate, time) %>%
           summarise(
             value = sum(value),
             value_samples = t(colSums(value_samples)),
@@ -179,8 +110,8 @@ emissions_zonal <- lapply(REGION_PLOT_SETTINGS, function(zonal_band) {
       'NEE',
       'Ocean'
     )),
-    name = factor(
-      name,
+    estimate = factor(
+      estimate,
       levels = c('Bottom-up', 'Without SIF', 'With SIF')
     ),
     zone = factor(
@@ -201,8 +132,8 @@ output <- emissions_zonal %>%
   geom_line(
     mapping = aes(
       y = value,
-      colour = name,
-      linetype = name
+      colour = estimate,
+      linetype = estimate
     ),
     linewidth = 0.4
   ) +
@@ -210,19 +141,20 @@ output <- emissions_zonal %>%
     mapping = aes(
       ymin = value_q025,
       ymax = value_q975,
-      fill = name
+      fill = estimate
     ),
     alpha = 0.3
   ) +
   ggh4x::facet_grid2(zone ~ inventory, scales = 'free_y', independent = 'y') +
   scale_y_continuous(n.breaks = 4) +
+  scale_x_date(date_labels = '%Y-%m') +
   scale_colour_manual(values = colour_key) +
   scale_fill_manual(values = colour_key) +
   scale_linetype_manual(values = linetype_key) +
   guides(fill = 'none') +
   labs(x = 'Time', y = 'Flux [PgC per month]', colour = NULL, fill = NULL, linetype = NULL) +
   ggtitle(
-    'Monthly fluxes by latitude band'
+    'Monthly fluxes by zonal band'
   ) +
   theme(
     plot.margin = margin(t = 1, r = 1, b = 0, l = 1, unit = 'mm'),

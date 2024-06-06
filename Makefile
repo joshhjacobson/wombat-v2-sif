@@ -26,6 +26,7 @@ GEOS_CHEM_RESTART_FILE = data/GEOSChem.Restart.20140901_0000z.nc4
 GEOS_2X25_GRID = data/geos.2x25.grid
 FOSSIL_INVENTORY_PATH = data/fossil-mipv10
 FIRES_INVENTORY_PATH = data/GFED4.1s_Aleya_hemco_080321
+FLUXCOM_DIRECTORY = data/FLUXCOM_RS
 ALPHA_WOMBAT_V2 = data/wombat-v2-alpha-LNLGIS.fst
 
 all:

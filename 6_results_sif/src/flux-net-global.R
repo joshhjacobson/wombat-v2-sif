@@ -60,26 +60,7 @@ prior_emissions <- perturbations %>%
   group_by(inventory_time, inventory, time) %>%
   summarise(value = sum(value), .groups = 'drop') %>%
   select(-inventory_time) %>%
-  mutate(name = 'Bottom-up')
-
-compute_posterior <- function(samples, posterior_name) {
-  prior_emissions %>%
-    mutate(
-      name = posterior_name,
-      value_prior = value,
-      value = value_prior + as.vector(
-        X_global[, as.integer(samples$alpha_df$basis_vector)]
-        %*% samples$alpha_df$value
-      ),
-      value_samples = value_prior + as.matrix(
-        X_global[, as.integer(samples$alpha_df$basis_vector)]
-        %*% samples$alpha_df$value_samples
-      ),
-      value_q025 = matrixStats::rowQuantiles(value_samples, probs = 0.025),
-      value_q975 = matrixStats::rowQuantiles(value_samples, probs = 0.975)
-    ) %>%
-    select(-value_prior)
-}
+  mutate(estimate = 'Bottom-up')
 
 posterior_emissions_LNLGIS <- compute_posterior(samples_LNLGIS, 'Without SIF')
 posterior_emissions_LNLGISSIF <- compute_posterior(samples_LNLGISSIF, 'With SIF')
@@ -96,7 +77,7 @@ emissions <- bind_rows(
       x,
       x %>%
         filter(inventory %in% c('bio_assim', 'bio_resp_tot')) %>%
-        group_by(name, time) %>%
+        group_by(estimate, time) %>%
         summarise(
           value = sum(value),
           value_samples = t(colSums(value_samples)),
@@ -121,8 +102,8 @@ emissions <- bind_rows(
       'NEE',
       'Ocean'
     )),
-    name = factor(
-      name,
+    estimate = factor(
+      estimate,
       levels = c('Bottom-up', 'Without SIF', 'With SIF')
     )
   )
@@ -138,8 +119,8 @@ output <- emissions %>%
   geom_line(
     mapping = aes(
       y = value,
-      colour = name,
-      linetype = name
+      colour = estimate,
+      linetype = estimate
     ),
     linewidth = 0.4
   ) +
@@ -147,11 +128,12 @@ output <- emissions %>%
     mapping = aes(
       ymin = value_q025,
       ymax = value_q975,
-      fill = name
+      fill = estimate
     ),
     alpha = 0.3
   ) +
   facet_wrap(~inventory, scales = 'free_y') +
+  scale_x_date(date_labels = '%Y-%m') +
   scale_colour_manual(values = colour_key) +
   scale_fill_manual(values = colour_key) +
   scale_linetype_manual(values = linetype_key) +

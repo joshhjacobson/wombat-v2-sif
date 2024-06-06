@@ -92,6 +92,7 @@ output <- ggplot(
   ) +
   ylim(0, NA) +
   # scale_y_continuous(n.breaks = 3, limits = c(0, NA)) +
+  scale_x_date(date_labels = '%Y-%m') +
   scale_colour_manual(
     values = c('Without SIF' = 'grey50', 'With SIF' = '#fb8b00')
   ) +

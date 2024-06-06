@@ -201,6 +201,7 @@ output2 <- observations %>%
   ) %>%
   ggplot(aes(month, n, linetype = observation_type)) +
     geom_line() +
+    scale_x_date(date_labels = '%Y-%m') +
     scale_y_log10() +
     scale_linetype_discrete(labels = c(
       'In situ/flask mole-fraction',

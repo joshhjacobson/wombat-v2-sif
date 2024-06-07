@@ -47,7 +47,7 @@ printf <- function(...) cat(sprintf(...))
 collapse0 <- function(x) paste0(x, collapse = '')
 paste_columns <- function(x) paste0(x, collapse = ' & ')
 paste_columns_min_bold <- function(x, digits = 3) {
-  x_ <- round(rmse_vector, digits = digits)
+  x_ <- round(x, digits = digits)
   if (length(unique(x_)) == 1) {
     paste_columns(sprintf(paste0('%.', digits, 'f'), x))
   } else {

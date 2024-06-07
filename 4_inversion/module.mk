@@ -42,9 +42,10 @@ SAMPLES_LNLG = 4_inversion/intermediates/samples-LNLG.rds
 SAMPLES_LNLGIS = 4_inversion/intermediates/samples-LNLGIS.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 
-ALPHA_FREE = 4_inversion/intermediates/osse-alpha.fst
+ALPHA_SMALL = 4_inversion/intermediates/osse-alpha-small.fst
+ALPHA_LARGE = 4_inversion/intermediates/osse-alpha-large.fst
 
-OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHAFREE
+OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHASMALL ALPHALARGE
 OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHA0-FIXRESP-WOSIF \
 	ALPHA0-FREERESP-WSIF \
@@ -53,13 +54,18 @@ OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHAV2-FIXRESP-WOSIF \
 	ALPHAV2-FREERESP-WSIF \
 	ALPHAV2-FREERESP-WOSIF \
-	ALPHAFREE-FIXRESP-WSIF \
-	ALPHAFREE-FIXRESP-WOSIF \
-	ALPHAFREE-FREERESP-WSIF \
-	ALPHAFREE-FREERESP-WOSIF
+	ALPHASMALL-FIXRESP-WSIF \
+	ALPHASMALL-FIXRESP-WOSIF \
+	ALPHASMALL-FREERESP-WSIF \
+	ALPHASMALL-FREERESP-WOSIF \
+	ALPHALARGE-FIXRESP-WSIF \
+	ALPHALARGE-FIXRESP-WOSIF \
+	ALPHALARGE-FREERESP-WSIF \
+	ALPHALARGE-FREERESP-WOSIF
 OSSE_FLAGS_ALPHA0 = --seed 0 --bio-clim-slice-w 1
 OSSE_FLAGS_ALPHAV2 = --seed 1 --true-alpha $(ALPHA_WOMBAT_V2)
-OSSE_FLAGS_ALPHAFREE = --seed 2 --true-alpha $(ALPHA_FREE)
+OSSE_FLAGS_ALPHASMALL = --seed 2 --true-alpha $(ALPHA_SMALL)
+OSSE_FLAGS_ALPHALARGE = --seed 3 --true-alpha $(ALPHA_LARGE)
 OSSE_FLAGS_ALPHA = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_FLAGS_$(findstring $(OSSE_BASE_CASE), $*)))
 OSSE_FLAGS_FREERESP = --fix-resp-linear Region03
 OSSE_FLAGS_RESP = $(OSSE_FLAGS_$(findstring FREERESP, $*))
@@ -136,6 +142,7 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 			$(H_SIF) \
 		--output $@
 
+# TODO: add ALPHA_SMALL and ALPHA_LARGE to the dependencies
 $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 	4_inversion/src/osse-observations.R \
 	$(OBSERVATIONS) \
@@ -147,8 +154,7 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 	3_sif/intermediates/oco2-hourly-sif.fst \
 	$(H_LNLG) \
 	$(H_IS) \
-	$(H_SIF) \
-	$(ALPHA_FREE)
+	$(H_SIF)
 	Rscript $< $(OSSE_FLAGS_$*) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
@@ -167,21 +173,31 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 			$(H_SIF) \
 		--output $@
 
-$(ALPHA_FREE): \
-	4_inversion/src/osse-alpha.R \
+ADJUSTED_ALPHA_DEPS = 4_inversion/src/osse-alpha.R \
 	$(REGION_MASK) \
 	$(SIB4_CLIMATOLOGY_ASSIM_2X25) \
 	$(SIB4_CLIMATOLOGY_RESP_TOT_2X25) \
 	$(BASIS_VECTORS) \
 	$(CONTROL_EMISSIONS)
-	Rscript $< \
-		--region-mask $(REGION_MASK) \
-		--sib4-climatology-assim $(SIB4_CLIMATOLOGY_ASSIM_2X25) \
-		--sib4-climatology-resp-tot $(SIB4_CLIMATOLOGY_RESP_TOT_2X25) \
-		--basis-vectors $(BASIS_VECTORS) \
-		--control-emissions $(CONTROL_EMISSIONS) \
-		--alpha-wombat-v2 $(ALPHA_WOMBAT_V2) \
-		--fix-resp-linear Region03 \
+ADJUSTED_ALPHA_CALL = Rscript 4_inversion/src/osse-alpha.R \
+	--region-mask $(REGION_MASK) \
+	--sib4-climatology-assim $(SIB4_CLIMATOLOGY_ASSIM_2X25) \
+	--sib4-climatology-resp-tot $(SIB4_CLIMATOLOGY_RESP_TOT_2X25) \
+	--basis-vectors $(BASIS_VECTORS) \
+	--control-emissions $(CONTROL_EMISSIONS) \
+	--alpha-wombat-v2 $(ALPHA_WOMBAT_V2) \
+	--fix-resp-linear Region03
+
+$(ALPHA_SMALL): \
+	$(ADJUSTED_ALPHA_DEPS)
+	$(ADJUSTED_ALPHA_CALL) \
+		--delta 0.1 \
+		--output $@
+
+$(ALPHA_LARGE): \
+	$(ADJUSTED_ALPHA_DEPS)
+	$(ADJUSTED_ALPHA_CALL) \
+		--delta 0.5 \
 		--output $@
 
 # Real-data inversions

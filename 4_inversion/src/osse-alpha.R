@@ -13,6 +13,7 @@ parser$add_argument('--basis-vectors')
 parser$add_argument('--control-emissions')
 parser$add_argument('--alpha-wombat-v2')
 parser$add_argument('--fix-resp-linear')
+parser$add_argument('--delta', type = 'numeric')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
@@ -86,11 +87,10 @@ alpha_bio_assim_linear <- alpha %>%
     region %in% regions_free
   ) %>%
   mutate(
-    delta = rnorm(n(), mean = 5, sd = 1),
-    alpha_adjusted = delta * value,
-    value = (1 + delta) * value
+    delta = args$delta,
+    value = value + delta
   ) %>%
-  select(c(basis_vector, inventory, component, region, value, alpha_adjusted))
+  select(c(basis_vector, inventory, component, region, value, delta))
 
 log_debug('Computing adjusted linear component for bio_resp_tot')
 # NOTE(jhj): This construction ensures that the implied linear component for NEE
@@ -98,14 +98,14 @@ log_debug('Computing adjusted linear component for bio_resp_tot')
 alpha_bio_resp_tot_linear <- perturbations %>%
   left_join(
     alpha_bio_assim_linear %>% select(
-      c(basis_vector, alpha_adjusted)
+      c(basis_vector, delta)
     ),
     by = 'basis_vector'
   ) %>%
   mutate(
-    value = if_else(inventory == 'bio_assim', alpha_adjusted * value, value)
+    value = if_else(inventory == 'bio_assim', delta * value, value)
   ) %>%
-  select(-c(basis_vector, alpha_adjusted)) %>%
+  select(-c(basis_vector, delta)) %>%
   tidyr::pivot_wider(
     names_from = inventory,
     values_from = value
@@ -122,7 +122,7 @@ alpha_bio_resp_tot_linear <- perturbations %>%
   )
 
 alpha_bio_linear <- bind_rows(
-  alpha_bio_assim_linear %>% select(-alpha_adjusted),
+  alpha_bio_assim_linear %>% select(-delta),
   alpha_bio_resp_tot_linear
 ) %>%
   mutate(

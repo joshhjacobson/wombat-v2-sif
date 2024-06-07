@@ -12,10 +12,14 @@ parser$add_argument('--flux-samples-alphav2-fixresp-wsif')
 parser$add_argument('--flux-samples-alphav2-fixresp-wosif')
 parser$add_argument('--flux-samples-alphav2-freeresp-wsif')
 parser$add_argument('--flux-samples-alphav2-freeresp-wosif')
-parser$add_argument('--flux-samples-alphafree-fixresp-wsif')
-parser$add_argument('--flux-samples-alphafree-fixresp-wosif')
-parser$add_argument('--flux-samples-alphafree-freeresp-wsif')
-parser$add_argument('--flux-samples-alphafree-freeresp-wosif')
+parser$add_argument('--flux-samples-alphasmall-fixresp-wsif')
+parser$add_argument('--flux-samples-alphasmall-fixresp-wosif')
+parser$add_argument('--flux-samples-alphasmall-freeresp-wsif')
+parser$add_argument('--flux-samples-alphasmall-freeresp-wosif')
+parser$add_argument('--flux-samples-alphalarge-fixresp-wsif')
+parser$add_argument('--flux-samples-alphalarge-fixresp-wosif')
+parser$add_argument('--flux-samples-alphalarge-freeresp-wsif')
+parser$add_argument('--flux-samples-alphalarge-freeresp-wosif')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
@@ -28,10 +32,14 @@ args <- parser$parse_args()
 #   flux_samples_alphav2_fixresp_wosif = '6_results_sif/intermediates/osse-flux-aggregates-samples-ALPHAV2-FIXRESP-WOSIF.rds',
 #   flux_samples_alphav2_freeresp_wsif = '6_results_sif/intermediates/osse-flux-aggregates-samples-ALPHAV2-FREERESP-WSIF.rds',
 #   flux_samples_alphav2_freeresp_wosif = '6_results_sif/intermediates/osse-flux-aggregates-samples-ALPHAV2-FREERESP-WOSIF.rds',
-#   flux_samples_alphafree_fixresp_wsif = '6_results_sif/intermediates/osse-flux-aggregates-samples-ALPHAFREE-FIXRESP-WSIF.rds',
-#   flux_samples_alphafree_fixresp_wosif = '6_results_sif/intermediates/osse-flux-aggregates-samples-ALPHAFREE-FIXRESP-WOSIF.rds',
-#   flux_samples_alphafree_freeresp_wsif = '6_results_sif/intermediates/osse-flux-aggregates-samples-ALPHAFREE-FREERESP-WSIF.rds',
-#   flux_samples_alphafree_freeresp_wosif = '6_results_sif/intermediates/osse-flux-aggregates-samples-ALPHAFREE-FREERESP-WOSIF.rds',
+#   flux_samples_alphasmall_fixresp_wsif = '6_results_sif/intermediates/osse-flux-aggregates-samples-alphasmall-FIXRESP-WSIF.rds',
+#   flux_samples_alphasmall_fixresp_wosif = '6_results_sif/intermediates/osse-flux-aggregates-samples-alphasmall-FIXRESP-WOSIF.rds',
+#   flux_samples_alphasmall_freeresp_wsif = '6_results_sif/intermediates/osse-flux-aggregates-samples-alphasmall-FREERESP-WSIF.rds',
+#   flux_samples_alphasmall_freeresp_wosif = '6_results_sif/intermediates/osse-flux-aggregates-samples-alphasmall-FREERESP-WOSIF.rds',
+#   flux_samples_alphasmall_fixresp_wsif = '6_results_sif/intermediates/osse-flux-aggregates-samples-alphalarge-FIXRESP-WSIF.rds',
+#   flux_samples_alphasmall_fixresp_wosif = '6_results_sif/intermediates/osse-flux-aggregates-samples-alphalarge-FIXRESP-WOSIF.rds',
+#   flux_samples_alphasmall_freeresp_wsif = '6_results_sif/intermediates/osse-flux-aggregates-samples-alphalarge-FREERESP-WSIF.rds',
+#   flux_samples_alphasmall_freeresp_wosif = '6_results_sif/intermediates/osse-flux-aggregates-samples-alphalarge-FREERESP-WOSIF.rds',
 #   output = '6_results_sif/figures/osse-metrics-table.tex'
 # )
 
@@ -101,11 +109,11 @@ flux_aggregates_samples <- bind_rows(
       estimate = 'Without SIF'
     ),
   read_flux_samples(
-    args$flux_samples_alphafree_fixresp_wsif,
+    args$flux_samples_alphasmall_fixresp_wsif,
     c('Truth', 'Posterior')
   ) %>%
     mutate(
-      truth = 'WOMBAT v2, adj.',
+      truth = 'WOMBAT v2, AS',
       resp_term = 'Fixed',
       estimate = if_else(
         estimate == 'Posterior',
@@ -114,10 +122,31 @@ flux_aggregates_samples <- bind_rows(
       )
     ),
   read_flux_samples(
-    args$flux_samples_alphafree_fixresp_wosif,
+    args$flux_samples_alphasmall_fixresp_wosif,
   ) %>%
     mutate(
-      truth = 'WOMBAT v2, adj.',
+      truth = 'WOMBAT v2, AS',
+      resp_term = 'Fixed',
+      estimate = 'Without SIF'
+    ),
+  read_flux_samples(
+    args$flux_samples_alphalarge_fixresp_wsif,
+    c('Truth', 'Posterior')
+  ) %>%
+    mutate(
+      truth = 'WOMBAT v2, AL',
+      resp_term = 'Fixed',
+      estimate = if_else(
+        estimate == 'Posterior',
+        'With SIF',
+        estimate
+      )
+    ),
+  read_flux_samples(
+    args$flux_samples_alphalarge_fixresp_wosif,
+  ) %>%
+    mutate(
+      truth = 'WOMBAT v2, AL',
       resp_term = 'Fixed',
       estimate = 'Without SIF'
     ),
@@ -164,11 +193,11 @@ flux_aggregates_samples <- bind_rows(
       estimate = 'Without SIF'
     ),
   read_flux_samples(
-    args$flux_samples_alphafree_freeresp_wsif,
+    args$flux_samples_alphasmall_freeresp_wsif,
     c('Truth', 'Posterior')
   ) %>%
     mutate(
-      truth = 'WOMBAT v2, adj.',
+      truth = 'WOMBAT v2, AS',
       resp_term = 'Free',
       estimate = if_else(
         estimate == 'Posterior',
@@ -177,10 +206,31 @@ flux_aggregates_samples <- bind_rows(
       )
     ),
   read_flux_samples(
-    args$flux_samples_alphafree_freeresp_wosif,
+    args$flux_samples_alphasmall_freeresp_wosif,
   ) %>%
     mutate(
-      truth = 'WOMBAT v2, adj.',
+      truth = 'WOMBAT v2, AS',
+      resp_term = 'Free',
+      estimate = 'Without SIF'
+    ),
+  read_flux_samples(
+    args$flux_samples_alphalarge_freeresp_wsif,
+    c('Truth', 'Posterior')
+  ) %>%
+    mutate(
+      truth = 'WOMBAT v2, AL',
+      resp_term = 'Free',
+      estimate = if_else(
+        estimate == 'Posterior',
+        'With SIF',
+        estimate
+      )
+    ),
+  read_flux_samples(
+    args$flux_samples_alphalarge_freeresp_wosif,
+  ) %>%
+    mutate(
+      truth = 'WOMBAT v2, AL',
       resp_term = 'Free',
       estimate = 'Without SIF'
     )
@@ -197,7 +247,7 @@ osse_fluxes <- flux_aggregates_samples %>%
   ) %>%
   mutate(
     resp_term = factor(resp_term, levels = c('Fixed', 'Free')),
-    truth = factor(truth, levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, adj.')),
+    truth = factor(truth, levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, AS', 'WOMBAT v2, AL')),
     estimate = factor(estimate, levels = c('Without SIF', 'With SIF'))
   )
 
@@ -225,10 +275,10 @@ printf(
     collapse = '|'
   )
 )
-cat('Resp. & Component & True Flux & \\multicolumn{2}{c|}{RMSE [PgC per month]} & \\multicolumn{2}{c}{CRPS} \\\\\n')
+cat('RLT & Component & True Flux & \\multicolumn{2}{c|}{RMSE [PgC per month]} & \\multicolumn{2}{c}{CRPS} \\\\\n')
 cat('\\cmidrule(lr){4-5} \\cmidrule(lr){6-7}\n')
 printf(
-  'Linear & & & %s \\\\\n\\midrule\n',
+  '& & & %s \\\\\n\\midrule\n',
   paste_columns(rep(paste_columns(estimates), 2))
 )
 for (resp_term_k in resp_terms) {

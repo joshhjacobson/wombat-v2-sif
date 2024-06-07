@@ -69,11 +69,11 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif_targets --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/perturbations-augmented.fst --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/perturbations-augmented-zonal.fst --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/six-year-average-LNLGIS.fst --dry-run
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/osse-flux-aggregates-zonal-samples-ALPHA0-FREERESP-WOSIF.rds --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/osse-flux-aggregates-samples-ALPHA0-FREERESP-WOSIF.rds --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/fluxcom-monthly-2x25.fst
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-true-fluxes.pdf --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-metrics-table.tex --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-metrics-zonal-ALPHAFREE.pdf --dry-run
 
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global.pdf --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHALARGE.pdf --dry-run

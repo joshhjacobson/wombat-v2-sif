@@ -7,23 +7,19 @@ source(Sys.getenv('UTILS_PARTIAL'))
 source(Sys.getenv('DISPLAY_PARTIAL'))
 
 parser <- ArgumentParser()
-parser$add_argument('--flux-aggregators')
+parser$add_argument('--perturbations-augmented')
 parser$add_argument('--alpha-v2')
 parser$add_argument('--alpha-free')
 parser$add_argument('--alpha-free-large')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
-flux_aggregators <- fst::read_fst(args$flux_aggregators)
+perturbations_augmented <- fst::read_fst(args$perturbations_augmented)
 alpha_v2 <- fst::read_fst(args$alpha_v2)
 alpha_free <- fst::read_fst(args$alpha_free)
 alpha_free_large <- fst::read_fst(args$alpha_free_large)
 
-perturbations_base <- flux_aggregators %>%
-  filter(
-    time >= '2015-01-01',
-    time < '2021-01-01'
-  ) %>%
+perturbations_augmented <- perturbations_augmented %>%
   mutate(
     inventory_time = interaction(
       inventory,
@@ -32,11 +28,14 @@ perturbations_base <- flux_aggregators %>%
     )
   )
 
-perturbations <- perturbations_base %>%
+perturbations <- perturbations_augmented %>%
   group_by(inventory_time, basis_vector) %>%
-  summarise(value = sum(value), .groups = 'drop') %>%
+  summarise(
+    value = KG_M2_S_TO_PGC_MONTH * sum(area * value),
+    .groups = 'drop'
+  ) %>%
   left_join(
-    perturbations_base %>%
+    perturbations_augmented %>%
       distinct(inventory_time, inventory, time),
     by = 'inventory_time'
   )
@@ -65,7 +64,7 @@ true_emissions_alpha_v2 <- bottom_up %>%
 
 true_emissions_alpha_free <- bottom_up %>%
   mutate(
-    output = 'WOMBAT v2, adj. small',
+    output = 'WOMBAT v2, AS',
     value = value + as.vector(
       X_global[, as.integer(alpha_free$basis_vector)]
       %*% alpha_free$value
@@ -74,7 +73,7 @@ true_emissions_alpha_free <- bottom_up %>%
 
 true_emissions_alpha_free_large <- bottom_up %>%
   mutate(
-    output = 'WOMBAT v2, adj. large',
+    output = 'WOMBAT v2, AL',
     value = value + as.vector(
       X_global[, as.integer(alpha_free_large$basis_vector)]
       %*% alpha_free_large$value
@@ -125,12 +124,12 @@ emissions <- bind_rows(
     )),
     output = factor(
       output,
-      levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, adj. small', 'WOMBAT v2, adj. large')
+      levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, AS', 'WOMBAT v2, AL')
     )
   )
 
-colour_key <- c('Bottom-up' = 'black', 'WOMBAT v2' = '#5954d6', 'WOMBAT v2, adj. small' = '#00c6f8', 'WOMBAT v2, adj. large' = '#008cf9')
-linetype_key <- c('Bottom-up' = '41', 'WOMBAT v2' = '2212', 'WOMBAT v2, adj. small' = '1131', 'WOMBAT v2, adj. large' = '11')
+colour_key <- c('Bottom-up' = 'black', 'WOMBAT v2' = '#5954d6', 'WOMBAT v2, AS' = '#00c6f8', 'WOMBAT v2, AL' = '#008cf9')
+linetype_key <- c('Bottom-up' = '41', 'WOMBAT v2' = '2212', 'WOMBAT v2, AS' = '1131', 'WOMBAT v2, AL' = '11')
 
 output <- ggplot(
   emissions %>% filter(inventory != 'Total'),

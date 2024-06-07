@@ -17,10 +17,12 @@ utils
 # Temporary
 .vscode
 cli-cookbook.txt
+*/setup*
 4_inversion/run-osse-*
 
 data/downloaded_20211217
 data/FLUXCOM_RS
+data/FLUXCOM_RS_members
 data/fossil-mipv10
 data/GEOS_Chem
 data/GFED4.1s_Aleya_hemco_080321

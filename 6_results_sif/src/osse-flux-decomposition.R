@@ -8,19 +8,19 @@ source(Sys.getenv('DISPLAY_PARTIAL'))
 
 parser <- ArgumentParser()
 parser$add_argument('--perturbations-augmented-zonal')
-parser$add_argument('--samples-wsif')
-parser$add_argument('--samples-wosif')
+parser$add_argument('--samples-fixresp-wsif')
+parser$add_argument('--samples-fixresp-wosif')
+parser$add_argument('--samples-freeresp-wsif')
+parser$add_argument('--samples-freeresp-wosif')
 parser$add_argument('--true-alpha')
 parser$add_argument('--region')
 parser$add_argument('--output')
-args <- parser$parse_args()
+args <- parser$parse_known_args()[[1]]
 
 if (!(args$region %in% names(REGION_PLOT_SETTINGS))) {
   stop('Invalid region')
 }
 plot_region <- REGION_PLOT_SETTINGS[[args$region]]
-samples_wsif <- readRDS(args$samples_wsif)
-samples_wosif <- readRDS(args$samples_wosif)
 true_alpha <- if (!is.null(args$true_alpha)) fst::read_fst(args$true_alpha) else NULL
 perturbations_zonal <- fst::read_fst(args$perturbations_augmented_zonal)
 
@@ -84,13 +84,21 @@ if (!is.null(true_alpha)) {
     )
 }
 
-posterior_emissions_wosif <- compute_posterior(prior_emissions, X_region, samples_wosif, 'Without SIF')
-posterior_emissions_wsif <- compute_posterior(prior_emissions, X_region, samples_wsif, 'With SIF')
+list_samples <- list(
+  list(name = 'With SIF, fixed RLT', path = args$samples_fixresp_wsif),
+  list(name = 'Without SIF, fixed RLT', path = args$samples_fixresp_wosif),
+  list(name = 'With SIF, free RLT', path = args$samples_freeresp_wsif),
+  list(name = 'Without SIF, free RLT', path = args$samples_freeresp_wosif)
+)
+posterior_emissions <- lapply(list_samples, function(samples_i) {
+  if (is.null(samples_i$path)) return(NULL)
+  samples <- readRDS(samples_i$path)
+  compute_posterior(prior_emissions, X_region, samples, samples_i$name)
+}) %>% bind_rows()
 
 emissions <- bind_rows(
   true_emissions,
-  posterior_emissions_wsif,
-  posterior_emissions_wosif
+  posterior_emissions
 ) %>%
   {
     x <- .
@@ -113,7 +121,8 @@ emissions <- bind_rows(
     )
   } %>%
   filter(!(
-    inventory == 'ocean' & minor_component %in% c('linear', 'periodic') & grepl('SIF', estimate, fixed = TRUE)
+    (inventory == 'bio_resp_tot' & minor_component == 'linear' & grepl('fixed RLT', estimate, fixed = TRUE))
+    | (inventory == 'ocean' & minor_component %in% c('linear', 'periodic') & grepl('SIF', estimate, fixed = TRUE))
   )) %>%
   mutate(
     inventory = factor(c(
@@ -137,15 +146,30 @@ emissions <- bind_rows(
       'Residual'
     )),
     estimate = factor(
-      estimate, 
-      levels = c('Truth', 'Without SIF', 'With SIF'))
+      estimate,
+      levels = c(
+        'Truth',
+        'Without SIF, fixed RLT',
+        'With SIF, fixed RLT',
+        'Without SIF, free RLT',
+        'With SIF, free RLT'
+      )
+    )
   )
 
-colour_key <- c('Truth' = '#4053d3', 'Without SIF' = 'grey50', 'With SIF' = '#ebac23')
+colour_key <- c(
+  'Truth' = '#4053d3',
+  'Without SIF, fixed RLT' = 'grey50',
+  'With SIF, fixed RLT' = '#ebac23',
+  'Without SIF, free RLT' = 'grey50',
+  'With SIF, free RLT' = '#ebac23'
+)
 
 output <- wrap_plots(lapply(sort(unique(emissions$inventory)), function(inventory_i) {
   ggplot(
-    emissions %>% filter(inventory == inventory_i),
+    emissions %>% filter(
+      inventory == inventory_i
+    ),
     aes(time)
   ) +
     geom_line(
@@ -168,7 +192,7 @@ output <- wrap_plots(lapply(sort(unique(emissions$inventory)), function(inventor
     scale_x_date(date_labels = '%Y-%m') +
     scale_colour_manual(values = colour_key) +
     scale_fill_manual(values = colour_key) +
-    scale_linetype_manual(values = c('41', 'solid', 'solid')) +
+    scale_linetype_manual(values = c('41', rep('solid', 4))) +
     labs(x = 'Time', y = 'Flux [PgC per month]', colour = NULL, fill = NULL, linetype = NULL) +
     guides(fill = 'none') +
     ggtitle(inventory_i)
@@ -179,11 +203,7 @@ output <- wrap_plots(lapply(sort(unique(emissions$inventory)), function(inventor
       size = 11,
       margin = margin(0, 0, 5.5, 0, unit = 'points')
     ),
-    legend.position = if (plot_region$in_supplement) {
-      'right'
-    } else {
-      'bottom'
-    },
+    legend.position = 'bottom',
     legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'mm'),
     axis.text.x = element_text(size = 9),
     axis.text.y = element_text(size = 7),
@@ -196,7 +216,7 @@ output <- output +
     title = sprintf('Decomposition of %s fluxes', plot_region$lowercase_title),
     theme = theme(
       plot.title = element_text(
-        hjust = if (plot_region$in_supplement) 0.32 else 0.5,
+        hjust = 0.5,
         size = 13
       )
     )
@@ -205,10 +225,6 @@ output <- output +
 ggsave_base(
   args$output,
   output,
-  width = if (plot_region$in_supplement) {
-    DISPLAY_SETTINGS$supplement_full_width
-  } else {
-    DISPLAY_SETTINGS$full_width
-  },
-  height = if (plot_region$in_supplement) 11.7 else 13
+  width = DISPLAY_SETTINGS$full_width,
+  height = 13
 )

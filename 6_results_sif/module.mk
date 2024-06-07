@@ -23,26 +23,21 @@ FLUXCOM_TER_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-ter-monthl
 FLUXCOM_NEE_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-nee-monthly-2x25.nc
 FLUXCOM_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25.fst
 
-6_RESULTS_SIF_TARGETS += \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHA0.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAV2.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAFREE.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHA0.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAV2.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAFREE.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-global.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-n-boreal.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-n-temperate.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-tropical.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-n-tropical.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-s-tropical.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-s-extratropical.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/average-map.pdf
+# 6_RESULTS_SIF_TARGETS += \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHA0.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAV2.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAFREE.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHA0.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAV2.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAFREE.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map.pdf
+
+6_RESULTS_SIF_TARGETS += $(OSSE_FLUX_DECOMPOSITIONS)
 
 
 ## Products
@@ -75,10 +70,14 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \
 		--flux-samples-alphav2-fixresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAV2-FIXRESP-WOSIF.rds \
 		--flux-samples-alphav2-freeresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAV2-FREERESP-WSIF.rds \
 		--flux-samples-alphav2-freeresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAV2-FREERESP-WOSIF.rds \
-		--flux-samples-alphafree-fixresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAFREE-FIXRESP-WSIF.rds \
-		--flux-samples-alphafree-fixresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAFREE-FIXRESP-WOSIF.rds \
-		--flux-samples-alphafree-freeresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAFREE-FREERESP-WSIF.rds \
-		--flux-samples-alphafree-freeresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAFREE-FREERESP-WOSIF.rds \
+		--flux-samples-alphasmall-fixresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHASMALL-FIXRESP-WSIF.rds \
+		--flux-samples-alphasmall-fixresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHASMALL-FIXRESP-WOSIF.rds \
+		--flux-samples-alphasmall-freeresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHASMALL-FREERESP-WSIF.rds \
+		--flux-samples-alphasmall-freeresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHASMALL-FREERESP-WOSIF.rds \
+		--flux-samples-alphalarge-fixresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FIXRESP-WSIF.rds \
+		--flux-samples-alphalarge-fixresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FIXRESP-WOSIF.rds \
+		--flux-samples-alphalarge-freeresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FREERESP-WSIF.rds \
+		--flux-samples-alphalarge-freeresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FREERESP-WOSIF.rds \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-%.pdf: \
@@ -114,18 +113,53 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-%.pdf: \
 # 		--osse-base-case ALPHAFREE \
 # 		--output $@
 
-$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%.pdf: \
+# REGIONS = global n-boreal n-temperate tropical n-tropical s-tropical s-extratropical
+REGIONS = global
+RESP_TYPES = FIXRESP FREERESP
+OSSE_FLUX_DECOMPOSITIONS = \
+	$(foreach RESP_TYPE,$(RESP_TYPES),\
+	$(foreach REGION,$(REGIONS),\
+	$(foreach OSSE_CASE,$(OSSE_BASE_CASES),\
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_$(OSSE_CASE)-$(RESP_TYPE).pdf)))
+OSSE_FLUX_DECOMPOSITIONS += \
+	$(foreach REGION,$(REGIONS),\
+	$(foreach OSSE_CASE,$(OSSE_BASE_CASES),\
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_$(OSSE_CASE).pdf))
+
+$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-FIXRESP.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-flux-decomposition.R \
 	$(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
-	$(OSSE_SAMPLES_BASE)-ALPHAV2-FREERESP-WSIF.rds \
-	$(OSSE_SAMPLES_BASE)-ALPHAV2-FREERESP-WOSIF.rds \
+	$(OSSE_SAMPLES_CASES) \
 	$(DISPLAY_PARTIAL)
-	Rscript $< \
+	Rscript $< $(OSSE_FLAGS_ALPHA) \
 		--perturbations-augmented-zonal $(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
-		--samples-wsif $(OSSE_SAMPLES_BASE)-ALPHAV2-FREERESP-WSIF.rds \
-		--samples-wosif $(OSSE_SAMPLES_BASE)-ALPHAV2-FREERESP-WOSIF.rds \
-		--true-alpha $(ALPHA_WOMBAT_V2) \
-		--region $* \
+		--samples-wsif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FIXRESP-WSIF.rds \
+		--samples-wosif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FIXRESP-WOSIF.rds \
+		--region $(firstword $(subst _, ,$*)) \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-FREERESP.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/osse-flux-decomposition.R \
+	$(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
+	$(OSSE_SAMPLES_CASES) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< $(OSSE_FLAGS_ALPHA) \
+		--perturbations-augmented-zonal $(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
+		--samples-wsif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FREERESP-WSIF.rds \
+		--samples-wosif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FREERESP-WOSIF.rds \
+		--region $(firstword $(subst _, ,$*)) \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-mixed.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/osse-flux-decomposition.R \
+	$(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
+	$(OSSE_SAMPLES_CASES) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< $(OSSE_FLAGS_ALPHA) \
+		--perturbations-augmented-zonal $(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
+		--samples-fixresp-wosif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FIXRESP-WOSIF.rds \
+		--samples-freeresp-wsif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FREERESP-WSIF.rds \
+		--region $(firstword $(subst _, ,$*)) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf: \

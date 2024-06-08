@@ -4,16 +4,26 @@ library(dplyr, warn.conflicts = FALSE)
 source(Sys.getenv('UTILS_PARTIAL'))
 
 parser <- ArgumentParser()
-parser$add_argument('--fluxcom-gpp-monthly-2x25')
-parser$add_argument('--fluxcom-ter-monthly-2x25')
-parser$add_argument('--fluxcom-nee-monthly-2x25')
+parser$add_argument('--input-files', nargs = '+')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
-read_fluxcom <- function(filename, field_name) {
+flux_key <- c(
+  'GPP' = 'GPP',
+  'GPP_HB' = 'GPP',
+  'TER' = 'TER',
+  'TER_HB' = 'TER',
+  'NEE' = 'NEE'
+)
+
+read_fluxcom <- function(filename) {
   fn <- ncdf4::nc_open(filename)
   on.exit(ncdf4::nc_close(fn))
   v <- function(...) ncdf4::ncvar_get(fn, ...)
+  fields <- names(fn$var)
+  stopifnot(length(fields) == 1 & fields[1] %in% names(flux_key))
+  field_name <- fields[1]
+  flux_name <- flux_key[field_name]
   expand.grid(
     longitude = as.vector(v('lon')),
     latitude = as.vector(v('lat')),
@@ -21,18 +31,15 @@ read_fluxcom <- function(filename, field_name) {
     stringsAsFactors = FALSE
   ) %>%
     mutate(
-      inventory = field_name,
-      value = as.vector(v(field_name)),
-      value_mad = as.vector(v(paste0(field_name, '_mad')))
+      inventory = flux_name,
+      method = paste(field_name, ncdf4::ncatt_get(fn, 0)$method, sep = '.'),
+      value = as.vector(v(field_name))
     )
 }
 
 log_debug('Reading aggregated FLUXCOM data')
-output <- bind_rows(
-  read_fluxcom(args$fluxcom_gpp_monthly_2x25, 'GPP'),
-  read_fluxcom(args$fluxcom_ter_monthly_2x25, 'TER'),
-  read_fluxcom(args$fluxcom_nee_monthly_2x25, 'NEE')
-) %>%
+output <- lapply(args$input_files, read_fluxcom) %>%
+  bind_rows() %>%
   mutate(
     inventory = factor(c(
       'GPP' = 'GPP',
@@ -43,10 +50,14 @@ output <- bind_rows(
       'Respiration',
       'NEE'
     )),
+    method = factor(method),
     value = if_else(inventory == 'GPP', -value, value)
-  )
+  ) %>%
+  # NOTE(jhj): the MTE, GMDH_CV, and MARSens methods occasionally report
+  # highly non-physical values, which we remove here
+  filter(between(value, -30, 30))
 
-log_debug('Writing output to {args$output}')
+log_debug('Saving to {args$output}')
 fst::write_fst(output, args$output)
 
 log_debug('Done')

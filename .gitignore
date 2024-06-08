@@ -17,7 +17,7 @@ utils
 # Temporary
 .vscode
 cli-cookbook.txt
-*/setup*
+*/*.R
 4_inversion/run-osse-*
 
 data/downloaded_20211217

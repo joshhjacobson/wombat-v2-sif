@@ -21,6 +21,15 @@ SIX_YEAR_AVERAGE_LNLGISSIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average
 FLUXCOM_GPP_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-gpp-monthly-2x25.nc
 FLUXCOM_TER_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-ter-monthly-2x25.nc
 FLUXCOM_NEE_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-nee-monthly-2x25.nc
+
+# HB (non-HB) refers to daytime (nighttime) flux partioning
+FLUXCOM_FLUXES = GPP GPP_HB TER TER_HB NEE
+FLUXCOM_METHODS = ANNnoPFT GMDH_CV KRR MARSens MTE MTEM MTE_Viterbo RFmiss SVM
+FLUXCOM_MONTHLY_2x25_BASE = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25
+FLUXCOM_MONTHLY_2x25_FILES = \
+	$(foreach FLUX,$(FLUXCOM_FLUXES),\
+	$(foreach METHOD,$(FLUXCOM_METHODS),\
+	$(FLUXCOM_MONTHLY_2x25_BASE)-$(FLUX)-$(METHOD).nc))
 FLUXCOM_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25.fst
 
 # 6_RESULTS_SIF_TARGETS += \
@@ -49,13 +58,15 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-true-fluxes.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
 	$(ALPHA_SMALL) \
+	$(ALPHA_MEDIUM) \
 	$(ALPHA_LARGE) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
 		--alpha-v2 $(ALPHA_WOMBAT_V2) \
-		--alpha-free $(ALPHA_SMALL) \
-		--alpha-free-large $(ALPHA_LARGE) \
+		--alpha-small $(ALPHA_SMALL) \
+		--alpha-medium $(ALPHA_MEDIUM) \
+		--alpha-large $(ALPHA_LARGE) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \
@@ -212,37 +223,20 @@ $(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf: \
 # TODO: add FLUXCOM details to README
 $(FLUXCOM_MONTHLY_2x25): \
 	$(6_RESULTS_SIF_SRC_DIR)/fluxcom-monthly.R \
-	$(FLUXCOM_GPP_MONTHLY_2x25) \
-	$(FLUXCOM_TER_MONTHLY_2x25) \
-	$(FLUXCOM_NEE_MONTHLY_2x25)
+	$(FLUXCOM_MONTHLY_2x25_FILES)
 	Rscript $< \
-		--fluxcom-gpp-monthly-2x25 $(FLUXCOM_GPP_MONTHLY_2x25) \
-		--fluxcom-ter-monthly-2x25 $(FLUXCOM_TER_MONTHLY_2x25) \
-		--fluxcom-nee-monthly-2x25 $(FLUXCOM_NEE_MONTHLY_2x25) \
+		--input-files $(FLUXCOM_MONTHLY_2x25_FILES) \
 		--output $@
 
-$(FLUXCOM_GPP_MONTHLY_2x25): \
-	$(GEOS_2X25_GRID)
+$(FLUXCOM_MONTHLY_2x25_BASE)-%.nc: \
+	$(GEOS_2X25_GRID) \
+	$(FLUXCOM_05X05_GRID)
 	cdo -v -z zip_6 \
 		-remapcon,$(GEOS_2X25_GRID) \
-		-select,name=GPP,GPP_mad \
-		$(FLUXCOM_DIRECTORY)/GPP.RS_V006.FP-ALL.MLM-ALL.METEO-NONE.720_360.monthly.{2015,2016,2017,2018,2019,2020}.nc \
-		$@
-
-$(FLUXCOM_TER_MONTHLY_2x25): \
-	$(GEOS_2X25_GRID)
-	cdo -v -z zip_6 \
-		-remapcon,$(GEOS_2X25_GRID) \
-		-select,name=TER,TER_mad \
-		$(FLUXCOM_DIRECTORY)/TER.RS_V006.FP-ALL.MLM-ALL.METEO-NONE.720_360.monthly.{2015,2016,2017,2018,2019,2020}.nc \
-		$@
-
-$(FLUXCOM_NEE_MONTHLY_2x25): \
-	$(GEOS_2X25_GRID)
-	cdo -v -z zip_6 \
-		-remapcon,$(GEOS_2X25_GRID) \
-		-select,name=NEE,NEE_mad \
-		$(FLUXCOM_DIRECTORY)/NEE.RS_V006.FP-NONE.MLM-ALL.METEO-NONE.720_360.monthly.{2015,2016,2017,2018,2019,2020}.nc \
+		-setattribute,$(firstword $(subst -, ,$*))@method=$(lastword $(subst -, ,$*)) \
+		-select,name=$(firstword $(subst -, ,$*)) \
+		-setgrid,$(FLUXCOM_05X05_GRID) \
+		$(FLUXCOM_DIRECTORY)/$(firstword $(subst -, ,$*)).$(lastword $(subst -, ,$*)).monthly.{2015,2016,2017,2018,2019,2020}.nc \
 		$@
 
 $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average-%.fst: \

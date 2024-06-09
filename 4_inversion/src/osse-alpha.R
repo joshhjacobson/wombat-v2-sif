@@ -17,8 +17,6 @@ parser$add_argument('--delta', type = 'numeric')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
-set.seed(20240425)
-
 basis_vectors <- fst::read_fst(args$basis_vectors)
 control_emissions <- fst::read_fst(args$control_emissions)
 alpha <- fst::read_fst(args$alpha_wombat_v2)

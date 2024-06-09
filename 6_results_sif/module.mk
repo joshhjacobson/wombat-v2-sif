@@ -85,12 +85,17 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \
 		--flux-samples-alphasmall-fixresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHASMALL-FIXRESP-WOSIF.rds \
 		--flux-samples-alphasmall-freeresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHASMALL-FREERESP-WSIF.rds \
 		--flux-samples-alphasmall-freeresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHASMALL-FREERESP-WOSIF.rds \
+		--flux-samples-alphamd-fixresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAMD-FIXRESP-WSIF.rds \
+		--flux-samples-alphamd-fixresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAMD-FIXRESP-WOSIF.rds \
+		--flux-samples-alphamd-freeresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAMD-FREERESP-WSIF.rds \
+		--flux-samples-alphamd-freeresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAMD-FREERESP-WOSIF.rds \
 		--flux-samples-alphalarge-fixresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FIXRESP-WSIF.rds \
 		--flux-samples-alphalarge-fixresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FIXRESP-WOSIF.rds \
 		--flux-samples-alphalarge-freeresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FREERESP-WSIF.rds \
 		--flux-samples-alphalarge-freeresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FREERESP-WOSIF.rds \
 		--output $@
 
+# TODO: If keeping these figures, add intervals
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-%.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-metrics-monthly.R \
 	$(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-%-FIXRESP-WSIF.rds \

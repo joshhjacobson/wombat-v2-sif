@@ -18,6 +18,7 @@ utils
 .vscode
 cli-cookbook.txt
 */*.R
+*/*.sh
 4_inversion/run-osse-*
 
 data/downloaded_20211217

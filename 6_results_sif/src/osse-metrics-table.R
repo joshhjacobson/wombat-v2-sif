@@ -16,6 +16,10 @@ parser$add_argument('--flux-samples-alphasmall-fixresp-wsif')
 parser$add_argument('--flux-samples-alphasmall-fixresp-wosif')
 parser$add_argument('--flux-samples-alphasmall-freeresp-wsif')
 parser$add_argument('--flux-samples-alphasmall-freeresp-wosif')
+parser$add_argument('--flux-samples-alphamd-fixresp-wsif')
+parser$add_argument('--flux-samples-alphamd-fixresp-wosif')
+parser$add_argument('--flux-samples-alphamd-freeresp-wsif')
+parser$add_argument('--flux-samples-alphamd-freeresp-wosif')
 parser$add_argument('--flux-samples-alphalarge-fixresp-wsif')
 parser$add_argument('--flux-samples-alphalarge-fixresp-wosif')
 parser$add_argument('--flux-samples-alphalarge-freeresp-wsif')
@@ -130,6 +134,27 @@ flux_aggregates_samples <- bind_rows(
       estimate = 'Without SIF'
     ),
   read_flux_samples(
+    args$flux_samples_alphamd_fixresp_wsif,
+    c('Truth', 'Posterior')
+  ) %>%
+    mutate(
+      truth = 'WOMBAT v2, AM',
+      resp_term = 'Fixed',
+      estimate = if_else(
+        estimate == 'Posterior',
+        'With SIF',
+        estimate
+      )
+    ),
+  read_flux_samples(
+    args$flux_samples_alphamd_fixresp_wosif,
+  ) %>%
+    mutate(
+      truth = 'WOMBAT v2, AM',
+      resp_term = 'Fixed',
+      estimate = 'Without SIF'
+    ),
+  read_flux_samples(
     args$flux_samples_alphalarge_fixresp_wsif,
     c('Truth', 'Posterior')
   ) %>%
@@ -214,6 +239,27 @@ flux_aggregates_samples <- bind_rows(
       estimate = 'Without SIF'
     ),
   read_flux_samples(
+    args$flux_samples_alphamd_freeresp_wsif,
+    c('Truth', 'Posterior')
+  ) %>%
+    mutate(
+      truth = 'WOMBAT v2, AM',
+      resp_term = 'Free',
+      estimate = if_else(
+        estimate == 'Posterior',
+        'With SIF',
+        estimate
+      )
+    ),
+  read_flux_samples(
+    args$flux_samples_alphamd_freeresp_wosif,
+  ) %>%
+    mutate(
+      truth = 'WOMBAT v2, AM',
+      resp_term = 'Free',
+      estimate = 'Without SIF'
+    ),
+  read_flux_samples(
     args$flux_samples_alphalarge_freeresp_wsif,
     c('Truth', 'Posterior')
   ) %>%
@@ -247,7 +293,7 @@ osse_fluxes <- flux_aggregates_samples %>%
   ) %>%
   mutate(
     resp_term = factor(resp_term, levels = c('Fixed', 'Free')),
-    truth = factor(truth, levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, AS', 'WOMBAT v2, AL')),
+    truth = factor(truth, levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, AS', 'WOMBAT v2, AM', 'WOMBAT v2, AL')),
     estimate = factor(estimate, levels = c('Without SIF', 'With SIF'))
   )
 

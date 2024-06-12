@@ -19,10 +19,6 @@ REGION_GRID_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/region-grid.rds
 REGION_SF_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/region-sf.rds
 SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
 
-FLUXCOM_GPP_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-gpp-monthly-2x25.nc
-FLUXCOM_TER_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-ter-monthly-2x25.nc
-FLUXCOM_NEE_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-nee-monthly-2x25.nc
-
 # HB (non-HB) refers to daytime (nighttime) flux partioning
 FLUXCOM_FLUXES = GPP GPP_HB TER TER_HB NEE
 FLUXCOM_METHODS = ANNnoPFT GMDH_CV KRR MARSens MTE MTEM MTE_Viterbo RFmiss SVM
@@ -32,6 +28,7 @@ FLUXCOM_MONTHLY_2x25_FILES = \
 	$(foreach METHOD,$(FLUXCOM_METHODS),\
 	$(FLUXCOM_MONTHLY_2x25_BASE)-$(FLUX)-$(METHOD).nc))
 FLUXCOM_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25.fst
+FLUXCOM_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25-zonal.fst
 
 6_RESULTS_SIF_TARGETS += \
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf \
@@ -46,6 +43,7 @@ FLUXCOM_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25.f
 	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-gpp.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-resp.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-nee.pdf \
@@ -201,7 +199,6 @@ $(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf: \
 
 $(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/flux-net-zonal.R \
-	$(AREA_1X1) \
 	$(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
 	$(SAMPLES_LNLGIS) \
 	$(SAMPLES_LNLGISSIF) \
@@ -210,6 +207,20 @@ $(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf: \
 		--perturbations-augmented-zonal $(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
 		--samples-LNLGIS $(SAMPLES_LNLGIS) \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/seasonal-cycle-zonal.R \
+	$(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
+	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_LNLGISSIF) \
+	$(FLUXCOM_MONTHLY_2x25_ZONAL) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--perturbations-augmented-zonal $(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
+		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
+		--fluxcom-monthly-2x25-zonal $(FLUXCOM_MONTHLY_2x25_ZONAL) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-%.pdf: \
@@ -224,6 +235,17 @@ $(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-%.pdf: \
 		--output $@
 
 ## Intermediates
+
+$(FLUXCOM_MONTHLY_2x25_ZONAL): \
+	$(6_RESULTS_SIF_SRC_DIR)/fluxcom-monthly-zonal.R \
+	$(FLUXCOM_MONTHLY_2x25) \
+	$(CONTROL_EMISSIONS) \
+	$(AREA_1X1)
+	Rscript $< \
+		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
+		--control-emissions $(CONTROL_EMISSIONS) \
+		--area-1x1 $(AREA_1X1) \
+		--output $@
 
 # TODO: add FLUXCOM details to README
 $(FLUXCOM_MONTHLY_2x25): \

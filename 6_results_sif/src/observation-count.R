@@ -184,7 +184,7 @@ output2 <- observations %>%
     overall_observation_mode != 'OG'
   ) %>%
   mutate(
-    month = lubridate::round_date(time, 'month')
+    month = lubridate::round_date(time, 'month') %>% as.Date()
   ) %>%
   group_by(observation_type, month) %>%
   summarise(n = n(), .groups = 'drop') %>%

@@ -434,7 +434,7 @@ discretise_by_breaks <- function(y, breaks, limits) {
 
 grid_df_to_sf <- function(df, variable_name) {
   y_raster <- raster::brick(lapply(variable_name, function(variable_name_i) {
-    y <- df[[variable_name_i]]
+    y <- df %>% arrange(longitude, latitude) %>% pull(variable_name_i)
     latitudes <- sort(unique(df$latitude))
     longitudes <- sort(unique(df$longitude))
     y_matrix <- matrix(
@@ -477,6 +477,74 @@ grid_df_to_sf <- function(df, variable_name) {
   sf::st_crs(output) <- 'WGS84'
   output
 }
+
+# sparse_grid_df_to_sf <- function(df, variable_names, grid_system) {
+#   df <- df %>%
+#     mutate(
+#       longitude = factor(longitude, levels = grid_system$longitude),
+#       latitude = factor(latitude, levels = grid_system$latitude)
+#     )
+#   y_rasters <- lapply(variable_names, function(variable_name_i) {
+#     y_matrix <- with(df, sparseMatrix(
+#       i = as.integer(latitude),
+#       j = as.integer(longitude),
+#       x = df[[variable_name_i]],
+#       dims = c(nlevels(latitude), nlevels(longitude))
+#     ))
+#     # First grid cell is centred on -180, which makes it hard to construct
+#     # compliant polygons; avoid this by splitting horizontal cells in two
+#     y_matrix_wide <- matrix(
+#       NA,
+#       nrow = nrow(y_matrix),
+#       ncol = 2 * ncol(y_matrix)
+#     )
+#     for (i in seq_len(nrow(y_matrix))) {
+#       # First original cell sits on the boundary, so it's value goes to first and
+#       # last new cell
+#       y_matrix_wide[i, 1] <- y_matrix[i, 1]
+#       y_matrix_wide[i, ncol(y_matrix_wide)] <- y_matrix[i, 1]
+#       # Remaining cells simply repeat
+#       y_matrix_wide[
+#         i,
+#         2 : (ncol(y_matrix_wide) - 1)
+#       ] <- rep(y_matrix[i, 2 : ncol(y_matrix)], each = 2)
+#     }
+#     # TODO: may instead want to convert all exact zeros to NA in final data frame
+#     # to get grey values at missing locations
+#     y_matrix_wide[y_matrix_wide == 0] <- NA
+
+#     output_i <- stars::st_as_stars(t(y_matrix_wide)) %>%
+#       stars::st_set_dimensions(
+#         which = c('X1' , 'X2'),
+#         names = c('longitude', 'latitude'),
+#         point = 'area'
+#       ) %>%
+#       # NOTE(jhj): stars uses cell bounds, so values are offset below
+#       stars::st_set_dimensions(
+#         which = 'longitude',
+#         values = seq(
+#           min(grid_system$longitude),
+#           max(grid_system$longitude) + grid_system$cell_width / 2,
+#           by = grid_system$cell_width / 2
+#         )
+#       ) %>%
+#       stars::st_set_dimensions(
+#         which = 'latitude',
+#         values = seq(
+#           min(grid_system$latitude) - grid_system$cell_height / 2,
+#           max(grid_system$latitude) + grid_system$cell_height / 2,
+#           by = grid_system$cell_height
+#         )
+#       )
+#     names(output_i) <- variable_name_i
+#     output_i
+#   })
+
+#   # NOTE: would need to use merge = TRUE here
+#   output <- do.call(c, y_rasters) %>% sf::st_as_sf()
+#   sf::st_crs(output) <- 'WGS84'
+#   output
+# }
 
 REGION_PLOT_SETTINGS <- list(
   'global' = list(

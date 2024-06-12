@@ -15,8 +15,9 @@ OSSE_FLUX_AGGREGATES_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_FL
 OSSE_FLUX_AGGREGATES_ZONAL_SAMPLES_BASE = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-zonal-samples
 OSSE_FLUX_AGGREGATES_ZONAL_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_FLUX_AGGREGATES_ZONAL_SAMPLES_BASE)-$(OSSE_CASE).rds)
 
-SIX_YEAR_AVERAGE_LNLGIS = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average-LNLGIS.fst
-SIX_YEAR_AVERAGE_LNLGISSIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average-LNLGISSIF.fst
+REGION_GRID_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/region-grid.rds
+REGION_SF_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/region-sf.rds
+SIX_YEAR_AVERAGE_SIF = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average.fst
 
 FLUXCOM_GPP_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-gpp-monthly-2x25.nc
 FLUXCOM_TER_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-ter-monthly-2x25.nc
@@ -32,19 +33,22 @@ FLUXCOM_MONTHLY_2x25_FILES = \
 	$(FLUXCOM_MONTHLY_2x25_BASE)-$(FLUX)-$(METHOD).nc))
 FLUXCOM_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25.fst
 
-# 6_RESULTS_SIF_TARGETS += \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHA0.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAV2.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAFREE.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHA0.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAV2.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAFREE.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map.pdf
+6_RESULTS_SIF_TARGETS += \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHA0.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAV2.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAMD.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHA0.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAV2.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAMD.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-gpp.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-resp.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-nee.pdf \
 
 6_RESULTS_SIF_TARGETS += $(OSSE_FLUX_DECOMPOSITIONS)
 
@@ -95,7 +99,7 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \
 		--flux-samples-alphalarge-freeresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FREERESP-WOSIF.rds \
 		--output $@
 
-# TODO: If keeping these figures, add intervals
+# TODO: If keeping these figures, add intervals and maybe do cross-comparison
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-%.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-metrics-monthly.R \
 	$(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-%-FIXRESP-WSIF.rds \
@@ -117,17 +121,6 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-%.pdf: \
 		--flux-samples-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-zonal-samples-$*-FIXRESP-WOSIF.rds \
 		--osse-base-case $* \
 		--output $@
-
-# $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAFREE.pdf: \
-# 	$(6_RESULTS_SIF_SRC_DIR)/osse-metrics-zonal.R \
-# 	$(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-zonal-samples-ALPHAFREE-FREERESP-WSIF.rds \
-# 	$(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-zonal-samples-ALPHAFREE-FIXRESP-WOSIF.rds \
-# 	$(DISPLAY_PARTIAL)
-# 	Rscript $< \
-# 		--flux-samples-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-zonal-samples-ALPHAFREE-FREERESP-WSIF.rds \
-# 		--flux-samples-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-zonal-samples-ALPHAFREE-FIXRESP-WOSIF.rds \
-# 		--osse-base-case ALPHAFREE \
-# 		--output $@
 
 # REGIONS = global n-boreal n-temperate tropical n-tropical s-tropical s-extratropical
 REGIONS = global
@@ -178,6 +171,14 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-mixed.pdf: \
 		--region $(firstword $(subst _, ,$*)) \
 		--output $@
 
+$(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/region-map.R \
+	$(REGION_SF_SIF) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--region-sf $(REGION_SF_SIF) \
+		--output $@
+
 $(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/observation-count.R \
 	$(OBSERVATIONS) \
@@ -211,17 +212,16 @@ $(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf: \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
 		--output $@
 
-# $(6_RESULTS_SIF_FIGURES_DIR)/average-map.pdf: \
-# 	$(6_RESULTS_SIF_SRC_DIR)/average-map.R \
-# 	$(SIX_YEAR_AVERAGE_LNLGIS) \
-# 	$(SIX_YEAR_AVERAGE_LNLGISSIF) \
-# 	$(REGION_SF) \
-# 	$(DISPLAY_PARTIAL)
-# 	Rscript $< \
-# 		--six-year-average-LNLGIS $(SIX_YEAR_AVERAGE_LNLGIS) \
-# 		--six-year-average-LNLGISSIF $(SIX_YEAR_AVERAGE_LNLGISSIF) \
-# 		--region-sf $(REGION_SF) \
-# 		--output $@
+$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-%.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/average-map-wombat.R \
+	$(SIX_YEAR_AVERAGE_SIF) \
+	$(REGION_SF_SIF) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--six-year-average $(SIX_YEAR_AVERAGE_SIF) \
+		--flux-component $* \
+		--region-sf $(REGION_SF_SIF) \
+		--output $@
 
 ## Intermediates
 
@@ -244,14 +244,16 @@ $(FLUXCOM_MONTHLY_2x25_BASE)-%.nc: \
 		$(FLUXCOM_DIRECTORY)/$(firstword $(subst -, ,$*)).$(lastword $(subst -, ,$*)).monthly.{2015,2016,2017,2018,2019,2020}.nc \
 		$@
 
-$(6_RESULTS_SIF_INTERMEDIATES_DIR)/six-year-average-%.fst: \
+$(SIX_YEAR_AVERAGE_SIF): \
 	$(6_RESULTS_SIF_SRC_DIR)/six-year-average.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
-	4_inversion/intermediates/samples-%.rds \
+	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_LNLGISSIF) \
 	$(UTILS_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
-		--samples 4_inversion/intermediates/samples-$*.rds \
+		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
 		--output $@
 
 $(OSSE_FLUX_AGGREGATES_ZONAL_SAMPLES_BASE)-%.rds: \
@@ -294,4 +296,18 @@ $(PERTURBATIONS_AUGMENTED_SIF): \
 		--basis-vectors $(BASIS_VECTORS) \
 		--control-emissions $(CONTROL_EMISSIONS) \
 		--perturbations $(PERTURBATIONS) \
+		--output $@
+
+$(REGION_SF_SIF): \
+	$(6_RESULTS_SIF_SRC_DIR)/region-sf.R \
+	$(REGION_GRID)
+	Rscript $< \
+		--region-grid $(REGION_GRID_SIF) \
+		--output $@
+
+$(REGION_GRID_SIF): \
+	$(6_RESULTS_SIF_SRC_DIR)/region-grid.R \
+	$(TRANSCOM_MASK_GEOS_2X25)
+	Rscript $< \
+		--transcom-grid $(TRANSCOM_MASK_GEOS_2X25) \
 		--output $@

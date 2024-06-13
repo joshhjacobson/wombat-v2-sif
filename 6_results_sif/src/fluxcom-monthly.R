@@ -5,6 +5,7 @@ source(Sys.getenv('UTILS_PARTIAL'))
 
 parser <- ArgumentParser()
 parser$add_argument('--input-files', nargs = '+')
+parser$add_argument('--control-emissions')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
@@ -37,25 +38,33 @@ read_fluxcom <- function(filename) {
     )
 }
 
+cell_area <- fst::read_fst(args$control_emissions) %>%
+  distinct(longitude, latitude, cell_height, area) %>%
+  mutate(
+    latitude_bottom = latitude - cell_height / 2
+  ) %>%
+  select(-cell_height)
+
 log_debug('Reading aggregated FLUXCOM data')
 output <- lapply(args$input_files, read_fluxcom) %>%
   bind_rows() %>%
   mutate(
     inventory = factor(c(
-      'GPP' = 'GPP',
-      'TER' = 'Respiration',
-      'NEE' = 'NEE'
+      'GPP' = 'bio_assim',
+      'TER' = 'bio_resp_tot',
+      'NEE' = 'nee'
     )[inventory], levels = c(
-      'GPP',
-      'Respiration',
-      'NEE'
+      'bio_assim',
+      'bio_resp_tot',
+      'nee'
     )),
     method = factor(method),
-    value = if_else(inventory == 'GPP', -value, value)
+    value = if_else(inventory == 'bio_assim', -value, value)
   ) %>%
   # NOTE(jhj): the MTE, GMDH_CV, and MARSens methods occasionally report
   # highly non-physical values, which we remove here
-  filter(between(value, -30, 30))
+  filter(between(value, -30, 30)) %>%
+  left_join(cell_area, by = c('longitude', 'latitude'))
 
 log_debug('Saving to {args$output}')
 fst::write_fst(output, args$output)

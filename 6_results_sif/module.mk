@@ -30,25 +30,29 @@ FLUXCOM_MONTHLY_2x25_FILES = \
 FLUXCOM_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25.fst
 FLUXCOM_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25-zonal.fst
 
+# 6_RESULTS_SIF_TARGETS += \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHA0.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAV2.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAMD.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHA0.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAV2.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAMD.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
+
 6_RESULTS_SIF_TARGETS += \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHA0.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAV2.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAMD.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHA0.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAV2.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAMD.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-gpp.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-resp.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-nee.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-global.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf
+	
+#	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-gpp.pdf \
+#	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-resp.pdf \
+#	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-nee.pdf \
 
-6_RESULTS_SIF_TARGETS += $(OSSE_FLUX_DECOMPOSITIONS)
+# 6_RESULTS_SIF_TARGETS += $(OSSE_FLUX_DECOMPOSITIONS)
 
 
 ## Products
@@ -190,11 +194,13 @@ $(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf: \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
 	$(SAMPLES_LNLGIS) \
 	$(SAMPLES_LNLGISSIF) \
+	$(FLUXCOM_MONTHLY_2x25) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
 		--samples-LNLGIS $(SAMPLES_LNLGIS) \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
+		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf: \
@@ -202,11 +208,27 @@ $(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf: \
 	$(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
 	$(SAMPLES_LNLGIS) \
 	$(SAMPLES_LNLGISSIF) \
+	$(FLUXCOM_MONTHLY_2x25_ZONAL) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented-zonal $(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
 		--samples-LNLGIS $(SAMPLES_LNLGIS) \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
+		--fluxcom-monthly-2x25-zonal $(FLUXCOM_MONTHLY_2x25_ZONAL) \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-global.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/seasonal-cycle-global.R \
+	$(PERTURBATIONS_AUGMENTED_SIF) \
+	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_LNLGISSIF) \
+	$(FLUXCOM_MONTHLY_2x25) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
+		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
+		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf: \
@@ -239,20 +261,19 @@ $(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-%.pdf: \
 $(FLUXCOM_MONTHLY_2x25_ZONAL): \
 	$(6_RESULTS_SIF_SRC_DIR)/fluxcom-monthly-zonal.R \
 	$(FLUXCOM_MONTHLY_2x25) \
-	$(CONTROL_EMISSIONS) \
 	$(AREA_1X1)
 	Rscript $< \
 		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
-		--control-emissions $(CONTROL_EMISSIONS) \
 		--area-1x1 $(AREA_1X1) \
 		--output $@
 
-# TODO: add FLUXCOM details to README
 $(FLUXCOM_MONTHLY_2x25): \
 	$(6_RESULTS_SIF_SRC_DIR)/fluxcom-monthly.R \
-	$(FLUXCOM_MONTHLY_2x25_FILES)
+	$(FLUXCOM_MONTHLY_2x25_FILES) \
+	$(CONTROL_EMISSIONS)
 	Rscript $< \
 		--input-files $(FLUXCOM_MONTHLY_2x25_FILES) \
+		--control-emissions $(CONTROL_EMISSIONS) \
 		--output $@
 
 $(FLUXCOM_MONTHLY_2x25_BASE)-%.nc: \

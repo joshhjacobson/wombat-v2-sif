@@ -1,7 +1,6 @@
 library(argparse)
 library(dplyr, warn.conflicts = FALSE)
 library(Matrix)
-library(patchwork)
 
 source(Sys.getenv('UTILS_PARTIAL'))
 source(Sys.getenv('DISPLAY_PARTIAL'))
@@ -10,7 +9,7 @@ parser <- ArgumentParser()
 parser$add_argument('--perturbations-augmented-zonal')
 parser$add_argument('--samples-LNLGIS')
 parser$add_argument('--samples-LNLGISSIF')
-parser$add_argument('--fluxcom-monthly-2x25')
+parser$add_argument('--fluxcom-monthly-2x25-zonal')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
@@ -31,47 +30,32 @@ perturbations_zonal <- perturbations_zonal %>%
     inventory_month = interaction(inventory, month, drop = TRUE)
   )
 
-fluxcom_zonal <- fluxcom_monthly_2x25_zonal %>%
+fluxcom_monthly_2x25_zonal <- fluxcom_monthly_2x25_zonal %>%
   mutate(
-    inventory = factor(c(
-      'GPP' = 'bio_assim',
-      'Respiration' = 'bio_resp_tot',
-      'NEE' = 'nee'
-    )[inventory], levels = c(
-      'bio_assim',
-      'bio_resp_tot',
-      'nee'
-    )),
-    month = lubridate::month(time),
-    inventory_month = interaction(inventory, month, drop = TRUE)
+    month = lubridate::month(time)
   )
 
-emissions_zonal <- lapply(REGION_PLOT_SETTINGS, function(zonal_band) {
-  fluxcom_zone <- fluxcom_zonal %>%
+zones <- within(REGION_PLOT_SETTINGS, rm('global'))
+emissions_zonal <- lapply(zones, function(zonal_band) {
+  fluxcom_zone <- fluxcom_monthly_2x25_zonal %>%
     filter(
       latitude_bottom >= zonal_band$latitude_lower,
       latitude_bottom < zonal_band$latitude_upper
     ) %>%
-    group_by(inventory_month, method) %>%
+    group_by(inventory, month, method) %>%
     summarise(
       # Average over the six-year study period
       value = GC_M2_DAY_TO_PGC_MONTH * sum(area * value) / 6,
       .groups = 'drop'
     ) %>%
-    left_join(
-      fluxcom_zonal %>%
-        distinct(inventory_month, inventory, month),
-      by = 'inventory_month'
-    ) %>%
-    group_by(inventory_month, inventory, month) %>%
+    group_by(inventory, month) %>%
     summarise(
       value_mean = mean(value),
-      value_q025 = quantile(value, probs = 0.025),
-      value_q975 = quantile(value, probs = 0.975),
+      value_low = quantile(value, 0.25),
+      value_high = quantile(value, 0.75),
       .groups = 'drop'
     ) %>%
     rename(value = value_mean) %>%
-    select(-inventory_month) %>%
     mutate(estimate = 'FLUXCOM')
 
   perturbations_zone <- perturbations_zonal %>%
@@ -104,8 +88,16 @@ emissions_zonal <- lapply(REGION_PLOT_SETTINGS, function(zonal_band) {
     select(-inventory_month) %>%
     mutate(estimate = 'Bottom-up')
 
-  posterior_emissions_LNLGIS <- compute_posterior(prior_emissions, X_zone, samples_LNLGIS, 'Posterior v2')
-  posterior_emissions_LNLGISSIF <- compute_posterior(prior_emissions, X_zone, samples_LNLGISSIF, 'Posterior v2S')
+  posterior_emissions_LNLGIS <- compute_posterior(prior_emissions, X_zone, samples_LNLGIS, 'Posterior v2') %>%
+    rename(
+      value_low = value_q025,
+      value_high = value_q975
+    )
+  posterior_emissions_LNLGISSIF <- compute_posterior(prior_emissions, X_zone, samples_LNLGISSIF, 'Posterior v2S') %>%
+    rename(
+      value_low = value_q025,
+      value_high = value_q975
+    )
 
   emissions_zone <- bind_rows(
     prior_emissions,
@@ -127,8 +119,8 @@ emissions_zonal <- lapply(REGION_PLOT_SETTINGS, function(zonal_band) {
           ) %>%
           mutate(
             inventory = 'nee',
-            value_q025 = matrixStats::rowQuantiles(value_samples, probs = 0.025),
-            value_q975 = matrixStats::rowQuantiles(value_samples, probs = 0.975)
+            value_low = matrixStats::rowQuantiles(value_samples, probs = 0.025),
+            value_high = matrixStats::rowQuantiles(value_samples, probs = 0.975)
           )
       )
     } %>%
@@ -154,28 +146,22 @@ emissions_zonal <- lapply(REGION_PLOT_SETTINGS, function(zonal_band) {
     ),
     zone = factor(
       zone,
-      levels = sapply(REGION_PLOT_SETTINGS, function(zonal_band) zonal_band$numeric_title)
+      levels = sapply(zones, function(zonal_band) zonal_band$numeric_title)
     )
   )
 
 
 colour_key <- c(
   'FLUXCOM' = 'grey70',
-  'Bottom-up' = 'black',
+  'Bottom-up' = 'grey30',
   'Posterior v2' = 'grey50',
-  'Posterior v2S' = '#ebac23'
+  'Posterior v2S' = '#fb8b00'
 )
 linetype_key <- c(
-  'FLUXCOM' = 'solid',
+  'FLUXCOM' = '12',
   'Bottom-up' = '41',
-  'Posterior v2' = 'solid',
+  'Posterior v2' = '1131',
   'Posterior v2S' = 'solid'
-)
-shape_key <- c(
-  'FLUXCOM' = 4,
-  'Bottom-up' = 16,
-  'Posterior v2' = 15,
-  'Posterior v2S' = 17
 )
 
 output <- emissions_zonal %>%
@@ -185,8 +171,8 @@ output <- emissions_zonal %>%
   ggplot(aes(x = month)) +
   geom_ribbon(
     mapping = aes(
-      ymin = value_q025,
-      ymax = value_q975,
+      ymin = value_low,
+      ymax = value_high,
       fill = estimate
     ),
     alpha = 0.3
@@ -199,13 +185,6 @@ output <- emissions_zonal %>%
     ),
     linewidth = 0.4
   ) +
-  geom_point(
-    mapping = aes(
-      y = value,
-      colour = estimate,
-      shape = estimate
-    ),
-  ) +
   ggh4x::facet_grid2(zone ~ inventory, scales = 'free_y', independent = 'y') +
   scale_y_continuous(n.breaks = 4) +
   scale_x_continuous(
@@ -215,12 +194,9 @@ output <- emissions_zonal %>%
   scale_colour_manual(values = colour_key) +
   scale_fill_manual(values = colour_key) +
   scale_linetype_manual(values = linetype_key) +
-  scale_shape_manual(values = shape_key) +
-  guides(fill = 'none', shape = 'none') +
-  labs(x = 'Month', y = 'Flux [PgC per month]', colour = NULL, fill = NULL, linetype = NULL, shape = NULL) +
-  ggtitle(
-    'Average seasonal cycle by zonal band'
-  ) +
+  guides(fill = 'none') +
+  labs(x = 'Month', y = 'Flux [PgC per month]', colour = NULL, fill = NULL, linetype = NULL) +
+  ggtitle('Average seasonal cycle by zonal band') +
   theme(
     plot.margin = margin(t = 1, r = 1, b = 0, l = 1, unit = 'mm'),
     plot.title = element_text(size = 13, hjust = 0.5),

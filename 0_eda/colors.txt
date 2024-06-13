@@ -7,7 +7,7 @@ Red: #ff4444
 
 Josh
 Green: #0a704e
-Orange: #fb8b00
+Orange: #fb8b00, #f48037
 Yellow: #f9d32e
 
 YNAB Bluish: #3B5EDA
@@ -17,6 +17,10 @@ Electric Indigo: #6F00FF
 Choices so far:
 Green: #018571
 Orange: #fb8b00
+Yellow: #ebac23
+
+Optimal Palettes:
+http://tsitsul.in/blog/coloropt/
 
 Propublica Palette:
 https://projects.propublica.org/repatriation-nagpra-database/

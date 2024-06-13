@@ -97,6 +97,10 @@ tar xzf ~/path/to/WOMBAT_v2_CO2_intermediates.tar.gz
 
 Then you can run the workflow from step 3 onwards as described below.
 
+## FLUXCOM RS ensemble
+
+TODO: describe FLUXCOM data source
+
 # Running the workflow
 
 The workflow of this repository is split into four steps:

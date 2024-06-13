@@ -1,6 +1,5 @@
 library(argparse)
 library(dplyr, warn.conflicts = FALSE)
-library(lubridate, warn.conflicts = FALSE)
 library(Matrix)
 
 source(Sys.getenv('UTILS_PARTIAL'))
@@ -25,18 +24,17 @@ samples_LNLGIS$alpha_df$value_samples <- samples_LNLGIS$alpha_df$value_samples[
   1:ncol(samples_LNLGISSIF$alpha_df$value_samples)
 ]
 
-fluxcom_monthly <- fluxcom_monthly_2x25 %>%
+fluxcom_month_averages <- fluxcom_monthly_2x25 %>%
   mutate(
-    time = as.Date(
-      floor_date(time, 'month') + days(floor(days_in_month(time) / 2))
-    )
+    month = lubridate::month(time)
   ) %>%
-  group_by(inventory, time, method) %>%
+  group_by(inventory, month, method) %>%
   summarise(
-    value = GC_M2_DAY_TO_PGC_MONTH * sum(area * value),
+    # Average over the six-year study period
+    value = GC_M2_DAY_TO_PGC_MONTH * sum(area * value) / 6,
     .groups = 'drop'
   ) %>%
-  group_by(inventory, time) %>%
+  group_by(inventory, month) %>%
   summarise(
     value_mean = mean(value),
     value_low = quantile(value, 0.25),
@@ -48,32 +46,34 @@ fluxcom_monthly <- fluxcom_monthly_2x25 %>%
 
 perturbations_base <- perturbations_base %>%
   mutate(
-    inventory_time = interaction(inventory, time, drop = TRUE)
+    month = lubridate::month(time),
+    inventory_month = interaction(inventory, month, drop = TRUE)
   )
 
 perturbations <- perturbations_base %>%
-  group_by(inventory_time, basis_vector) %>%
+  group_by(inventory_month, basis_vector) %>%
   summarise(
-    value = KG_M2_S_TO_PGC_MONTH * sum(area * value),
+    # Average over the six-year study period
+    value = KG_M2_S_TO_PGC_MONTH * sum(area * value) / 6,
     .groups = 'drop'
   ) %>%
   left_join(
     perturbations_base %>%
-      distinct(inventory_time, inventory, time),
-    by = 'inventory_time'
+      distinct(inventory_month, inventory, month),
+    by = 'inventory_month'
   )
 
 X_global <- with(perturbations, sparseMatrix(
-  i = as.integer(inventory_time),
+  i = as.integer(inventory_month),
   j = as.integer(basis_vector),
   x = value,
-  dims = c(nlevels(inventory_time), nlevels(basis_vector))
+  dims = c(nlevels(inventory_month), nlevels(basis_vector))
 ))
 
 prior_emissions <- perturbations %>%
-  group_by(inventory_time, inventory, time) %>%
+  group_by(inventory_month, inventory, month) %>%
   summarise(value = sum(value), .groups = 'drop') %>%
-  select(-inventory_time) %>%
+  select(-inventory_month) %>%
   mutate(estimate = 'Bottom-up')
 
 posterior_emissions_LNLGIS <- compute_posterior(prior_emissions, X_global, samples_LNLGIS, 'Posterior v2') %>%
@@ -99,7 +99,7 @@ emissions <- bind_rows(
       x,
       x %>%
         filter(inventory %in% c('bio_assim', 'bio_resp_tot')) %>%
-        group_by(estimate, time) %>%
+        group_by(estimate, month) %>%
         summarise(
           value = sum(value),
           value_samples = t(colSums(value_samples)),
@@ -112,7 +112,7 @@ emissions <- bind_rows(
         )
     )
   } %>%
-  bind_rows(fluxcom_monthly) %>%
+  bind_rows(fluxcom_month_averages) %>%
   mutate(
     inventory = factor(c(
       'bio_assim' = 'GPP',
@@ -148,7 +148,7 @@ output <- emissions %>%
   filter(
     inventory %in% c('GPP', 'Respiration', 'NEE')
   ) %>%
-  ggplot(aes(x = time)) +
+  ggplot(aes(x = month)) +
   geom_ribbon(
     mapping = aes(
       ymin = value_low,
@@ -166,7 +166,10 @@ output <- emissions %>%
     linewidth = 0.4
   ) +
   facet_wrap(vars(inventory), scales = 'free_y', ncol = 1) +
-  scale_x_date(date_labels = '%Y-%m') +
+  scale_x_continuous(
+    breaks = seq(1, 11, 2),
+    labels = month.abb[c(TRUE, FALSE)]
+  ) +
   scale_colour_manual(values = colour_key) +
   scale_fill_manual(values = colour_key) +
   scale_linetype_manual(values = linetype_key) +
@@ -174,8 +177,8 @@ output <- emissions %>%
     fill = 'none',
     colour = guide_legend(nrow = 2, byrow = TRUE)
   ) +
-  labs(x = 'Time', y = 'Flux [PgC per month]', colour = NULL, fill = NULL, linetype = NULL) +
-  ggtitle('Monthly global fluxes') +
+  labs(x = 'Month', y = 'Flux [PgC per month]', colour = NULL, fill = NULL, linetype = NULL) +
+  ggtitle('Average seasonal cycle of global fluxes') +
   theme(
     plot.margin = margin(t = 1, r = 1, b = 0, l = 1, unit = 'mm'),
     plot.title = element_text(size = 13, hjust = 0.5),

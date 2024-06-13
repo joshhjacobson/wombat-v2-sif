@@ -48,7 +48,7 @@ area_both <- area_495 + area_505
 # Splits grid cells that cross boundaries
 perturbations_augmented_zonal <- bind_rows(
   perturbations_augmented_base %>%
-    filter(latitude != 0),
+    filter(latitude != 0 & latitude != 50),
   perturbations_augmented_base %>%
     filter(latitude == 0) %>%
     mutate(

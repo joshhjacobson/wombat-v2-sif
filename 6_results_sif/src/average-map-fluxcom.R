@@ -283,12 +283,18 @@ base_theme <- theme(
     size = 9,
     margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'cm')
   ),
-  plot.margin = margin(t = 0.2, b = 0.2, l = 0.05, r = 0.05, unit = 'cm')
+  plot.margin = margin(t = 0.4, b = 0.2, l = 0.05, r = 0.05, unit = 'cm')
 )
 
 top_theme <- base_theme +
   theme(
-    plot.margin = margin(t = 0.2, b = 0.2, l = 0.05, r = 0.05, unit = 'cm')
+    plot.margin = margin(t = 0.3, b = 0.2, l = 0.05, r = 0.05, unit = 'cm')
+  )
+
+bottom_theme <- base_theme +
+  theme(
+    plot.margin = margin(t = 0, b = 0.2, l = 0.05, r = 0.05, unit = 'cm'),
+    legend.margin = margin(t = -0.4, l = 0.05, b = 0, r = 0.05, unit = 'cm')
   )
 
 output <- wrap_plots(
@@ -300,7 +306,7 @@ output <- wrap_plots(
     nrow = 2,
     ncol = 2
   ),
-  average_diff + base_theme,
+  average_diff + bottom_theme,
   ncol = 1,
   widths = c(2.5, 1),
   heights = c(2.5, 1)

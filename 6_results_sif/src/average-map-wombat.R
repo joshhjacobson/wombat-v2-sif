@@ -53,7 +53,6 @@ plot_map_mean <- function(df, variable, flux_key) {
     flux_key$palette,
     reverse = flux_key$reverse,
     symmetric = flux_key$symmetric,
-    drop_second_labels = flux_key$drop_second_labels,
     label_precision = flux_key$label_precision_mean,
     show_excess = TRUE
   )
@@ -67,7 +66,6 @@ plot_map_sd <- function(df, variable, flux_key) {
     flux_key$sd_limits,
     'BuPu',
     show_excess = TRUE,
-    drop_second_labels = FALSE,
     label_precision = flux_key$label_precision_sd,
     symmetric = FALSE,
     reverse = TRUE
@@ -80,7 +78,6 @@ flux_key <- list(
     label = 'GPP',
     label_precision_mean = 0,
     label_precision_sd = 2,
-    drop_second_labels = FALSE,
     palette = 'BluYl',
     reverse = FALSE,
     symmetric = FALSE,
@@ -96,7 +93,6 @@ flux_key <- list(
     label = 'respiration',
     label_precision_mean = 0,
     label_precision_sd = 2,
-    drop_second_labels = FALSE,
     palette = 'Magenta',
     reverse = TRUE,
     symmetric = FALSE,
@@ -112,13 +108,12 @@ flux_key <- list(
     label = 'NEE',
     label_precision_mean = 1,
     label_precision_sd = 3,
-    drop_second_labels = TRUE,
     palette = 'Tropic',
     reverse = FALSE,
     symmetric = TRUE,
-    mean_breaks = round(seq(-0.6, 0.6, by = 0.1), 1),
+    mean_breaks = round(seq(-0.6, 0.6, by = 0.2), 1),
     mean_limits = c(-0.6, 0.6),
-    diff_breaks = round(seq(-0.6, 0.6, by = 0.1), 1),
+    diff_breaks = round(seq(-0.6, 0.6, by = 0.2), 1),
     diff_limits = c(-0.6, 0.6),
     sd_breaks = round(seq(0, 0.1, by = 0.025), 3),
     sd_limits = c(0, 0.1 + 1.5 * 0.025)
@@ -204,7 +199,6 @@ average_posterior_mean_diff <- six_year_average_diff_sfs$mean %>%
     'RdBu',
     reverse = TRUE,
     symmetric = TRUE,
-    drop_second_labels = flux_key$drop_second_labels,
     label_precision = flux_key$label_precision_mean,
     show_excess = TRUE
   ) +

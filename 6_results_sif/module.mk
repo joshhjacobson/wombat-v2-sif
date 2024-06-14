@@ -30,23 +30,21 @@ FLUXCOM_MONTHLY_2x25_FILES = \
 FLUXCOM_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25.fst
 FLUXCOM_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25-zonal.fst
 
-# 6_RESULTS_SIF_TARGETS += \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHA0.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAV2.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAMD.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHA0.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAV2.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAMD.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-global.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf
-
 6_RESULTS_SIF_TARGETS += \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHA0.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAV2.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAMD.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHA0.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAV2.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAMD.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-global.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-gpp.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-resp.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-nee.pdf \

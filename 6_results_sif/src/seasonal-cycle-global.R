@@ -165,7 +165,8 @@ output <- emissions %>%
     ),
     linewidth = 0.4
   ) +
-  facet_wrap(vars(inventory), scales = 'free_y', ncol = 1) +
+  # facet_wrap(vars(inventory), scales = 'free_y', ncol = 1) +
+  facet_wrap(vars(inventory), scales = 'free_y', nrow = 1) +
   scale_x_continuous(
     breaks = seq(1, 11, 2),
     labels = month.abb[c(TRUE, FALSE)]
@@ -174,8 +175,8 @@ output <- emissions %>%
   scale_fill_manual(values = colour_key) +
   scale_linetype_manual(values = linetype_key) +
   guides(
-    fill = 'none',
-    colour = guide_legend(nrow = 2, byrow = TRUE)
+    fill = 'none'
+    # colour = guide_legend(nrow = 2, byrow = TRUE)
   ) +
   labs(x = 'Month', y = 'Flux [PgC per month]', colour = NULL, fill = NULL, linetype = NULL) +
   ggtitle('Average seasonal cycle of global fluxes') +
@@ -190,9 +191,15 @@ output <- emissions %>%
     legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'mm')
   )
 
+# ggsave_base(
+#   args$output,
+#   output,
+#   width = 9,
+#   height = 18
+# )
 ggsave_base(
   args$output,
   output,
-  width = 9,
-  height = 18
+  width = DISPLAY_SETTINGS$supplement_full_width,
+  height = 6.9
 )

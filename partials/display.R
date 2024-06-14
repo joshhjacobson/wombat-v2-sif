@@ -112,7 +112,7 @@ plot_map <- function(
   palette,
   show_excess = TRUE,
   label_precision = 0,
-  drop_second_labels = TRUE,
+  drop_second_labels = FALSE,
   symmetric = FALSE,
   reverse = FALSE,
   bar_width = 11

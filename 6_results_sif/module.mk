@@ -41,16 +41,18 @@ FLUXCOM_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAMD.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-global.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf
 
 6_RESULTS_SIF_TARGETS += \
-	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-global.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf
-	
-#	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-gpp.pdf \
-#	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-resp.pdf \
-#	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-nee.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-gpp.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-resp.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-nee.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-gpp.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-resp.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-nee.pdf \
 
 # 6_RESULTS_SIF_TARGETS += $(OSSE_FLUX_DECOMPOSITIONS)
 
@@ -252,6 +254,19 @@ $(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-%.pdf: \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--six-year-average $(SIX_YEAR_AVERAGE_SIF) \
+		--flux-component $* \
+		--region-sf $(REGION_SF_SIF) \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-%.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/average-map-fluxcom.R \
+	$(SIX_YEAR_AVERAGE_SIF) \
+	$(FLUXCOM_MONTHLY_2x25) \
+	$(REGION_SF_SIF) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--six-year-average $(SIX_YEAR_AVERAGE_SIF) \
+		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
 		--flux-component $* \
 		--region-sf $(REGION_SF_SIF) \
 		--output $@

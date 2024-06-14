@@ -53,6 +53,7 @@ plot_map_mean <- function(df, variable, flux_key) {
     flux_key$palette,
     reverse = flux_key$reverse,
     symmetric = flux_key$symmetric,
+    drop_second_labels = flux_key$drop_second_labels,
     label_precision = flux_key$label_precision_mean,
     show_excess = TRUE
   )
@@ -79,12 +80,13 @@ flux_key <- list(
     label = 'GPP',
     label_precision_mean = 0,
     label_precision_sd = 2,
+    drop_second_labels = FALSE,
     palette = 'BluYl',
     reverse = FALSE,
     symmetric = FALSE,
-    mean_breaks = round(seq(-12, 0, by = 1), 1),
+    mean_breaks = round(seq(-12, 0, by = 2), 1),
     mean_limits = c(-14, 0),
-    diff_breaks = round(seq(-3, 3, by = 0.5), 1),
+    diff_breaks = round(seq(-3, 3, by = 1), 1),
     diff_limits = c(-4, 4),
     sd_breaks = round(seq(0, 0.25, by = 0.05), 3),
     sd_limits = c(0, 0.25 + 1.5 * 0.05)
@@ -94,12 +96,13 @@ flux_key <- list(
     label = 'respiration',
     label_precision_mean = 0,
     label_precision_sd = 2,
-    palette = 'BurgYl',
+    drop_second_labels = FALSE,
+    palette = 'Magenta',
     reverse = TRUE,
     symmetric = FALSE,
-    mean_breaks = round(seq(0, 12, by = 1), 1),
+    mean_breaks = round(seq(0, 12, by = 2), 1),
     mean_limits = c(0, 14),
-    diff_breaks = round(seq(-3, 3, by = 0.5), 1),
+    diff_breaks = round(seq(-3, 3, by = 1), 1),
     diff_limits = c(-4, 4),
     sd_breaks = round(seq(0, 0.25, by = 0.05), 3),
     sd_limits = c(0, 0.25 + 1.5 * 0.05)
@@ -109,7 +112,8 @@ flux_key <- list(
     label = 'NEE',
     label_precision_mean = 1,
     label_precision_sd = 3,
-    palette = 'Geyser',
+    drop_second_labels = TRUE,
+    palette = 'Tropic',
     reverse = FALSE,
     symmetric = TRUE,
     mean_breaks = round(seq(-0.6, 0.6, by = 0.1), 1),
@@ -159,7 +163,7 @@ six_year_average_diff_sfs <- convert_to_sf(
 )
 
 flux_mean_label <- expression('Flux [kgCO'[2]~m^{-2}~yr^{-1}*']')
-flux_sd_label <- expression('Posterior st. dev. of flux [kgCO'[2]~m^{-2}~yr^{-1}*']')
+flux_sd_label <- expression('Posterior st. dev. [kgCO'[2]~m^{-2}~yr^{-1}*']')
 
 average_bottom_up <- six_year_average_sfs$mean %>%
   filter(estimate == 'Bottom-up') %>%
@@ -171,25 +175,25 @@ average_posterior_mean_wosif <- six_year_average_sfs$mean %>%
   filter(estimate == 'LNLGIS') %>%
   plot_map_mean(value, flux_key) +
     labs(fill = flux_mean_label) +
-    ggtitle('Posterior mean v2')
+    ggtitle('Posterior mean, v2')
 
 average_posterior_sd_wosif <- six_year_average_sfs$sd %>%
   filter(estimate == 'LNLGIS') %>%
   plot_map_sd(value, flux_key) +
     labs(fill = flux_sd_label) +
-    ggtitle('Posterior st. dev. v2')
+    ggtitle('Posterior st. dev., v2')
 
 average_posterior_mean_wsif <- six_year_average_sfs$mean %>%
   filter(estimate == 'LNLGISSIF') %>%
   plot_map_mean(value, flux_key) +
     labs(fill = flux_mean_label) +
-    ggtitle('Posterior mean v2S')
+    ggtitle('Posterior mean, v2S')
 
 average_posterior_sd_wsif <- six_year_average_sfs$sd %>%
   filter(estimate == 'LNLGISSIF') %>%
   plot_map_sd(value, flux_key) +
     labs(fill = flux_sd_label) +
-    ggtitle('Posterior st. dev. v2S')
+    ggtitle('Posterior st. dev., v2S')
 
 average_posterior_mean_diff <- six_year_average_diff_sfs$mean %>%
   filter(estimate == 'Difference') %>%
@@ -200,6 +204,7 @@ average_posterior_mean_diff <- six_year_average_diff_sfs$mean %>%
     'RdBu',
     reverse = TRUE,
     symmetric = TRUE,
+    drop_second_labels = flux_key$drop_second_labels,
     label_precision = flux_key$label_precision_mean,
     show_excess = TRUE
   ) +
@@ -209,63 +214,67 @@ average_posterior_mean_diff <- six_year_average_diff_sfs$mean %>%
 average_posterior_sd_diff <- six_year_average_diff_sfs$sd %>%
   filter(estimate == 'Difference') %>%
   plot_map_sd(value, flux_key) +
-    labs(fill = expression('Posterior st. dev. of difference [kgCO'[2]~m^{-2}~yr^{-1}*']')) +
+    labs(fill = expression('Posterior st. dev. [kgCO'[2]~m^{-2}~yr^{-1}*']')) +
     ggtitle('Posterior st. dev. (v2S - v2)')
 
 base_theme <- theme(
   legend.position = 'bottom',
-  legend.margin = margin(t = -2, l = 1, b = -2, r = 1, unit = 'mm'),
-  legend.title = element_text(size = 9),
+  legend.margin = margin(t = -0.2, l = 0.05, b = -0.2, r = 0.05, unit = 'cm'),
+  legend.title = element_text(size = 8),
   plot.title = element_text(
     hjust = 0.5,
     vjust = 1,
-    size = 10,
+    size = 9,
     margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'cm')
   ),
-  plot.margin = margin(t = 0, b = 0.2, l = 0.1, r = 0, unit = 'cm')
+  plot.margin = margin(t = 0.1, b = 0.2, l = 0.05, r = 0.05, unit = 'cm')
 )
 
 top_theme <- base_theme +
   theme(
     legend.position = 'none',
-    plot.margin = margin(t = 0.3, b = 0.2, l = 0.1, r = 0, unit = 'cm')
+    plot.margin = margin(t = 0.2, b = 0, l = 0.05, r = 0.05, unit = 'cm')
   )
 
 middle_theme <- base_theme +
   theme(
     legend.position = 'none',
-    plot.margin = margin(t = 0, b = 0.2, l = 0.1, r = 0, unit = 'cm')
+    plot.margin = margin(t = -0.2, b = 0.2, l = 0.05, r = 0.05, unit = 'cm')
   )
 
 bottom_theme <- base_theme +
   theme(
-    plot.margin = margin(t = 0.4, b = 0.2, l = 0.1, r = 0, unit = 'cm')
+    plot.margin = margin(t = 0.4, b = 0.2, l = 0.05, r = 0.05, unit = 'cm')
   )
 
-design <- ('
-  A#
-  BC
-  DE
-  FG
-')
 output <- wrap_plots(
   average_bottom_up + top_theme,
-  average_posterior_mean_wosif + middle_theme,
-  average_posterior_sd_wosif + middle_theme,
-  average_posterior_mean_wsif + base_theme,
-  average_posterior_sd_wsif + base_theme,
-  average_posterior_mean_diff + bottom_theme,
-  average_posterior_sd_diff + bottom_theme,
-  design = design
-) +
-  plot_annotation(
-    title = sprintf('Average %s from January 2015 to December 2020', flux_key$label),
-    theme = theme(plot.title = element_text(size = 11, hjust = 0.5))
-  )
+  wrap_plots(
+    average_posterior_mean_wosif + middle_theme,
+    average_posterior_sd_wosif + middle_theme,
+    average_posterior_mean_wsif + base_theme,
+    average_posterior_sd_wsif + base_theme,
+    average_posterior_mean_diff + bottom_theme,
+    average_posterior_sd_diff + bottom_theme,
+    nrow = 3,
+    ncol = 2
+  ),
+  ncol = 1,
+  widths = c(1, 4),
+  heights = c(1, 5)
+)
+
+output <- wrap_plots(
+  wrap_elements(
+      panel = grid::textGrob(sprintf('Average %s from January 2015 to December 2020', flux_key$label))
+    ),
+    output,
+    heights = c(0.05, 1)
+)
 
 ggsave_base(
   args$output,
   output,
   width = DISPLAY_SETTINGS$full_width,
-  height = 20.84
+  height = 19.32
 )

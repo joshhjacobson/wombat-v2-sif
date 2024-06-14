@@ -65,14 +65,12 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf: \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
 	$(ALPHA_SMALL) \
 	$(ALPHA_MEDIUM) \
-	$(ALPHA_LARGE) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
 		--alpha-v2 $(ALPHA_WOMBAT_V2) \
 		--alpha-small $(ALPHA_SMALL) \
-		--alpha-medium $(ALPHA_MEDIUM) \
-		--alpha-large $(ALPHA_LARGE) \
+		--alpha-large $(ALPHA_MEDIUM) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \
@@ -91,14 +89,10 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \
 		--flux-samples-alphasmall-fixresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHASMALL-FIXRESP-WOSIF.rds \
 		--flux-samples-alphasmall-freeresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHASMALL-FREERESP-WSIF.rds \
 		--flux-samples-alphasmall-freeresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHASMALL-FREERESP-WOSIF.rds \
-		--flux-samples-alphamd-fixresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAMD-FIXRESP-WSIF.rds \
-		--flux-samples-alphamd-fixresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAMD-FIXRESP-WOSIF.rds \
-		--flux-samples-alphamd-freeresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAMD-FREERESP-WSIF.rds \
-		--flux-samples-alphamd-freeresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAMD-FREERESP-WOSIF.rds \
-		--flux-samples-alphalarge-fixresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FIXRESP-WSIF.rds \
-		--flux-samples-alphalarge-fixresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FIXRESP-WOSIF.rds \
-		--flux-samples-alphalarge-freeresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FREERESP-WSIF.rds \
-		--flux-samples-alphalarge-freeresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHALARGE-FREERESP-WOSIF.rds \
+		--flux-samples-alphalarge-fixresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAMD-FIXRESP-WSIF.rds \
+		--flux-samples-alphalarge-fixresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAMD-FIXRESP-WOSIF.rds \
+		--flux-samples-alphalarge-freeresp-wsif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAMD-FREERESP-WSIF.rds \
+		--flux-samples-alphalarge-freeresp-wosif $(6_RESULTS_SIF_INTERMEDIATES_DIR)/osse-flux-aggregates-samples-ALPHAMD-FREERESP-WOSIF.rds \
 		--output $@
 
 # TODO: If keeping these figures, add intervals and maybe do cross-comparison

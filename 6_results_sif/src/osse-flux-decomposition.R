@@ -160,9 +160,9 @@ emissions <- bind_rows(
 colour_key <- c(
   'Truth' = '#4053d3',
   'Without SIF, fixed RLT' = 'grey50',
-  'With SIF, fixed RLT' = '#ebac23',
+  'With SIF, fixed RLT' = '#fb8b00',
   'Without SIF, free RLT' = 'grey50',
-  'With SIF, free RLT' = '#ebac23'
+  'With SIF, free RLT' = '#fb8b00'
 )
 
 output <- wrap_plots(lapply(sort(unique(emissions$inventory)), function(inventory_i) {

@@ -10,7 +10,6 @@ parser <- ArgumentParser()
 parser$add_argument('--perturbations-augmented')
 parser$add_argument('--alpha-v2')
 parser$add_argument('--alpha-small')
-parser$add_argument('--alpha-medium')
 parser$add_argument('--alpha-large')
 parser$add_argument('--output')
 args <- parser$parse_args()
@@ -18,7 +17,6 @@ args <- parser$parse_args()
 perturbations_augmented <- fst::read_fst(args$perturbations_augmented)
 alpha_v2 <- fst::read_fst(args$alpha_v2)
 alpha_small <- fst::read_fst(args$alpha_small)
-alpha_medium <- fst::read_fst(args$alpha_medium)
 alpha_large <- fst::read_fst(args$alpha_large)
 
 perturbations_augmented <- perturbations_augmented %>%
@@ -73,15 +71,6 @@ true_emissions_alpha_small <- bottom_up %>%
     )
   )
 
-true_emissions_alpha_medium <- bottom_up %>%
-  mutate(
-    output = 'WOMBAT v2, AM',
-    value = value + as.vector(
-      X_global[, as.integer(alpha_medium$basis_vector)]
-      %*% alpha_medium$value
-    )
-  )
-
 true_emissions_alpha_large <- bottom_up %>%
   mutate(
     output = 'WOMBAT v2, AL',
@@ -95,7 +84,6 @@ emissions <- bind_rows(
   bottom_up,
   true_emissions_alpha_v2,
   true_emissions_alpha_small,
-  true_emissions_alpha_medium,
   true_emissions_alpha_large
 ) %>%
   {
@@ -136,12 +124,12 @@ emissions <- bind_rows(
     )),
     output = factor(
       output,
-      levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, AS', 'WOMBAT v2, AM', 'WOMBAT v2, AL')
+      levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, AS', 'WOMBAT v2, AL')
     )
   )
 
-colour_key <- c('Bottom-up' = 'black', 'WOMBAT v2' = '#5954d6', 'WOMBAT v2, AS' = '#00c6f8', 'WOMBAT v2, AM' = '#d163e6', 'WOMBAT v2, AL' = '#008cf9')
-linetype_key <- c('Bottom-up' = '41', 'WOMBAT v2' = '2212', 'WOMBAT v2, AS' = '1131', 'WOMBAT v2, AM' = '22', 'WOMBAT v2, AL' = '11')
+colour_key <- c('Bottom-up' = 'grey30', 'WOMBAT v2' = '#5954d6', 'WOMBAT v2, AS' = '#00c6f8', 'WOMBAT v2, AL' = '#008cf9')
+linetype_key <- c('Bottom-up' = '41', 'WOMBAT v2' = '2212', 'WOMBAT v2, AS' = '1131', 'WOMBAT v2, AL' = '11')
 
 output <- ggplot(
   emissions %>% filter(inventory != 'Total'),
@@ -155,7 +143,7 @@ output <- ggplot(
     ),
     linewidth = 0.6
   ) +
-  facet_wrap(~ inventory, scales = 'free_y', nrow = 2) +
+  facet_wrap(vars(inventory), scales = 'free_y', nrow = 2) +
   scale_x_date(date_labels = '%Y-%m') +
   scale_colour_manual(values = colour_key) +
   scale_linetype_manual(values = linetype_key) +

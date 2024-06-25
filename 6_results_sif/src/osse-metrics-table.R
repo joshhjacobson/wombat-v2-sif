@@ -248,11 +248,6 @@ inventories <-  c('GPP', 'Respiration', 'NEE')
 truth_cases <- levels(metrics$truth)
 estimates <- levels(metrics$estimate)
 
-resp_labels <- c(
-  'Fixed' = 'Fixed to\\nBottom-up',
-  'Free' = 'Free'
-)
-
 log_debug('Writing table to {args$output}')
 # '\\begin{tabular}{@{}lll%s@{}}\n\\toprule\n',
 sink(args$output)
@@ -284,7 +279,7 @@ for (resp_term_k in resp_terms) {
         '%s & %s & %s & %s & %s \\\\\n',
         ifelse(
           inventory_i == inventories[1] & truth_j == truth_cases[1],
-          resp_labels[resp_term_k],
+          resp_term_k,
           ''
         ),
         ifelse(truth_j == truth_cases[1], inventory_i, ''),

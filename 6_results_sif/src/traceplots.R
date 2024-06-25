@@ -16,8 +16,8 @@ library(patchwork)
 # args <- parser$parse_args()
 
 args <- list(
-  samples = '4_inversion/intermediates/samples-LNLGIS-FREERESP.rds',
-  output_base = '6_results_sif/figures/traceplots/traceplots-LNLGIS-FREERESP'
+  samples = '4_inversion/intermediates/osse-samples-ALPHAMD-FREERESP-WSIF.rds',
+  output_base = '6_results_sif/figures/archive/osse/traceplots/traceplots-ALPHAMD-FREERESP-WSIF'
 )
 
 
@@ -134,7 +134,7 @@ if (
     nrow() > 0
 ) {
   inventories <- c('bio_assim', 'bio_resp_tot')
-  for (r in 1:11) {
+  for (r in seq(11)[-3]) {
     for (j in seq_along(components)) {
       r_j <- as.integer(r + (j - 1) * 11)
       region <- sprintf('Region%02d', r)
@@ -145,6 +145,15 @@ if (
         ggtitle(bquote(alpha[.(sprintf('c,%01d,%01d', j - 1, r))])) +
         scale_bio_inventory
     }
+  }
+  for (j in seq_along(components)) {
+    r_j <- as.integer(3 + (j - 1) * 11)
+    traces[[r_j]] <- plot_traces(
+      samples$alpha[, sprintf('bio_assim.%s.Region03', components[j])],
+      'gpp'
+    ) +
+      ggtitle(bquote(alpha[.(sprintf('c,%01d,3', j - 1))])) +
+      scale_bio_inventory
   }
 } else {
   inventories <- c('bio_assim')

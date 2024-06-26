@@ -8,6 +8,7 @@ parser <- ArgumentParser()
 parser$add_argument('--perturbations-augmented')
 parser$add_argument('--samples-LNLGIS')
 parser$add_argument('--samples-LNLGISSIF')
+parser$add_argument('--fluxcom-monthly-2x25')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
@@ -33,6 +34,22 @@ compute_alpha_posterior <- function(samples, perturbations) {
 perturbations_augmented <- fst::read_fst(args$perturbations_augmented)
 samples_LNLGIS <- readRDS(args$samples_LNLGIS)
 samples_LNLGISSIF <- readRDS(args$samples_LNLGISSIF)
+
+six_year_average_fluxcom <- fst::read_fst(args$fluxcom_monthly_2x25) %>%
+  group_by(longitude, latitude, inventory, method) %>%
+  summarise(
+    value = GC_DAY_TO_KGCO2_YEAR * sum(value) / 72,
+    .groups = 'drop'
+  ) %>%
+  group_by(longitude, latitude, inventory) %>%
+  summarise(
+    value_mean = mean(value),
+    value_scale = mad(value, constant = 1),
+    .groups = 'drop'
+  ) %>%
+  mutate(
+    estimate = 'FLUXCOM'
+  )
 
 perturbations_augmented <- perturbations_augmented %>%
   filter(
@@ -77,23 +94,23 @@ output <- bind_rows(
   six_year_average_bottom_up %>%
     mutate(
       estimate = 'LNLGIS',
-      value = value + alpha_LNLGIS$value_tilde_mean,
       value_samples = value + alpha_LNLGIS$value_tilde_samples,
-      value_sd = matrixStats::rowSds(value_samples)
+      value = value + alpha_LNLGIS$value_tilde_mean,
+      value_scale = matrixStats::rowSds(value_samples)
     ),
   six_year_average_bottom_up %>%
     mutate(
       estimate = 'LNLGISSIF',
-      value = value + alpha_LNLGISSIF$value_tilde_mean,
       value_samples = value + alpha_LNLGISSIF$value_tilde_samples,
-      value_sd = matrixStats::rowSds(value_samples)
+      value = value + alpha_LNLGISSIF$value_tilde_mean,
+      value_scale = matrixStats::rowSds(value_samples)
     ),
   six_year_average_bottom_up %>%
     mutate(
-      estimate = 'Difference',
-      value = alpha_difference$value_tilde_mean,
+      estimate = 'WOMBAT Difference',
       value_samples = alpha_difference$value_tilde_samples,
-      value_sd = matrixStats::rowSds(value_samples)
+      value = alpha_difference$value_tilde_mean,
+      value_scale = matrixStats::rowSds(value_samples)
     )
 ) %>%
   {
@@ -104,17 +121,39 @@ output <- bind_rows(
       x %>%
         group_by(estimate, longitude, latitude) %>%
         summarise(
-          value = sum(value),
           value_samples = t(colSums(value_samples)),
+          value = sum(value),
           .groups = 'drop'
         ) %>%
         mutate(
           inventory = 'nee',
-          value_sd = matrixStats::rowSds(value_samples)
+          value_scale = matrixStats::rowSds(value_samples)
         )
     )
   } %>%
+  {
+    x <- .
+
+    bind_rows(
+      x,
+      x %>%
+        filter(estimate == 'LNLGISSIF') %>%
+        left_join(
+          six_year_average_fluxcom %>%
+            select(longitude, latitude, inventory, fluxcom_mean = value_mean),
+          by = c('longitude', 'latitude', 'inventory')
+        ) %>%
+        mutate(
+          estimate = 'FLUXCOM Difference',
+          value_samples = value_samples - fluxcom_mean,
+          value = value - fluxcom_mean,
+          value_scale = matrixStats::rowSds(value_samples)
+        ) %>%
+        select(-fluxcom_mean)
+    )
+  } %>%
+  rename(value_mean = value) %>%
   select(-value_samples) %>%
-  rename(value_mean = value)
+  bind_rows(six_year_average_fluxcom)
 
 fst::write_fst(output, args$output)

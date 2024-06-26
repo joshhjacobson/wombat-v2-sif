@@ -61,9 +61,7 @@ output <- lapply(args$input_files, read_fluxcom) %>%
     method = factor(method),
     value = if_else(inventory == 'bio_assim', -value, value)
   ) %>%
-  # NOTE(jhj): the MTE, GMDH_CV, and MARSens methods occasionally report
-  # highly non-physical values, which we remove here
-  filter(between(value, -30, 30)) %>%
+  filter(complete.cases(value)) %>%
   left_join(cell_area, by = c('longitude', 'latitude'))
 
 log_debug('Saving to {args$output}')

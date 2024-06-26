@@ -8,7 +8,6 @@ source(Sys.getenv('DISPLAY_PARTIAL'))
 
 parser <- ArgumentParser()
 parser$add_argument('--six-year-average')
-parser$add_argument('--fluxcom-monthly-2x25')
 parser$add_argument('--flux-component')
 parser$add_argument('--region-sf')
 parser$add_argument('--output')
@@ -18,8 +17,8 @@ convert_to_sf <- function(
   df,
   mean_breaks,
   mean_limits,
-  sd_breaks = NULL,
-  sd_limits = NULL,
+  sd_breaks,
+  sd_limits,
   mad_breaks = NULL,
   mad_limits = NULL
 ) {
@@ -37,21 +36,29 @@ convert_to_sf <- function(
           )
       }) %>%
       bind_rows(),
-    sd = if (!is.null(sd_breaks) & !is.null(sd_limits)) {
-      df %>%
-        filter(estimate == 'LNLGISSIF') %>%
-        mutate(
-          value = discretise_by_breaks(value_scale, sd_breaks, sd_limits)
-        ) %>%
-        grid_df_to_sf('value')
-    } else NULL,
+    sd = df %>%
+      group_by(estimate) %>%
+      group_map(~ {
+        .x %>%
+          mutate(
+            value = discretise_by_breaks(value_scale, sd_breaks, sd_limits)
+          ) %>%
+          grid_df_to_sf('value') %>%
+          mutate(
+            estimate = .y$estimate
+          )
+      }) %>%
+      bind_rows(),
     mad = if (!is.null(mad_breaks) & !is.null(mad_limits)) {
       df %>%
         filter(estimate == 'FLUXCOM') %>%
         mutate(
           value = discretise_by_breaks(value_scale, mad_breaks, mad_limits)
         ) %>%
-        grid_df_to_sf('value')
+        grid_df_to_sf('value') %>%
+        mutate(
+          estimate = 'FLUXCOM'
+        )
     } else NULL
   )
 }
@@ -116,53 +123,20 @@ flux_key <- flux_key[[args$flux_component]]
 
 region_sf <- readRDS(args$region_sf)
 
-six_year_average_fluxcom <- fst::read_fst(args$fluxcom_monthly_2x25) %>%
+six_year_average_base <- fst::read_fst(args$six_year_average) %>%
   filter(
-    inventory == flux_key$name,
-    abs(latitude) != 89.5
-  ) %>%
-  group_by(longitude, latitude, method) %>%
-  summarise(
-    value = GC_DAY_TO_KGCO2_YEAR * sum(value) / 72,
-    .groups = 'drop'
-  ) %>%
-  group_by(longitude, latitude) %>%
-  summarise(
-    value_mean = mean(value),
-    value_scale = mad(value, constant = 1),
-    .groups = 'drop'
-  ) %>%
-  mutate(
-    estimate = 'FLUXCOM'
-  )
-
-six_year_average <- fst::read_fst(args$six_year_average) %>%
-  filter(
-    estimate == 'LNLGISSIF',
+    estimate %in% c('LNLGISSIF', 'FLUXCOM', 'FLUXCOM Difference'),
     inventory == flux_key$name,
     abs(latitude) != 89.5
   ) %>%
   select(-inventory) %>%
-  rename(value_scale = value_sd) %>%
-  bind_rows(six_year_average_fluxcom) %>%
-  {
-    x <- .
-
-    bind_rows(
-      x,
-      x %>%
-        select(-value_scale) %>%
-        tidyr::pivot_wider(
-          names_from = estimate,
-          values_from = value_mean
-        ) %>%
-        mutate(
-          estimate = 'Difference',
-          value_mean = LNLGISSIF - FLUXCOM
-        ) %>%
-        select(longitude, latitude, estimate, value_mean)
+  mutate(
+    estimate = case_match(
+      estimate,
+      'FLUXCOM Difference' ~ 'Difference',
+      .default = estimate
     )
-  }
+  )
 
 # Join the six-year average with the full TransCom grid to display missing values
 six_year_average <- expand.grid(
@@ -171,7 +145,7 @@ six_year_average <- expand.grid(
   estimate = c('LNLGISSIF', 'FLUXCOM', 'Difference')
 ) %>%
   left_join(
-    six_year_average,
+    six_year_average_base,
     by = c('longitude', 'latitude', 'estimate')
   )
 
@@ -188,12 +162,16 @@ six_year_average_sfs <- convert_to_sf(
 six_year_average_diff_sfs <- convert_to_sf(
   six_year_average %>% filter(estimate == 'Difference'),
   flux_key$diff_breaks,
-  flux_key$diff_limits
+  flux_key$diff_limits,
+  flux_key$sd_breaks,
+  flux_key$sd_limits
 )
 
 flux_mean_label <- expression('Flux [kgCO'[2]~m^{-2}~yr^{-1}*']')
 flux_sd_label <- expression('Posterior st. dev. [kgCO'[2]~m^{-2}~yr^{-1}*']')
 flux_mad_label <- expression('Median abs. dev. [kgCO'[2]~m^{-2}~yr^{-1}*']')
+
+# TODO: use uneven colour splits
 
 average_mean_fluxcom <- six_year_average_sfs$mean %>%
   filter(estimate == 'FLUXCOM') %>%
@@ -212,6 +190,7 @@ average_mean_fluxcom <- six_year_average_sfs$mean %>%
     ggtitle('FLUXCOM mean')
 
 average_mad_fluxcom <- six_year_average_sfs$mad %>%
+  filter(estimate == 'FLUXCOM') %>%
   plot_map(
     value,
     flux_key$mad_breaks,
@@ -243,6 +222,7 @@ average_posterior_mean_wombat <- six_year_average_sfs$mean %>%
     ggtitle('WOMBAT v2S posterior mean')
 
 average_posterior_sd_wombat <- six_year_average_sfs$sd %>%
+  filter(estimate == 'LNLGISSIF') %>%
   plot_map(
     value,
     flux_key$sd_breaks,
@@ -257,7 +237,7 @@ average_posterior_sd_wombat <- six_year_average_sfs$sd %>%
     labs(fill = flux_sd_label) +
     ggtitle('WOMBAT v2S posterior st. dev.')
 
-average_diff <- six_year_average_diff_sfs$mean %>%
+average_posterior_mean_diff <- six_year_average_diff_sfs$mean %>%
   filter(estimate == 'Difference') %>%
   plot_map(
     value,
@@ -271,7 +251,23 @@ average_diff <- six_year_average_diff_sfs$mean %>%
     show_excess = TRUE
   ) +
     labs(fill = expression('Flux difference [kgCO'[2]~m^{-2}~yr^{-1}*']')) +
-    ggtitle('WOMBAT v2S - FLUXCOM')
+    ggtitle('WOMBAT v2S - FLUXCOM mean')
+
+average_posterior_sd_diff <- six_year_average_diff_sfs$sd %>%
+  filter(estimate == 'Difference') %>%
+  plot_map(
+    value,
+    flux_key$sd_breaks,
+    flux_key$sd_limits,
+    'BuPu',
+    show_excess = TRUE,
+    drop_second_labels = FALSE,
+    label_precision = 2,
+    symmetric = FALSE,
+    reverse = TRUE
+  ) +
+    labs(fill = flux_sd_label) +
+    ggtitle('Posterior st. dev. (v2S - FLUXCOM)')
 
 base_theme <- theme(
   legend.position = 'bottom',
@@ -291,25 +287,15 @@ top_theme <- base_theme +
     plot.margin = margin(t = 0.3, b = 0.2, l = 0.05, r = 0.05, unit = 'cm')
   )
 
-bottom_theme <- base_theme +
-  theme(
-    plot.margin = margin(t = 0, b = 0.2, l = 0.05, r = 0.05, unit = 'cm'),
-    legend.margin = margin(t = -0.4, l = 0.05, b = 0, r = 0.05, unit = 'cm')
-  )
-
 output <- wrap_plots(
-  wrap_plots(
-    average_mean_fluxcom + top_theme,
-    average_mad_fluxcom + top_theme,
-    average_posterior_mean_wombat + base_theme,
-    average_posterior_sd_wombat + base_theme,
-    nrow = 2,
-    ncol = 2
-  ),
-  average_diff + bottom_theme,
-  ncol = 1,
-  widths = c(2.5, 1),
-  heights = c(2.5, 1)
+  average_mean_fluxcom + top_theme,
+  average_mad_fluxcom + top_theme,
+  average_posterior_mean_wombat + base_theme,
+  average_posterior_sd_wombat + base_theme,
+  average_posterior_mean_diff + base_theme,
+  average_posterior_sd_diff + base_theme,
+  nrow = 3,
+  ncol = 2
 )
 
 output <- wrap_plots(
@@ -324,5 +310,5 @@ ggsave_base(
   args$output,
   output,
   width = DISPLAY_SETTINGS$full_width,
-  height = 17.52
+  height = 17.12
 )

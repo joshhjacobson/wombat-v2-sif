@@ -33,7 +33,7 @@ convert_to_sf <- function(df, mean_breaks, mean_limits, sd_breaks, sd_limits) {
       group_map(~ {
         .x %>%
           mutate(
-            value = discretise_by_breaks(value_sd, sd_breaks, sd_limits)
+            value = discretise_by_breaks(value_scale, sd_breaks, sd_limits)
           ) %>%
           grid_df_to_sf('value') %>%
           mutate(
@@ -126,6 +126,21 @@ flux_key <- flux_key[[args$flux_component]]
 
 region_sf <- readRDS(args$region_sf)
 
+six_year_average_base <- fst::read_fst(args$six_year_average) %>%
+  filter(
+    estimate %in% c('Bottom-up', 'LNLGIS', 'LNLGISSIF', 'WOMBAT Difference'),
+    inventory == flux_key$name,
+    abs(latitude) != 89.5
+  ) %>%
+  select(-inventory) %>%
+  mutate(
+    estimate = case_match(
+      estimate,
+      'WOMBAT Difference' ~ 'Difference',
+      .default = estimate
+    )
+  )
+
 # Join the six-year average with the full TransCom grid to display missing values
 six_year_average <- expand.grid(
   longitude = seq(-180, 177.5, by = 2.5),
@@ -133,11 +148,7 @@ six_year_average <- expand.grid(
   estimate = c('Bottom-up', 'LNLGIS', 'LNLGISSIF', 'Difference')
 ) %>%
   left_join(
-    fst::read_fst(args$six_year_average) %>%
-      filter(
-        inventory == flux_key$name,
-        abs(latitude) != 89.5
-      ),
+    six_year_average_base,
     by = c('longitude', 'latitude', 'estimate')
   )
 
@@ -159,6 +170,8 @@ six_year_average_diff_sfs <- convert_to_sf(
 
 flux_mean_label <- expression('Flux [kgCO'[2]~m^{-2}~yr^{-1}*']')
 flux_sd_label <- expression('Posterior st. dev. [kgCO'[2]~m^{-2}~yr^{-1}*']')
+
+# TODO: use uneven colour splits
 
 average_bottom_up <- six_year_average_sfs$mean %>%
   filter(estimate == 'Bottom-up') %>%
@@ -208,7 +221,7 @@ average_posterior_mean_diff <- six_year_average_diff_sfs$mean %>%
 average_posterior_sd_diff <- six_year_average_diff_sfs$sd %>%
   filter(estimate == 'Difference') %>%
   plot_map_sd(value, flux_key) +
-    labs(fill = expression('Posterior st. dev. [kgCO'[2]~m^{-2}~yr^{-1}*']')) +
+    labs(fill = flux_sd_label) +
     ggtitle('Posterior st. dev. (v2S - v2)')
 
 base_theme <- theme(

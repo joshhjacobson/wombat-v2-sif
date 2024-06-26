@@ -45,12 +45,15 @@ FLUXCOM_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-
 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-global.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-latitude-profile.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-gpp.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-resp.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-nee.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-gpp.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-resp.pdf \
-	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-nee.pdf \
+	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-nee.pdf
+
+# TODO: include maps of SIF slope and intercept for all months in supplement
 
 # 6_RESULTS_SIF_TARGETS += $(OSSE_FLUX_DECOMPOSITIONS)
 
@@ -175,6 +178,7 @@ $(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf: \
 		--region-sf $(REGION_SF_SIF) \
 		--output $@
 
+# TODO: for all maps, try plotting with tidyterra
 $(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/observation-count.R \
 	$(OBSERVATIONS) \
@@ -239,6 +243,20 @@ $(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf: \
 		--fluxcom-monthly-2x25-zonal $(FLUXCOM_MONTHLY_2x25_ZONAL) \
 		--output $@
 
+$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-latitude-profile.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/seasonal-latitude-profile.R \
+	$(PERTURBATIONS_AUGMENTED_SIF) \
+	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_LNLGISSIF) \
+	$(FLUXCOM_MONTHLY_2x25) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
+		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
+		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
+		--output $@
+
 $(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-%.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/average-map-wombat.R \
 	$(SIX_YEAR_AVERAGE_SIF) \
@@ -253,17 +271,29 @@ $(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-%.pdf: \
 $(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-%.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/average-map-fluxcom.R \
 	$(SIX_YEAR_AVERAGE_SIF) \
-	$(FLUXCOM_MONTHLY_2x25) \
 	$(REGION_SF_SIF) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--six-year-average $(SIX_YEAR_AVERAGE_SIF) \
-		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
 		--flux-component $* \
 		--region-sf $(REGION_SF_SIF) \
 		--output $@
 
 ## Intermediates
+
+$(SIX_YEAR_AVERAGE_SIF): \
+	$(6_RESULTS_SIF_SRC_DIR)/six-year-average.R \
+	$(PERTURBATIONS_AUGMENTED_SIF) \
+	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_LNLGISSIF) \
+	$(FLUXCOM_MONTHLY_2x25) \
+	$(UTILS_PARTIAL)
+	Rscript $< \
+		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
+		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
+		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
+		--output $@
 
 $(FLUXCOM_MONTHLY_2x25_ZONAL): \
 	$(6_RESULTS_SIF_SRC_DIR)/fluxcom-monthly-zonal.R \
@@ -283,28 +313,37 @@ $(FLUXCOM_MONTHLY_2x25): \
 		--control-emissions $(CONTROL_EMISSIONS) \
 		--output $@
 
+# NOTE(jhj): FLUXCOM MTE, GMDH_CV, and MARSens methods occasionally report
+# non-physical values; we remove values outside the range of [-20, 20] gC/m^2/day
+# TODO: make comparisons with X-BASE product instead?
+
 $(FLUXCOM_MONTHLY_2x25_BASE)-%.nc: \
 	$(GEOS_2X25_GRID) \
 	$(FLUXCOM_05X05_GRID)
 	cdo -v -z zip_6 \
-		-remapcon,$(GEOS_2X25_GRID) \
 		-setattribute,$(firstword $(subst -, ,$*))@method=$(lastword $(subst -, ,$*)) \
-		-select,name=$(firstword $(subst -, ,$*)) \
+		-setvrange,0,20 \
+		-setctomiss,0 \
+		-remapcon,$(GEOS_2X25_GRID) \
+		-setmisstoc,0 \
 		-setgrid,$(FLUXCOM_05X05_GRID) \
+		-select,name=$(firstword $(subst -, ,$*)) \
 		$(FLUXCOM_DIRECTORY)/$(firstword $(subst -, ,$*)).$(lastword $(subst -, ,$*)).monthly.{2015,2016,2017,2018,2019,2020}.nc \
 		$@
 
-$(SIX_YEAR_AVERAGE_SIF): \
-	$(6_RESULTS_SIF_SRC_DIR)/six-year-average.R \
-	$(PERTURBATIONS_AUGMENTED_SIF) \
-	$(SAMPLES_LNLGIS) \
-	$(SAMPLES_LNLGISSIF) \
-	$(UTILS_PARTIAL)
-	Rscript $< \
-		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
-		--samples-LNLGIS $(SAMPLES_LNLGIS) \
-		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
-		--output $@
+$(FLUXCOM_MONTHLY_2x25_BASE)-NEE-%.nc: \
+	$(GEOS_2X25_GRID) \
+	$(FLUXCOM_05X05_GRID)
+	cdo -v -z zip_6 \
+		-setattribute,NEE@method=$* \
+		-setvrange,-20,20 \
+		-setctomiss,0 \
+		-remapcon,$(GEOS_2X25_GRID) \
+		-setmisstoc,0 \
+		-setgrid,$(FLUXCOM_05X05_GRID) \
+		-select,name=NEE \
+		$(FLUXCOM_DIRECTORY)/NEE.$*.monthly.{2015,2016,2017,2018,2019,2020}.nc \
+		$@
 
 $(OSSE_FLUX_AGGREGATES_ZONAL_SAMPLES_BASE)-%.rds: \
 	$(6_RESULTS_SIF_SRC_DIR)/flux-aggregates-zonal-samples.R \

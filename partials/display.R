@@ -79,11 +79,14 @@ scale_fill_binned_custom <- function(
   aesthetics = 'fill',
   ...
 ) {
-  palette_colours <- if (symmetric & palette_name == 'RdBu') {
+  palette_colours <- if (symmetric && palette_name %in% c('RdBu', 'PuOr')) {
     scales::brewer_pal('div', palette_name, -1)(10)[2:9]
-  }
-  else if (symmetric) {
-    colorspace::divergingx_hcl(10, palette = palette_name, rev = reverse)
+  } else if (symmetric) {
+    if (palette_name %in% row.names(colorspace::divergingx_palettes())) {
+      colorspace::divergingx_hcl(10, palette = palette_name, rev = reverse)
+    } else {
+      colorspace::diverging_hcl(10, palette = palette_name, rev = reverse)
+    }
   } else {
     if (reverse) {
       colorspace::sequential_hcl(11, palette = palette_name, rev = reverse)[1:9]
@@ -93,9 +96,8 @@ scale_fill_binned_custom <- function(
   }
   palette <- scales::gradient_n_pal(palette_colours, NULL, 'Lab')
   binned_scale(
-    'fill',
-    'steps2_uneven',
-    function(x) {
+    aesthetics = 'fill',
+    palette = function(x) {
       palette(seq(0, 1, length.out = length(x)))
     },
     na.value = na.value,

@@ -1,26 +1,13 @@
 library(argparse)
 library(dplyr, warn.conflicts = FALSE)
-library(lubridate, warn.conflicts = FALSE)
 library(fastsparse)
-library(WoodburyMatrix)
 library(Matrix)
 library(fst)
 
 source(Sys.getenv('UTILS_PARTIAL'))
 
 sample_normal_precision <- function(Q) {
-  chol_Q <- Cholesky(Q, LDL = FALSE)
-  if (is(chol_Q, 'triangularMatrix')) {
-    as.vector(solve(chol_Q, rnorm(ncol(chol_Q))))
-  } else if (is(chol_Q, 'CHMfactor')) {
-    as.vector(solve(chol_Q, solve(
-      chol_Q,
-      rnorm(ncol(chol_Q)),
-      system = 'Lt'
-    ), system = 'Pt'))
-  } else {
-    as.vector(backsolve(chol_Q, rnorm(ncol(chol_Q))))
-  }
+  as.vector(solve(chol(Q), rnorm(ncol(Q))))
 }
 
 parser <- ArgumentParser()
@@ -120,15 +107,12 @@ log_debug('Simulating observation errors')
 epsilon_parts <- lapply(hyperparameter_group_indices, function(i) {
   observations_i <- observation_parts[[i]]
 
-  is_precision <- NA
-  Sigma_epsilon_parts <- observations_i %>%
+  epsilon_parts_i <- observations_i %>%
     group_by(observation_group, hyperparameter_group) %>%
     group_map(~ {
       parameters <- .y %>%
         left_join(hyperparameter_estimates, by = 'hyperparameter_group')
 
-      precisions <- 1 / .x$error^2
-      cross_precisions <- head(sqrt(precisions), -1) * tail(sqrt(precisions), -1)
       diff_time <- diff(as.double(
         .x$time - .x$time[1],
         unit = parameters$ell_unit
@@ -136,54 +120,47 @@ epsilon_parts <- lapply(hyperparameter_group_indices, function(i) {
       # HACK(mgnb): some IS sites have repeated times; separate them minimally
       diff_time[diff_time == 0] <- 1 / 24
 
-      if (parameters$rho == 1) {
-        is_precision <<- TRUE
-        ou_precision(
+      n <- nrow(.x)
+      output <- if (parameters$rho == 1) {
+        sample_normal_precision(ou_precision(
           diff_time,
           1 / parameters$ell,
-          precisions * parameters$gamma,
-          cross_precisions * parameters$gamma
-        )
+          rep(1, n),
+          rep(1, n - 1)
+        ))
       } else {
-        is_precision <<- FALSE
-        A <- FastDiagonal(
-          x = (parameters$gamma / (1 - parameters$rho)) * precisions
-        )
-        B <- ou_precision(
-          diff_time,
-          1 / parameters$ell,
-          precisions * parameters$gamma / parameters$rho,
-          cross_precisions * parameters$gamma / parameters$rho
-        )
-        O <- TridiagonalMatrix(
-          A@x + B@major,
-          B@minor
-        )
-        WoodburyMatrix(
-          A,
-          B,
-          O = O,
-          symmetric = TRUE
+        (
+          sample_normal_precision(Diagonal(
+            x = rep(1 / (1 - parameters$rho), n)
+          ))
+          + sample_normal_precision(ou_precision(
+            diff_time,
+            1 / parameters$ell,
+            rep(1 / parameters$rho, n),
+            rep(1 / parameters$rho, n - 1)
+          ))
         )
       }
+
+      output * .x$error / sqrt(parameters$gamma)
     })
 
-  if (!is_precision) {
-    # NOTE(mgnb): implicitly, we have a single WoodburyMatrix
-    epsilon <- rwnorm(n = 1, covariance = Sigma_epsilon_parts[[1]])
-  } else {
-    # NOTE(mgnb): implicitly, we have a list of TridiagonalMatrix's
-    epsilon <- sample_normal_precision(bdiag_tridiagonal(Sigma_epsilon_parts))
-  }
-  stopifnot(length(epsilon) == nrow(observations_i))
+  epsilons_i <- do.call(c, epsilon_parts_i)
+
+  stopifnot(nrow(observations_i) == length(epsilons_i))
   observations_i %>%
     select(observation_id) %>%
-    mutate(epsilon = epsilon)
+    mutate(
+      epsilon = epsilons_i
+    )
 })
 
 osse_epsilon <- bind_rows(epsilon_parts)
 stopifnot(!anyNA(osse_epsilon$epsilon))
-stopifnot(nrow(osse_epsilon) == nrow(observations))
+stopifnot(nrow(observations) == nrow(osse_epsilon))
+stopifnot(all(
+  levels(observations$observation_id) == levels(osse_epsilon$observation_id)
+))
 
 osse_observations <- observations %>%
   left_join(
@@ -196,8 +173,8 @@ osse_observations <- observations %>%
 
 if (!is.null(args$true_alpha)) {
   log_debug('Computing perturbations with true alpha from {args$true_alpha}')
-  true_alpha <- fst::read_fst(args$true_alpha)
-  basis_vectors <- fst::read_fst(args$basis_vectors)
+  true_alpha <- read_fst(args$true_alpha)
+  basis_vectors <- read_fst(args$basis_vectors)
   prior <- readRDS(args$prior)
 
   n_all_alpha <- nrow(basis_vectors)
@@ -244,6 +221,6 @@ osse_observations <- osse_observations %>%
   ))
 
 log_debug('Saving to {args$output}')
-fst::write_fst(osse_observations, args$output)
+write_fst(osse_observations, args$output)
 
 log_debug('Done')

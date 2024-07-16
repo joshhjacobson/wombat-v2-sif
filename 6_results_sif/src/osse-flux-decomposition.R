@@ -75,6 +75,7 @@ true_emissions <- prior_emissions %>%
   mutate(estimate = 'Truth')
 
 if (!is.null(true_alpha)) {
+  log_debug('Adjusting bottom-up with true alpha from {args$true_alpha}')
   true_emissions <- true_emissions %>%
     mutate(
       value = value + as.vector(
@@ -90,6 +91,10 @@ list_samples <- list(
   list(name = 'With SIF, free RLT', path = args$samples_freeresp_wsif),
   list(name = 'Without SIF, free RLT', path = args$samples_freeresp_wosif)
 )
+if (sum(sapply(list_samples, function(x) !is.null(x$path))) < 2) {
+  stop('At least two sets of posterior samples are required for a comparison')
+}
+
 posterior_emissions <- lapply(list_samples, function(samples_i) {
   if (is.null(samples_i$path)) return(NULL)
   samples <- readRDS(samples_i$path)
@@ -149,6 +154,7 @@ emissions <- bind_rows(
       estimate,
       levels = c(
         'Truth',
+        'Bottom-up',
         'Without SIF, fixed RLT',
         'With SIF, fixed RLT',
         'Without SIF, free RLT',
@@ -158,11 +164,20 @@ emissions <- bind_rows(
   )
 
 colour_key <- c(
-  'Truth' = '#4053d3',
-  'Without SIF, fixed RLT' = 'grey50',
+  'Truth' = 'black',
+  'Bottom-up' = 'grey50',
+  'Without SIF, fixed RLT' = '#008df9cc',
   'With SIF, fixed RLT' = '#fb8b00',
-  'Without SIF, free RLT' = 'grey50',
+  'Without SIF, free RLT' = '#008cf9cc',
   'With SIF, free RLT' = '#fb8b00'
+)
+linetype_key <- c(
+  'Truth' = 'solid',
+  'Bottom-up' = '11',
+  'Without SIF, fixed RLT' = '41',
+  'With SIF, fixed RLT' = '41',
+  'Without SIF, free RLT' = '41',
+  'With SIF, free RLT' = '41'
 )
 
 output <- wrap_plots(lapply(sort(unique(emissions$inventory)), function(inventory_i) {
@@ -178,7 +193,8 @@ output <- wrap_plots(lapply(sort(unique(emissions$inventory)), function(inventor
         colour = estimate,
         linetype = estimate
       ),
-      linewidth = 0.4
+      linewidth = 0.4,
+      alpha = 0.8
     ) +
     geom_ribbon(
       mapping = aes(
@@ -192,7 +208,7 @@ output <- wrap_plots(lapply(sort(unique(emissions$inventory)), function(inventor
     scale_x_date(date_labels = '%Y-%m') +
     scale_colour_manual(values = colour_key) +
     scale_fill_manual(values = colour_key) +
-    scale_linetype_manual(values = c('41', rep('solid', 4))) +
+    scale_linetype_manual(values = linetype_key) +
     labs(x = 'Time', y = 'Flux [PgC per month]', colour = NULL, fill = NULL, linetype = NULL) +
     guides(fill = 'none') +
     ggtitle(inventory_i)

@@ -167,7 +167,7 @@ alpha_to_include <- is.finite(diag(prior$precision)) & with(
   )
 )
 all_regions_fixed <- identical(args$fix_resp_linear, sprintf('Region%02d', 1:11))
-all_regions_free <- args$fix_resp_linear %in% c('NULL', 'null', 'None', 'none', 'NA', 'na')
+all_regions_free <- unique(args$fix_resp_linear %in% c('NULL', 'null', 'None', 'none', 'NA', 'na'))
 
 part_indices <- seq_along(args$component_name)
 observations$component_name <- ''
@@ -647,7 +647,7 @@ for (iteration in 2 : args$n_samples) {
   )
   if (!is.null(args$constraints)) {
     alpha_current <- sampleHmcConstrained(
-      rep(0, n_alpha),
+      alpha_current,
       alpha_mean,
       chol_alpha_precision,
       F_constraint,

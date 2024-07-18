@@ -13,6 +13,14 @@ Yellow: #f9d32e
 YNAB Bluish: #3B5EDA
 True Indigo: #330099
 Electric Indigo: #6F00FF
+Stack Overflow Orange: #F48024
+ACP Blue: #0072BC
+ACP inverse orange: #ff8d43
+Close to steel blue (light azure): #76ABDF
+Steel Blue: #4682b4
+Steel Green: #46b478
+Blue complement to chosen orange: #0070fb
+#0070BB
 
 Choices so far:
 Green: #018571

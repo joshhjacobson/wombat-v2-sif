@@ -15,7 +15,6 @@ parser$add_argument('--seed', type = 'integer', default = 0)
 parser$add_argument('--true-alpha')
 parser$add_argument('--basis-vectors')
 parser$add_argument('--hyperparameter-estimates')
-parser$add_argument('--prior')
 parser$add_argument('--observations')
 parser$add_argument('--overall-observation-mode', nargs = '+')
 parser$add_argument('--control', nargs = '+')
@@ -175,7 +174,6 @@ if (!is.null(args$true_alpha)) {
   log_debug('Computing perturbations with true alpha from {args$true_alpha}')
   true_alpha <- read_fst(args$true_alpha)
   basis_vectors <- read_fst(args$basis_vectors)
-  prior <- readRDS(args$prior)
 
   n_all_alpha <- nrow(basis_vectors)
 

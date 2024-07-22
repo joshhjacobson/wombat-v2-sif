@@ -42,12 +42,11 @@ SAMPLES_LNLG = 4_inversion/intermediates/samples-LNLG.rds
 SAMPLES_LNLGIS = 4_inversion/intermediates/samples-LNLGIS.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 
-ALPHA_SMALL = 4_inversion/intermediates/osse-alpha-small.fst
-ALPHA_MEDIUM = 4_inversion/intermediates/osse-alpha-medium.fst
-ALPHA_LARGE = 4_inversion/intermediates/osse-alpha-large.fst
-OSSE_ALPHAS = $(ALPHA_SMALL) $(ALPHA_MEDIUM) $(ALPHA_LARGE)
+ALPHA_ADJUSTMENT_CASES = small medium negative
+ALPHA_ADJUSTMENT_BASE = 4_inversion/intermediates/osse-alpha
+OSSE_ADJUSTED_ALPHAS = $(foreach ADJUSTMENT,$(ALPHA_ADJUSTMENT_CASES),$(ALPHA_ADJUSTMENT_BASE)-$(ADJUSTMENT).fst)
 
-OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHASMALL ALPHAMD ALPHALARGE
+OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHASMALL ALPHAMD ALPHANEG
 OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHA0-FIXRESP-WOSIF \
 	ALPHA0-FREERESP-WSIF \
@@ -60,19 +59,18 @@ OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHASMALL-FIXRESP-WOSIF \
 	ALPHASMALL-FREERESP-WSIF \
 	ALPHASMALL-FREERESP-WOSIF \
+	ALPHASMALL-FREERESP-FIXLW-WSIF \
 	ALPHAMD-FIXRESP-WSIF \
 	ALPHAMD-FIXRESP-WOSIF \
 	ALPHAMD-FREERESP-WSIF \
 	ALPHAMD-FREERESP-WOSIF \
-	ALPHALARGE-FIXRESP-WSIF \
-	ALPHALARGE-FIXRESP-WOSIF \
-	ALPHALARGE-FREERESP-WSIF \
-	ALPHALARGE-FREERESP-WOSIF
+	ALPHANEG-FIXRESP-WOSIF \
+	ALPHANEG-FREERESP-WSIF
 OSSE_FLAGS_ALPHA0 = --seed 0 --bio-clim-slice-w 1
 OSSE_FLAGS_ALPHAV2 = --seed 1 --true-alpha $(ALPHA_WOMBAT_V2)
-OSSE_FLAGS_ALPHASMALL = --seed 2 --true-alpha $(ALPHA_SMALL)
-OSSE_FLAGS_ALPHAMD = --seed 3 --true-alpha $(ALPHA_MEDIUM)
-OSSE_FLAGS_ALPHALARGE = --seed 4 --true-alpha $(ALPHA_LARGE)
+OSSE_FLAGS_ALPHASMALL = --seed 2 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-small.fst
+OSSE_FLAGS_ALPHAMD = --seed 3 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-medium.fst
+OSSE_FLAGS_ALPHANEG = --seed 4 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-negative.fst
 OSSE_FLAGS_ALPHA = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_FLAGS_$(findstring $(OSSE_BASE_CASE), $*)))
 OSSE_FLAGS_FREERESP = --fix-resp-linear Region03
 OSSE_FLAGS_RESP = $(OSSE_FLAGS_$(findstring FREERESP, $*))
@@ -149,13 +147,46 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 			$(H_SIF) \
 		--output $@
 
+$(OSSE_SAMPLES_BASE)-%-FIXLW-WSIF.rds: \
+	4_inversion/src/samples-fixed-linear-precision.R \
+	$(OSSE_OBSERVATIONS_CASES) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	3_sif/intermediates/oco2-hourly-sif.fst \
+	$(H_LNLG) \
+	$(H_IS) \
+	$(H_SIF)
+	Rscript $< $(OSSE_FLAGS) \
+		--n-samples 200 \
+		--n-warm-up 100 \
+		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
+		--constraints $(CONSTRAINTS) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
+		--control \
+			2_matching/intermediates/runs/base/oco2-hourly.fst \
+			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+			3_sif/intermediates/oco2-hourly-sif.fst \
+		--component-name LNLG IS SIF \
+		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_IS) \
+			$(H_SIF) \
+		--output $@
+
 $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 	4_inversion/src/osse-observations.R \
 	$(OBSERVATIONS) \
 	$(BASIS_VECTORS) \
 	$(HYPERPARAMETER_ESTIMATES) \
-	$(OSSE_ALPHAS) \
-	$(PRIOR) \
+	$(OSSE_ADJUSTED_ALPHAS) \
 	2_matching/intermediates/runs/base/oco2-hourly.fst \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	3_sif/intermediates/oco2-hourly-sif.fst \
@@ -165,7 +196,6 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 	Rscript $< $(OSSE_FLAGS_$*) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
-		--prior $(PRIOR) \
 		--observations $(OBSERVATIONS) \
 		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
 		--control \
@@ -195,22 +225,22 @@ ADJUSTED_ALPHA_CALL = Rscript 4_inversion/src/osse-alpha.R \
 	--alpha-wombat-v2 $(ALPHA_WOMBAT_V2) \
 	--fix-resp-linear Region03
 
-$(ALPHA_SMALL): \
+$(ALPHA_ADJUSTMENT_BASE)-small.fst: \
 	$(ADJUSTED_ALPHA_DEPS)
 	$(ADJUSTED_ALPHA_CALL) \
 		--delta 0.1 \
 		--output $@
 
-$(ALPHA_MEDIUM): \
+$(ALPHA_ADJUSTMENT_BASE)-medium.fst: \
 	$(ADJUSTED_ALPHA_DEPS)
 	$(ADJUSTED_ALPHA_CALL) \
 		--delta 0.35 \
 		--output $@
 
-$(ALPHA_LARGE): \
+$(ALPHA_ADJUSTMENT_BASE)-negative.fst: \
 	$(ADJUSTED_ALPHA_DEPS)
 	$(ADJUSTED_ALPHA_CALL) \
-		--delta 0.5 \
+		--delta -0.35 \
 		--output $@
 
 # Real-data inversions
@@ -489,9 +519,9 @@ $(PRIOR): \
 	4_inversion/src/prior.R \
 	$(PERTURBATIONS) \
 	$(BASIS_VECTORS)
-	# NOTE(mgnb): the GpGp package fails if the number of threads of greater
-	# than one
-	OMP_NUM_THREADS=1 Rscript $< \
+	# NOTE(jhj): the GpGp package may complain if the number of threads is greater
+	# than one; try setting OMP_NUM_THREADS=1 as needed
+	Rscript $< \
 		--basis-vectors $(BASIS_VECTORS) \
 		--perturbations $(PERTURBATIONS) \
 		--output $@

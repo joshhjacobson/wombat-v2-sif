@@ -102,8 +102,9 @@ posterior_emissions <- lapply(list_samples, function(samples_i) {
 }) %>% bind_rows()
 
 emissions <- bind_rows(
-  true_emissions,
-  posterior_emissions
+  prior_emissions,
+  posterior_emissions,
+  true_emissions
 ) %>%
   {
     x <- .
@@ -166,9 +167,9 @@ emissions <- bind_rows(
 colour_key <- c(
   'Truth' = 'black',
   'Bottom-up' = 'grey50',
-  'Without SIF, fixed RLT' = '#008df9cc',
+  'Without SIF, fixed RLT' = '#4682b4',
   'With SIF, fixed RLT' = '#fb8b00',
-  'Without SIF, free RLT' = '#008cf9cc',
+  'Without SIF, free RLT' = '#4682b4',
   'With SIF, free RLT' = '#fb8b00'
 )
 linetype_key <- c(
@@ -194,7 +195,7 @@ output <- wrap_plots(lapply(sort(unique(emissions$inventory)), function(inventor
         linetype = estimate
       ),
       linewidth = 0.4,
-      alpha = 0.8
+      alpha = 0.9
     ) +
     geom_ribbon(
       mapping = aes(

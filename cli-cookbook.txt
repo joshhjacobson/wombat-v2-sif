@@ -56,13 +56,15 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-al
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-alpha-medium.fst --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-alpha-large.fst --dry-run
 
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-observations-ALPHAMD.fst --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-observations-ALPHANEG.fst --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHAV2-WSIF.rds --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHAV2-WOSIF.rds --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHA0-WSIF.rds --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHASMALL-FIXRESP-WOSIF.rds --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHAMD-FREERESP-WOSIF.rds --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHAMD-FREERESP-WSIF.rds --dry-run
+
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHASMALL-FREERESP-FIXLW-WSIF.rds --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHAFREE-WOSIF.rds |& tee osse-samples-ALPHAFREE-WOSIF.txt
 
@@ -90,7 +92,7 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-metric
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 5_results/figures/flux-components-global.pdf --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHA0-mixed.pdf --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHAV2-mixed.pdf --dry-run
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHAMD-mixed.pdf --dry-run
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHAMD-FIXLW-mixed.pdf --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHANEG-mixed.pdf --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHASMALL-FIXLW-mixed.pdf --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHAV2-FIXRESP.pdf --dry-run

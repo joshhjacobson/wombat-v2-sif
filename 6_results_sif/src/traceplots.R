@@ -16,8 +16,8 @@ library(patchwork)
 # args <- parser$parse_args()
 
 args <- list(
-  samples = '4_inversion/intermediates/osse-samples-ALPHAMD-FREERESP-WSIF.rds',
-  output_base = '6_results_sif/figures/archive/osse/traceplots/traceplots-ALPHAMD-FREERESP-WSIF'
+  samples = '4_inversion/intermediates/osse-samples-ALPHASMALL-FREERESP-FIXLW-WSIF.rds',
+  output_base = '6_results_sif/figures/archive/osse/traceplots/traceplots-ALPHASMALL-FREERESP-FIXLW-WSIF'
 )
 
 

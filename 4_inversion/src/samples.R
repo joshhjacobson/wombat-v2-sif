@@ -609,7 +609,8 @@ w_bio_resid_samples[1, ] <- w_bio_resid_current
 gamma_samples[1, ] <- gamma_current
 
 rho_bio_clim_slice <- slice(0.1, max_evaluations = 1000)
-# HACK(jhj): increasing the width of slice can be necessary when the truth is very close to prior (i.e., ALPHA0)
+# HACK(jhj): increasing the width of slice can be necessary when the truth 
+# is very close to prior in the OSSE (i.e., ALPHA0)
 w_bio_clim_slice <- list(
   slice(args$bio_clim_slice_w, max_evaluations = 5000),
   slice(args$bio_clim_slice_w, max_evaluations = 5000)

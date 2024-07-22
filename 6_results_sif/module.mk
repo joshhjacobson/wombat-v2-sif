@@ -70,14 +70,14 @@ FLUXCOM_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-true-fluxes.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
-	$(ALPHA_SMALL) \
-	$(ALPHA_MEDIUM) \
+	$(OSSE_ADJUSTED_ALPHAS) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
 		--alpha-v2 $(ALPHA_WOMBAT_V2) \
-		--alpha-small $(ALPHA_SMALL) \
-		--alpha-large $(ALPHA_MEDIUM) \
+		--alpha-small $(ALPHA_ADJUSTMENT_BASE)-small.fst \
+		--alpha-positive $(ALPHA_ADJUSTMENT_BASE)-medium.fst \
+		--alpha-negative $(ALPHA_ADJUSTMENT_BASE)-negative.fst \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \
@@ -125,21 +125,19 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-%.pdf: \
 		--osse-base-case $* \
 		--output $@
 
-REGIONS = global n-boreal n-temperate tropical n-tropical s-tropical s-extratropical
-# REGIONS = global
+# REGIONS = global n-boreal n-temperate tropical n-tropical s-tropical s-extratropical
+REGIONS = global
 RESP_TYPES = FIXRESP FREERESP
-# OSSE_FLUX_DECOMPOSITIONS = \
-# 	$(foreach RESP_TYPE,$(RESP_TYPES),\
-# 	$(foreach REGION,$(REGIONS),\
-# 	$(foreach OSSE_CASE,$(OSSE_BASE_CASES),\
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_$(OSSE_CASE)-$(RESP_TYPE).pdf)))
-# OSSE_FLUX_DECOMPOSITIONS += \
-# 	$(foreach REGION,$(REGIONS),\
-# 	$(foreach OSSE_CASE,$(OSSE_BASE_CASES),\
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_$(OSSE_CASE)-mixed.pdf))
+SPECIFIC_CASES = ALPHANEG
 OSSE_FLUX_DECOMPOSITIONS = \
+	$(foreach RESP_TYPE,$(RESP_TYPES),\
 	$(foreach REGION,$(REGIONS),\
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_ALPHAV2-FIXRESP.pdf)
+	$(foreach OSSE_CASE,$(SPECIFIC_CASES),\
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_$(OSSE_CASE)-$(RESP_TYPE).pdf)))
+OSSE_FLUX_DECOMPOSITIONS += \
+	$(foreach REGION,$(REGIONS),\
+	$(foreach OSSE_CASE,$(SPECIFIC_CASES),\
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_$(OSSE_CASE)-mixed.pdf))
 
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-FIXRESP.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-flux-decomposition.R \
@@ -180,7 +178,7 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-mixed.pdf: \
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-FIXLW-mixed.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-flux-decomposition.R \
 	$(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
-	$(OSSE_SAMPLES_CASES) \
+	$(OSSE_SAMPLES_BASE)-ALPHASMALL-FREERESP-FIXLW-WSIF.rds \
 	$(DISPLAY_PARTIAL)
 	Rscript $< $(OSSE_FLAGS_ALPHA) \
 		--perturbations-augmented-zonal $(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \

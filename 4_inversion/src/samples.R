@@ -167,7 +167,7 @@ alpha_to_include <- is.finite(diag(prior$precision)) & with(
   )
 )
 all_regions_fixed <- identical(args$fix_resp_linear, sprintf('Region%02d', 1:11))
-all_regions_free <- unique(args$fix_resp_linear %in% c('NULL', 'null', 'None', 'none', 'NA', 'na'))
+all_regions_free <- any(args$fix_resp_linear %in% c('NULL', 'null', 'None', 'none', 'NA', 'na'))
 
 part_indices <- seq_along(args$component_name)
 observations$component_name <- ''

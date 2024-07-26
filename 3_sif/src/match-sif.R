@@ -1,5 +1,6 @@
 library(argparse)
 library(dplyr, warn.conflicts = FALSE)
+library(lubridate, warn.conflicts = FALSE)
 library(ncdf4)
 library(parallel)
 
@@ -47,7 +48,7 @@ match_observations <- function(observations, inventory) {
     return(tidyr::tibble(
       observation_id = factor(),
       observation_value = numeric(),
-      model_time = POSIXct(),
+      model_time = as.POSIXct(numeric()),
       model_longitude = numeric(),
       model_latitude = numeric(),
       model_sif = numeric(),
@@ -90,17 +91,27 @@ args <- parser$parse_args()
 log_info('Loading OCO-2 SIF observations from {args$oco2_observations}')
 oco2_observations <- fst::read_fst(args$oco2_observations_sif)
 
-control_sif <- bind_rows(mclapply(args$inventory, function(filename) {
-  sib4_inventory <- read_inventory(filename)
-  match_observations(oco2_observations, sib4_inventory)
-}, mc.cores = get_cores()))
+# SiB4 inventory terminates in 2020, so we repeat the 2020 inventory for 2021
+path_final <- args$inventory[which.max(gsub('.*-(\\d+)\\.nc', '\\1', args$inventory))]
+sib4_inventory_final <- read_inventory(path_final)
+sib4_inventory_final$time <- sib4_inventory_final$time %m+% years(1)
+
+control_sif <- bind_rows(
+  mclapply(args$inventory, function(filename) {
+    sib4_inventory <- read_inventory(filename)
+    match_observations(oco2_observations, sib4_inventory)
+  }, mc.cores = get_cores()),
+  match_observations(oco2_observations, sib4_inventory_final)
+)
+stopifnot(nrow(oco2_observations) == nrow(control_sif))
+stopifnot(length(setdiff(oco2_observations$observation_id, control_sif$observation_id)) == 0)
 
 log_info('Loading fitted SIF-ASSIM models from {args$linear_models}')
 linear_models <- fst::read_fst(args$linear_models)
 
 control_sif <- control_sif %>%
   mutate(
-    month = lubridate::month(model_time)
+    month = month(model_time)
   ) %>%
   inner_join(
     linear_models,

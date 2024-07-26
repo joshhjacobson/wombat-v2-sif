@@ -280,11 +280,11 @@ get_cell_height <- function(latitude) {
 }
 
 match_time <- function(time, model) {
-  findInterval(
-    time,
-    c(model$time[1] - model$time_width / 2, model$time + model$time_width / 2),
-    rightmost.closed = FALSE
-  )
+  bins <- c(model$time[1] - model$time_width / 2, model$time + model$time_width / 2)
+  if (is.unsorted(bins)) {
+    bins <- sort(bins)
+  }
+  findInterval(time, bins, rightmost.closed = FALSE)
 }
 
 match_grid <- function(longitude, latitude, model) {

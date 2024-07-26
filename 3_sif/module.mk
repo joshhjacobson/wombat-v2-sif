@@ -10,8 +10,11 @@ MODEL_SIF_ASSIM = 3_sif/intermediates/model-sif-assim.fst
 OCO2_OBSERVATIONS_SIF = 3_sif/intermediates/observations-sif.fst
 CONTROL_SIF = 3_sif/intermediates/oco2-hourly-sif.fst
 
-SIB4_CLIMATOLOGY_INVENTORY_ASSIM_HOURLY_2X25 = $(foreach SIB4_YEAR,$(INVENTORY_OUTPUT_YEARS),3_sif/intermediates/sib4-hourly-climatology-inventory-assim-2x25-$(SIB4_YEAR).nc)
-SIB4_RESIDUAL_ASSIM_HOURLY_2X25 = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-residual-assim-2x25-$(SIB4_YEAR).nc)
+SIB4_CLIMATOLOGY_INVENTORY_ASSIM_HOURLY_2X25 = \
+	$(foreach SIB4_YEAR,$(INVENTORY_OUTPUT_YEARS),\
+	3_sif/intermediates/sib4-hourly-climatology-inventory-assim-2x25-$(SIB4_YEAR).nc)
+SIB4_RESIDUAL_ASSIM_HOURLY_2X25 = \
+	$(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-residual-assim-2x25-$(SIB4_YEAR).nc)
 SENSITIVITIES_SIF = 3_sif/intermediates/sensitivities-oco2-hourly-sif.fst
 
 # Sensitivities

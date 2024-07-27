@@ -77,7 +77,7 @@ perturbations <- climatology_linear %>%
     by = 'basis_vector'
   )
 
-log_debug('Simulating adjusted linear component for bio_assim')
+log_debug('Computing adjusted linear component for bio_assim')
 alpha_bio_assim_linear <- alpha %>%
   filter(
     inventory == 'bio_assim',

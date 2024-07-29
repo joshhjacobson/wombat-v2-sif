@@ -9,7 +9,7 @@ source(Sys.getenv('DISPLAY_PARTIAL'))
 parser <- ArgumentParser()
 parser$add_argument('--perturbations-augmented')
 parser$add_argument('--alpha-v2')
-parser$add_argument('--alpha-small')
+# parser$add_argument('--alpha-small')
 parser$add_argument('--alpha-positive')
 parser$add_argument('--alpha-negative')
 parser$add_argument('--output')
@@ -17,7 +17,7 @@ args <- parser$parse_args()
 
 perturbations_augmented <- fst::read_fst(args$perturbations_augmented)
 alpha_v2 <- fst::read_fst(args$alpha_v2)
-alpha_small <- fst::read_fst(args$alpha_small)
+# alpha_small <- fst::read_fst(args$alpha_small)
 alpha_positive <- fst::read_fst(args$alpha_positive)
 alpha_negative <- fst::read_fst(args$alpha_negative)
 
@@ -64,14 +64,14 @@ true_emissions_alpha_v2 <- bottom_up %>%
     )
   )
 
-true_emissions_alpha_small <- bottom_up %>%
-  mutate(
-    output = 'WOMBAT v2, AS',
-    value = value + as.vector(
-      X_global[, as.integer(alpha_small$basis_vector)]
-      %*% alpha_small$value
-    )
-  )
+# true_emissions_alpha_small <- bottom_up %>%
+#   mutate(
+#     output = 'WOMBAT v2, AS',
+#     value = value + as.vector(
+#       X_global[, as.integer(alpha_small$basis_vector)]
+#       %*% alpha_small$value
+#     )
+#   )
 
 true_emissions_alpha_positive <- bottom_up %>%
   mutate(
@@ -94,7 +94,7 @@ true_emissions_alpha_negative <- bottom_up %>%
 emissions <- bind_rows(
   bottom_up,
   true_emissions_alpha_v2,
-  true_emissions_alpha_small,
+  # true_emissions_alpha_small,
   true_emissions_alpha_positive,
   true_emissions_alpha_negative
 ) %>%
@@ -136,23 +136,23 @@ emissions <- bind_rows(
     )),
     output = factor(
       output,
-      levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, AS', 'WOMBAT v2, AP', 'WOMBAT v2, AN')
+      levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, AP', 'WOMBAT v2, AN')
     )
   )
 
 colour_key <- c(
   'Bottom-up' = 'grey50',
   'WOMBAT v2' = '#5954d6',
-  'WOMBAT v2, AS' = '#008cf9',
   'WOMBAT v2, AP' = '#00c6f8',
+  # 'WOMBAT v2, AM' = '',
   'WOMBAT v2, AN' = '#ff9287'
 )
 linetype_key <- c(
   'Bottom-up' = '11',
   'WOMBAT v2' = 'solid',
-  'WOMBAT v2, AS' = '41',
-  'WOMBAT v2, AP' = '1131',
-  'WOMBAT v2, AN' = '2212'
+  'WOMBAT v2, AP' = '41',
+  'WOMBAT v2, AN' = '1131'
+  # 'WOMBAT v2, AN' = '2212'
 )
 
 output <- ggplot(

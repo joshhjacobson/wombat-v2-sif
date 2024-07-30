@@ -1,28 +1,12 @@
 library(argparse)
 library(dplyr, warn.conflicts = FALSE)
+library(lubridate, warn.conflicts = FALSE)
 library(patchwork)
+library(stars)
 
 source(Sys.getenv('UTILS_PARTIAL'))
 source(Sys.getenv('DISPLAY_PARTIAL'))
 
-geom_world_sf <- function(
-  colour = 'black',
-  linewidth = 0.05,
-  inherit.aes = FALSE,
-  ...
-) {
-  worldmap <- sf::st_wrap_dateline(sf::st_as_sf(
-    rnaturalearth::ne_coastline(110, returnclass = 'sf')
-  ))
-
-  geom_sf(
-    data = worldmap,
-    colour = colour,
-    linewidth = linewidth,
-    inherit.aes = inherit.aes,
-    ...
-  )
-}
 
 match_grid <- function(df, model) {
   latitude_index <- findInterval(
@@ -33,7 +17,7 @@ match_grid <- function(df, model) {
   longitude_index <- findInterval(
     df$longitude,
     c(model$longitude[1] - model$cell_width[1] / 2, model$longitude + model$cell_width / 2),
-    rightmost.closed = TRUE
+    rightmost.closed = FALSE
   )
   longitude_index[longitude_index > length(model$longitude)] <- 1L
 
@@ -44,30 +28,76 @@ match_grid <- function(df, model) {
     )
 }
 
-label_expressions <- function(values) {
-  stopifnot(is.expression(values))
-  as_labeller(function(x) {
-    if (is.null(names(values))) {
-      x <- seq_along(x)
-      if (length(x) != length(values)) {
-        warning(sprintf(
-          'Number of labels (%s) does not match number of values (%s)',
-          length(values),
-          length(x)
-        ))
-      }
-    }
-    as.list(values[x])
-  }, default = identity)
-}
+# label_expressions <- function(values) {
+#   stopifnot(is.expression(values))
+#   as_labeller(function(x) {
+#     if (is.null(names(values))) {
+#       x <- seq_along(x)
+#       if (length(x) != length(values)) {
+#         warning(sprintf(
+#           'Number of labels (%s) does not match number of values (%s)',
+#           length(values),
+#           length(x)
+#         ))
+#       }
+#     }
+#     as.list(values[x])
+#   }, default = identity)
+# }
 
 
 parser <- ArgumentParser()
 parser$add_argument('--observations')
+parser$add_argument('--control', nargs = '+')
+parser$add_argument('--region-sf')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
-observations <- fst::read_fst(args$observations)
+
+earth_bbox_sf <- rnaturalearth::ne_download(
+  category = 'physical',
+  type = 'wgs84_bounding_box',
+  returnclass = 'sf'
+)
+region_sf <- readRDS(args$region_sf)
+
+control <- bind_rows(lapply(args$control, fst::read_fst)) %>%
+  mutate(observation_id = droplevels(observation_id))
+
+# Get the assimilated observations
+observations <- fst::read_fst(args$observations) %>%
+  filter(
+    assimilate %in% c(1, 3),
+    observation_id %in% control$observation_id,
+    overall_observation_mode != 'OG'
+  ) %>%
+  arrange(observation_group, time) %>%
+  left_join(
+    control %>%
+      select(observation_id, value_control = value),
+    by = 'observation_id'
+  ) %>%
+  mutate(
+    observation_id = factor(
+      as.character(observation_id),
+      as.character(observation_id)
+    )
+  )
+
+control <- control %>%
+  filter(observation_id %in% observations$observation_id) %>%
+  mutate(
+    observation_id = factor(
+      as.character(observation_id),
+      levels(observations$observation_id)
+    )
+  )
+
+stopifnot(all(
+  levels(observations$observation_id) == levels(control$observation_id)
+))
+stopifnot(nlevels(observations$observation_id) == nrow(observations))
+stopifnot(!anyNA(observations$error))
 
 observations <- bind_rows(
   observations %>%
@@ -85,155 +115,246 @@ observations <- bind_rows(
 
 
 grid_system <- list(
-  latitude = seq(-87.5, 87.5, by = 5),
-  cell_height = 5,
-  longitude = seq(-177.5, 177.5, by = 5),
-  cell_width = 5
+  latitude = seq(-88, 88, by = 2),
+  cell_height = 2,
+  longitude = seq(-180, 177.5, by = 2.5),
+  cell_width = 2.5
 )
 grid_base <- expand.grid(
   latitude = grid_system$latitude,
   longitude = grid_system$longitude
 )
 
-count_df <- lapply(c('obspack', 'oco2_xco2', 'oco2_sif'), function(observation_type_i) {
-  grid_base %>%
-    left_join(
-      observations %>%
-        filter(
-          observation_type == observation_type_i,
-          assimilate == 1,
-          overall_observation_mode != 'OG'
-        ) %>%
-        match_grid(grid_system) %>%
-        group_by(longitude, latitude) %>%
-        summarise(n = n(), .groups = 'drop'),
-      by = c('longitude', 'latitude')
-    ) %>%
-    grid_df_to_sf('n') %>%
-    mutate(observation_type = observation_type_i)
-}) %>%
-  bind_rows() %>%
-  mutate(
-    observation_type = factor(observation_type, c('obspack', 'oco2_xco2', 'oco2_sif'))
-  )
-
+observation_types <- c('obspack', 'oco2_xco2', 'oco2_sif')
 strip_labels <- expression(
   obspack = 'In situ/flask mole-fraction',
   oco2_xco2 = 'OCO-2 XCO'[2],
   oco2_sif = 'OCO-2 SIF'
 )
 
-output1 <- ggplot() +
-  geom_sf(
-    data = count_df,
-    mapping = aes(fill = pmax(10, n)),
-    colour = NA
-  ) +
-  geom_path(
-    data = data.frame(
-      longitude = c(-180, 180, 180, -180, -180),
-      latitude = c(-90, -90, 90, 90, -90)
-    ),
-    mapping = aes(longitude, latitude),
-    colour = 'black',
-    linewidth = 0.2
-  ) +
-  geom_world_sf() +
-  scale_fill_binned(
-    type = 'viridis',
-    trans = 'log10',
-    breaks = 10 ^ seq(0, 6, by = 0.5),
-    labels = function(x) {
-      ifelse((x %% 1 == 0) & (x > 10), sprintf('%.0f', x), '')
-    },
-    na.value = NA
-  ) +
-  coord_sf(
-    crs = sf::st_crs('+proj=eck4 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m no_defs'),
-    default_crs = sf::st_crs('WGS84'),
-    label_graticule = '',
-    expand = FALSE
-  ) +
-  labs(x = NULL, y = NULL, title = NULL, fill = 'Obs. count') +
-  facet_wrap(
-    ~ observation_type,
-    labeller = labeller(observation_type = label_expressions(strip_labels))
-  ) +
-  theme(
-    plot.margin = margin(t = 0, r = 1, b = 0, l = 1, unit = 'mm'),
-    panel.border = element_blank(),
-    strip.text = element_text(size = 8),
-    legend.position = 'bottom',
-    legend.title = element_text(
-      size = 8,
-      colour = '#23373b',
-      vjust = 1,
-      margin = margin(r = 1, unit = 'mm')
-    ),
-    legend.text = element_text(size = 7, colour = '#23373b'),
-    legend.key.height = unit(2, 'mm'),
-    legend.key.width = unit(1, 'cm'),
-    legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'mm'),
-    legend.box.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'mm'),
-    legend.box.spacing = unit(2, 'mm')
-  )
+output_columns <- lapply(seq_along(observation_types), function(i) {
+  count_space <- grid_base %>%
+    left_join(
+      observations %>%
+        filter(
+          observation_type == observation_types[i],
+          abs(latitude) <= 89
+        ) %>%
+        match_grid(grid_system) %>%
+        group_by(longitude, latitude) %>%
+        summarise(n = n(), .groups = 'drop'),
+      by = c('longitude', 'latitude')
+    ) %>%
+    arrange(longitude, latitude) %>%
+    st_as_stars(dims = c('longitude', 'latitude')) %>%
+    st_set_crs('WGS84') %>%
+    st_transform('ESRI:54012')
 
-output2 <- observations %>%
-  filter(
-    assimilate == 1,
-    overall_observation_mode != 'OG'
-  ) %>%
-  mutate(
-    month = lubridate::round_date(time, 'month') %>% as.Date()
-  ) %>%
-  group_by(observation_type, month) %>%
-  summarise(n = n(), .groups = 'drop') %>%
-  mutate(
-    observation_type = factor(c(
-      'obspack' = 'In situ/flask\nmole-fraction',
-      'oco2_xco2' = 'OCO-2 XCO2',
-      'oco2_sif' = 'OCO-2 SIF'
-    )[as.character(observation_type)], c(
-      'In situ/flask\nmole-fraction',
-      'OCO-2 XCO2',
-      'OCO-2 SIF'
-    ))
-  ) %>%
-  ggplot(aes(month, n, linetype = observation_type)) +
-    geom_line() +
-    scale_x_date(date_labels = '%Y-%m') +
-    scale_y_log10() +
-    scale_linetype_discrete(labels = c(
-      'In situ/flask mole-fraction',
-      expression('OCO-2 XCO'[2]),
-      'OCO-2 SIF'
-    )) +
-    labs(x = NULL, y = 'Obs. count', linetype = NULL) +
+  count_time <- observations %>%
+    filter(observation_type == observation_types[i]) %>%
+    mutate(
+      year_month = as.Date(floor_date(time, 'month') + days(15))
+    ) %>%
+    group_by(year_month) %>%
+    summarise(n = 1e-3 * n(), .groups = 'drop')
+
+  output_space <- ggplot() +
+    geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = NA) +
+    geom_stars(
+      data = count_space,
+      aes(fill = n)
+    ) +
+    geom_sf(data = region_sf, fill = NA, colour = 'grey35', linewidth = 0.1) +
+    geom_segment(
+      data = data.frame(y = c(-23, 23, 50)),
+      mapping = aes(x = -180, y = y, xend = 180, yend = y),
+      colour = 'black',
+      linetype = 'dashed',
+      linewidth = 0.3
+    ) +
+    geom_text(
+      data = data.frame(
+        x = c(-158, -160, -158),
+        y = c(-23, 23, 50),
+        label = c('23°S', '23°N', '50°N')
+      ),
+      mapping = aes(x = x, y = y, label = label),
+      size = 6/.pt,
+      nudge_y = -8
+    ) +
+    coord_sf(
+      crs = sf::st_crs('ESRI:54012'),
+      default_crs = sf::st_crs('WGS84'),
+      label_graticule = '',
+      expand = FALSE
+    ) +
+    scale_fill_binned_custom(
+      'Inferno',
+      transform = 'log10',
+      breaks = 10 ^ seq(0, 5, by = 0.5),
+      limits = c(1, 10^5),
+      labels = function(x) {
+        ifelse((x %% 1 == 0) & (x > 1) & (x < 10^5), sprintf('%.0f', x), '')
+      },
+      guide = guide_coloursteps(
+        title.position = 'left',
+        axis = FALSE,
+        label.theme = element_text(size = 7, colour = '#23373b'),
+        frame.colour = NA,
+        barwidth = 13,
+        barheight = 0.5
+      ),
+      na.value = NA
+    ) +
+    labs(x = NULL, y = NULL, title = NULL, fill = 'Obs. count') +
     theme(
-      plot.margin = margin(t = 3, r = 0, b = 0, l = 0, unit = 'mm'),
-      axis.title.y = element_text(size = 8),
-      axis.text.x = element_text(size = 8),
-      axis.text.y = element_text(size = 7),
-      legend.text = element_text(size = 8),
-      legend.position = 'bottom',
-      legend.key.size = unit(5, 'mm'),
-      legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'mm'),
-      legend.box.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'mm'),
-      legend.box.spacing = unit(2, 'mm')
+      panel.border = element_blank()
     )
 
-design <- ('
-  11111111
-  11111111
-  11111111
-  #222222#
-  #222222#
-')
-output <- wrap_plots(output1, output2, design = design)
+  output_time <- ggplot(count_time, aes(x = year_month, y = n)) +
+    geom_line(colour = 'grey15') +
+    scale_x_date(date_labels = '%Y-%m') +
+    labs(
+      x = NULL,
+      y = NULL,
+      title = strip_labels[i]
+    ) +
+    theme(
+      plot.title = element_text(size = 9, hjust = 0.5, margin = margin(0.1, 0, 0, 0, unit = 'cm')),
+      axis.title.y = element_text(size = 8),
+      axis.text.y = element_text(size = 7),
+      axis.text.x = element_text(size = 7),
+      axis.title.x = element_blank()
+    )
+  if (i == 1) {
+    output_time <- output_time + labs(y = 'Obs. count [K]')
+  }
+
+  wrap_plots(
+    output_time,
+    output_space,
+    ncol = 1,
+    heights = c(1, 2),
+    widths = c(1, 1)
+  )
+})
+
+output <- wrap_plots(output_columns, ncol = 3, guides = 'collect') & theme(
+  plot.margin = margin(t = 0, r = 0.05, b = 0.1, l = 0.01, unit = 'cm'),
+  legend.position = 'bottom',
+  legend.title = element_text(size = 8, colour = '#23373b', vjust = 1),
+  legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'cm'),
+  legend.box.margin = margin(t = -0.2, r = 0, b = -0.1, l = -1.5, unit = 'cm')
+)
 
 ggsave_base(
   args$output,
   output,
-  width = DISPLAY_SETTINGS$full_width,
-  height = 6.94
+  width = DISPLAY_SETTINGS$supplement_full_width,
+  height = 5.8
 )
+
+# output_space <- ggplot() +
+#   geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = NA) +
+#   geom_stars(
+#     data = count_stars,
+#     aes(fill = pmax(10, n))
+#   ) +
+#   geom_sf(data = region_sf, fill = NA, colour = 'grey35', linewidth = 0.1) +
+#   scale_fill_binned_custom(
+#     'Inferno',
+#     transform = 'log10',
+#     breaks = 10 ^ seq(0, 6, by = 0.5),
+#     labels = function(x) {
+#       ifelse((x %% 1 == 0) & (x > 10), sprintf('%.0f', x), '')
+#     },
+#     guide = guide_coloursteps(
+#       title.position = 'left',
+#       # title.hjust = 0.5,
+#       axis = FALSE,
+#       label.theme = element_text(size = 7, colour = '#23373b'),
+#       frame.colour = NA,
+#       barwidth = 13,
+#       barheight = 0.55
+#     ),
+#     na.value = NA
+#   ) +
+#   coord_sf(
+#     crs = sf::st_crs('ESRI:54012'),
+#     default_crs = sf::st_crs('WGS84'),
+#     label_graticule = '',
+#     expand = FALSE
+#   ) +
+#   labs(x = NULL, y = NULL, title = NULL, fill = 'Obs. count') +
+#   facet_wrap(
+#     ~ observation_type
+#     # labeller = labeller(observation_type = label_expressions(strip_labels))
+#   ) +
+#   theme(
+#     plot.margin = margin(t = -5, r = 0, b = 0, l = 0, unit = 'cm'),
+#     plot.title = element_blank(
+#       margin = margin(0, 0, 0, 0, unit = 'cm')
+#     ),
+#     # panel.border = element_blank(),
+#     strip.text = element_blank(),
+#     legend.position = 'bottom',
+#     legend.title = element_text(
+#       size = 8,
+#       colour = '#23373b',
+#       vjust = 1
+#       # margin = margin(r = 0.1, unit = 'cm')
+#     ),
+#     # legend.text = element_text(size = 7, colour = '#23373b'),
+#     # legend.key.height = unit(0.2, 'cm'),
+#     # legend.key.width = unit(1, 'cm'),
+#     legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'cm'),
+#     legend.box.margin = margin(t = -1, r = 0, b = 0, l = 0, unit = 'cm')
+#     # legend.box.spacing = unit(0.2, 'cm')
+#   )
+
+# output_time <- observations %>%
+#   mutate(
+#     year_month = as.Date(floor_date(time, 'month') + days(15))
+#   ) %>%
+#   group_by(observation_type, year_month) %>%
+#   summarise(n = 1e-3 * n(), .groups = 'drop') %>%
+#   mutate(
+#     observation_type = factor(observation_type, c('obspack', 'oco2_xco2', 'oco2_sif'))
+#   ) %>%
+#   ggplot(aes(x = year_month, y = n)) +
+#     geom_line(colour = 'grey15') +
+#     scale_x_date(date_labels = '%Y-%m') +
+#     # scale_y_continuous(label = scales::unit_format(scale = 1e-3, unit = 'K')) +
+#     facet_wrap(
+#       ~ observation_type,
+#       scales = 'free_y',
+#       labeller = labeller(observation_type = label_expressions(strip_labels))
+#     ) +
+#     labs(x = NULL, y = 'Obs. count (thousands)') +
+#     theme(
+#       plot.margin = margin(t = 0, r = 0, b = -5, l = 0, unit = 'cm'),
+#       strip.text = element_text(size = 9),
+#       axis.title.y = element_text(size = 8),
+#       axis.text.y = element_text(size = 7),
+#       axis.text.x = element_text(size = 7),
+#       axis.title.x = element_blank(),
+#       # legend.text = element_text(size = 8),
+#       # legend.position = 'bottom',
+#       # legend.key.size = unit(5, 'mm'),
+#       # legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'mm'),
+#       # legend.box.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'mm'),
+#       # legend.box.spacing = unit(2, 'mm')
+#     )
+
+# output <- wrap_plots(
+#   output_time,
+#   output_space,
+#   heights = c(1, 2)
+# )
+
+# ggsave_base(
+#   args$output,
+#   output,
+#   width = DISPLAY_SETTINGS$full_width,
+#   height = 6.94
+# )

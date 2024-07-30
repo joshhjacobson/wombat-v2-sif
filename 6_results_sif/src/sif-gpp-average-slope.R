@@ -64,13 +64,13 @@ output_map <- ggplot() +
     data = model_stars,
     aes(fill = value)
   ) +
-  geom_sf(data = region_sf, fill = NA, colour = 'grey55', linewidth = 0.1) +
+  geom_sf(data = region_sf, fill = NA, colour = 'grey35', linewidth = 0.1) +
   geom_segment(
     data = data.frame(y = c(-23, 23, 50)),
     mapping = aes(x = -180, y = y, xend = 180, yend = y),
     colour = 'black',
     linetype = 'dashed',
-    linewidth = 0.3
+    linewidth = 0.4
   ) +
   geom_text(
     data = data.frame(
@@ -93,7 +93,6 @@ output_map <- ggplot() +
     breaks = breaks,
     limits = limits,
     labels = labels,
-    symmetric = FALSE,
     guide = guide_coloursteps(
       title = expression('Slope'),
       label.theme = element_text(size = 7, colour = '#23373b'),
@@ -104,7 +103,7 @@ output_map <- ggplot() +
   labs(
     x = NULL,
     y = NULL,
-    title = sprintf('Season average SIF-GPP regression slope'),
+    title = sprintf('Season-average SIF-GPP regression slope'),
   ) +
   theme(
     panel.border = element_blank(),
@@ -118,14 +117,20 @@ output_map <- ggplot() +
     plot.margin = margin(t = 0, b = 0.1, l = 0, r = 0, unit = 'cm')
   )
 
-output_season <- model_slope %>%
+model_season <- model_slope %>%
   group_by(month) %>%
   summarise(
+    n = n(),
     value_q25 = quantile(value, 0.25, na.rm = TRUE),
     value_q75 = quantile(value, 0.75, na.rm = TRUE),
     value = mean(value, na.rm = TRUE),
     .groups = 'drop'
   ) %>%
+  mutate(
+    month_label = sprintf('%s\n(%d)', month, n)
+  )
+
+output_season <- model_season %>%
   ggplot(aes(x = month)) +
     geom_pointrange(
       aes(
@@ -133,13 +138,18 @@ output_season <- model_slope %>%
         ymin = value_q25,
         ymax = value_q75
       ),
+      colour = 'grey15',
       size = 0.3,
       linewidth = 0.6
+    ) +
+    scale_x_discrete(
+      breaks = model_season$month,
+      labels = model_season$month_label
     ) +
     labs(
       x = NULL,
       y = 'Slope',
-      title = 'Global average SIF-GPP regression slope'
+      title = 'Global-average SIF-GPP regression slope'
     ) +
     theme(
       axis.title.y = element_text(size = 10),
@@ -165,5 +175,5 @@ ggsave_base(
   args$output,
   output,
   width = DISPLAY_SETTINGS$full_width,
-  height = 9.82
+  height = 10.06
 )

@@ -45,6 +45,19 @@ model_stars <- model_slope %>%
   st_set_crs('WGS84') %>%
   st_transform('ESRI:54012')
 
+model_season <- model_slope %>%
+  group_by(month) %>%
+  summarise(
+    n = n(),
+    value_q25 = quantile(value, 0.25, na.rm = TRUE),
+    value_q75 = quantile(value, 0.75, na.rm = TRUE),
+    value = mean(value, na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  mutate(
+    month_label = sprintf('%s\n(%d)', month, n)
+  )
+
 breaks <- seq(0, 4, by = 0.5)
 limits <- c(0, 4)
 base_labels <- sprintf('%.1f', breaks)
@@ -59,7 +72,7 @@ labels <- ifelse(
 )
 
 output_map <- ggplot() +
-  geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = NA, linewidth = 0.1) +
+  geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = NA) +
   geom_stars(
     data = model_stars,
     aes(fill = value)
@@ -74,13 +87,13 @@ output_map <- ggplot() +
   ) +
   geom_text(
     data = data.frame(
-      x = c(-173, -175, -175),
+      x = c(-169, -170, -168),
       y = c(-23, 23, 50),
       label = c('23°S', '23°N', '50°N')
     ),
     mapping = aes(x = x, y = y, label = label),
     size = 8/.pt,
-    nudge_y = 5
+    nudge_y = -5
   ) +
   coord_sf(
     crs = sf::st_crs('ESRI:54012'),
@@ -95,8 +108,16 @@ output_map <- ggplot() +
     labels = labels,
     guide = guide_coloursteps(
       title = expression('Slope'),
-      label.theme = element_text(size = 7, colour = '#23373b'),
-      frame.colour = NA,
+      title.hjust = 0.5,
+      label.position = 'left',
+      label.theme = element_text(
+        size = 7,
+        colour = '#23373b',
+        margin = margin(0, 0.05, 0, 0, unit = 'cm')
+      ),
+      barwidth = 0.5,
+      barheight = 8,
+      frame.colour = NA
     ),
     na.value = NA
   ) +
@@ -107,27 +128,17 @@ output_map <- ggplot() +
   ) +
   theme(
     panel.border = element_blank(),
+    legend.position = 'left',
     legend.title = element_text(size = 10, colour = '#23373b'),
-    legend.margin = margin(t = 0, r = 0.05, b = 0, l = -0.1, unit = 'cm'),
+    legend.margin = margin(t = 0, r = -0.8, b = 0, l = 0, unit = 'cm'),
+    legend.box.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'cm'),
+    legend.box.spacing = unit(0, 'cm'),
     plot.title = element_text(
       hjust = 0.5,
       size = 11,
-      margin = margin(t = 0, r = 0, b = -0.1, l = 0, unit = 'cm')
+      margin = margin(t = 0.05, r = 0, b = 0.05, l = 0, unit = 'cm')
     ),
-    plot.margin = margin(t = 0, b = 0.1, l = 0, r = 0, unit = 'cm')
-  )
-
-model_season <- model_slope %>%
-  group_by(month) %>%
-  summarise(
-    n = n(),
-    value_q25 = quantile(value, 0.25, na.rm = TRUE),
-    value_q75 = quantile(value, 0.75, na.rm = TRUE),
-    value = mean(value, na.rm = TRUE),
-    .groups = 'drop'
-  ) %>%
-  mutate(
-    month_label = sprintf('%s\n(%d)', month, n)
+    plot.margin = margin(t = 0, b = 0, l = 0, r = 0, unit = 'cm')
   )
 
 output_season <- model_season %>%
@@ -158,7 +169,7 @@ output_season <- model_season %>%
       plot.title = element_text(
         hjust = 0.5,
         size = 11,
-        margin = margin(t = 0, r = 0, b = 0.1, l = 0, unit = 'cm')
+        margin = margin(t = 0.2, r = 0, b = 0.05, l = 0, unit = 'cm')
       ),
       plot.margin = margin(t = 0, b = 0.1, l = 0.05, r = 0.05, unit = 'cm')
     )
@@ -175,5 +186,5 @@ ggsave_base(
   args$output,
   output,
   width = DISPLAY_SETTINGS$full_width,
-  height = 10.06
+  height = 10.88
 )

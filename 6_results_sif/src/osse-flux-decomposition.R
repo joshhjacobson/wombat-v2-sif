@@ -167,10 +167,10 @@ emissions <- bind_rows(
 colour_key <- c(
   'Truth' = 'black',
   'Bottom-up' = 'grey50',
-  'Without SIF, fixed RLT' = '#4682b4',
-  'With SIF, fixed RLT' = '#fb8b00',
-  'Without SIF, free RLT' = '#4682b4',
-  'With SIF, free RLT' = '#fb8b00'
+  'Without SIF, fixed RLT' = '#6bccee',
+  'With SIF, fixed RLT' = '#ff6d00',
+  'Without SIF, free RLT' = '#6bccee',
+  'With SIF, free RLT' = '#ff6d00'
 )
 linetype_key <- c(
   'Truth' = 'solid',

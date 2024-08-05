@@ -13,6 +13,7 @@ nlm_best_of <- function(fn, k, max_attempts, best_of, ...) {
     result <- tryCatch({
       nlm(fn, rnorm(k), ...)
     }, error = function(e) {
+      print('Attempt ignored due to error:')
       print(e)
       NULL
     })
@@ -34,9 +35,9 @@ log_posterior <- function(
   residual,
   time_since,
   error,
+  gamma,
   rho,
-  ell,
-  gamma
+  ell
 ) {
   log_likelihood <- 0
   for (j in seq_along(rho)) {
@@ -193,9 +194,9 @@ fits <- residuals %>%
     data.frame(
       n = nrow(.x),
       hyperparameter_group = sort(unique(.x$hyperparameter_group)),
+      gamma = gamma,
       rho = rho,
       ell = ell,
-      gamma = gamma,
       ell_unit = unit
     )
   }) %>%

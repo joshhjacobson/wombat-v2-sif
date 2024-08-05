@@ -59,7 +59,6 @@ OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHASMALL-FIXRESP-WOSIF \
 	ALPHASMALL-FREERESP-WSIF \
 	ALPHASMALL-FREERESP-WOSIF \
-	ALPHASMALL-FREERESP-FIXLW-WSIF \
 	ALPHAMD-FIXRESP-WSIF \
 	ALPHAMD-FIXRESP-WOSIF \
 	ALPHAMD-FREERESP-WSIF \
@@ -79,6 +78,12 @@ OSSE_OBSERVATIONS_BASE = 4_inversion/intermediates/osse-observations
 OSSE_OBSERVATIONS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_OBSERVATIONS_BASE)-$(OSSE_BASE_CASE).fst)
 OSSE_SAMPLES_BASE = 4_inversion/intermediates/osse-samples
 OSSE_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_SAMPLES_BASE)-$(OSSE_CASE).rds)
+
+OSSE_SAMPLES_CASES += \
+	4_inversion/intermediates/osse-samples-ALPHASMALL-FREERESP-FP-WSIF.rds \
+	4_inversion/intermediates/osse-samples-ALPHANEG-FREERESP-FP-WSIF.rds \
+	4_inversion/intermediates/osse-samples-ALPHASMALL-FREERESP-ALL-WSIF.rds \
+	4_inversion/intermediates/osse-samples-ALPHANEG-FREERESP-ALL-WSIF.rds
 
 
 # OSSE inversions
@@ -147,8 +152,45 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 			$(H_SIF) \
 		--output $@
 
-$(OSSE_SAMPLES_BASE)-%-FIXLW-WSIF.rds: \
-	4_inversion/src/samples-fixed-linear-precision.R \
+
+$(OSSE_SAMPLES_BASE)-%-FREERESP-FP-WSIF.rds: \
+	4_inversion/samples-flat-prior.R \
+	$(OSSE_OBSERVATIONS_CASES) \
+	$(BASIS_VECTORS) \
+	4_inversion/intermediates/hyperparameter-estimates-flat-prior-bio.fst \
+	$(CONSTRAINTS) \
+	4_inversion/intermediates/prior-flat-bio.fst \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	3_sif/intermediates/oco2-hourly-sif.fst \
+	$(H_LNLG) \
+	$(H_IS) \
+	$(H_SIF)
+	Rscript $< \
+		--fix-resp-linear Region03 \
+		--n-samples 200 \
+		--n-warm-up 100 \
+		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior 4_inversion/intermediates/prior-flat-bio.fst \
+		--constraints $(CONSTRAINTS) \
+		--hyperparameter-estimates 4_inversion/intermediates/hyperparameter-estimates-flat-prior-bio.fst \
+		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
+		--control \
+			2_matching/intermediates/runs/base/oco2-hourly.fst \
+			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+			3_sif/intermediates/oco2-hourly-sif.fst \
+		--component-name LNLG IS SIF \
+		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_IS) \
+			$(H_SIF) \
+		--output $@
+
+# NOTE(jhj): for these inversions, the observations came from alpha's with RLT free in all land regions
+$(OSSE_SAMPLES_BASE)-%-FREERESP-ALL-WSIF.rds: \
+	4_inversion/src/samples.R \
 	$(OSSE_OBSERVATIONS_CASES) \
 	$(BASIS_VECTORS) \
 	$(HYPERPARAMETER_ESTIMATES) \
@@ -160,10 +202,11 @@ $(OSSE_SAMPLES_BASE)-%-FIXLW-WSIF.rds: \
 	$(H_LNLG) \
 	$(H_IS) \
 	$(H_SIF)
-	Rscript $< $(OSSE_FLAGS) \
+	Rscript $< \
+		--fix-resp-linear none \
 		--n-samples 200 \
 		--n-warm-up 100 \
-		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
+		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
 		--constraints $(CONSTRAINTS) \
@@ -240,7 +283,7 @@ $(ALPHA_ADJUSTMENT_BASE)-medium.fst: \
 $(ALPHA_ADJUSTMENT_BASE)-negative.fst: \
 	$(ADJUSTED_ALPHA_DEPS)
 	$(ADJUSTED_ALPHA_CALL) \
-		--delta -0.35 \
+		--delta -0.1 \
 		--output $@
 
 # Real-data inversions

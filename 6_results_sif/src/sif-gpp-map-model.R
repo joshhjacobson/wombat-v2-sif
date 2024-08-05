@@ -62,7 +62,7 @@ model_term <- model %>%
     value = value * term_key$scale_factor
   )
 
-model_stars <- model_term %>% 
+model_stars <- model_term %>%
   arrange(longitude, latitude, month) %>%
   st_as_stars(dims = c('longitude', 'latitude', 'month')) %>%
   st_set_crs('WGS84') %>%
@@ -87,12 +87,12 @@ if (term_key$drop_second_labels) {
 }
 
 output <- ggplot() +
-  geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = 'black', linewidth = 0.1) +
+  geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = NA) +
   geom_stars(
     data = model_stars,
     aes(fill = value)
   ) +
-  geom_sf(data = region_sf, fill = NA, colour = 'grey55', linewidth = 0.1) +
+  geom_sf(data = region_sf, fill = NA, colour = 'grey35', linewidth = 0.1) +
   geom_segment(
     data = data.frame(y = c(-23, 23, 50)),
     mapping = aes(x = -180, y = y, xend = 180, yend = y),
@@ -127,7 +127,6 @@ output <- ggplot() +
       title = term_key$legend_title,
       title.position = 'top',
       title.hjust = 0.5,
-      axis = FALSE,
       label.theme = element_text(size = 7),
       frame.colour = NA,
       barwidth = 13,

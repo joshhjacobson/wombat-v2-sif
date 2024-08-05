@@ -104,14 +104,14 @@ st_crs(region_sf) <- 'WGS84'
 #   igraph::greedy_vertex_coloring()
 
 land_palette <- c(
-  '#bbffbb',
-  '#77ff77',
-  '#99ff99'
+  '#bbffbb', '#bae4b3',
+  '#77ff77', '#31a354',
+  '#99ff99', '#74c476'
 )
 ocean_palette <- c(
-  '#bbbbff',
-  '#9999ff',
-  '#7777ff'
+  '#bbbbff', '#bdd7e7',
+  '#9999ff', '#6baed6',
+  '#7777ff', '#3182bd'
 )
 region_colours <- data.frame(
   region_code = sprintf('T%02d', 0:23),

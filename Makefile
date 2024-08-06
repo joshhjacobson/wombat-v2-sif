@@ -14,6 +14,7 @@ GEOS_CHEM_SOURCE = external/GEOS_Chem/Code.v12.3.2
 GEOS_CHEM_EXTDATA = data/GEOS_Chem/ExtData
 
 AREA_1X1 = data/area-1x1.nc
+OCO2_SIF_DIRECTORY = data/OCO2_L2_Lite_SIF_10r
 OCO2_OBSERVATIONS = data/OCO2_b10c_10sec_GOOD_r5.nc4
 OBSPACK_DIRECTORY = data/obspack_co2_1_OCO2MIP_v3.2_2021-05-20/data/daily
 TCCON_SOUNDING_DIRECTORY = data/downloaded_20211217
@@ -25,18 +26,25 @@ GEOS_CHEM_RESTART_FILE = data/GEOSChem.Restart.20140901_0000z.nc4
 GEOS_2X25_GRID = data/geos.2x25.grid
 FOSSIL_INVENTORY_PATH = data/fossil-mipv10
 FIRES_INVENTORY_PATH = data/GFED4.1s_Aleya_hemco_080321
+FLUXCOM_DIRECTORY = data/FLUXCOM_RS_members
+FLUXCOM_05X05_GRID = data/fluxcom.05x05.grid
+ALPHA_WOMBAT_V2 = data/wombat-v2-alpha-LNLGIS.fst
 
 all:
 	echo "Please refer to the README for instructions on how to run this project"
 
 include 1_transport/module.mk
 include 2_matching/module.mk
-include 3_inversion/module.mk
-include 4_results/module.mk
+include 3_sif/module.mk
+include 4_inversion/module.mk
+include 5_results/module.mk
+include 6_results_sif/module.mk
 
 1_transport_targets: $(1_TRANSPORT_TARGETS)
 2_matching_targets: $(2_MATCHING_TARGETS)
-3_inversion_targets: $(3_INVERSION_TARGETS)
-4_results_targets: $(4_RESULTS_TARGETS)
+3_sif_targets: $(3_SIF_TARGETS)
+4_inversion_targets: $(4_INVERSION_TARGETS)
+5_results_targets: $(5_RESULTS_TARGETS)
+6_results_sif_targets: $(6_RESULTS_SIF_TARGETS)
 
 .SECONDARY: $(SECONDARY_TARGETS)

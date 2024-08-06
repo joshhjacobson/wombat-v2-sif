@@ -11,11 +11,14 @@ if (Sys.getenv('WOMBAT_LOG_LEVEL') != '') {
 }
 
 get_cores <- function() {
+  omp_threads <- as.integer(Sys.getenv('OMP_NUM_THREADS'))
   max_workers <- as.integer(Sys.getenv('WOMBAT_MAX_WORKERS'))
-  if (is.na(max_workers)) {
-    parallel::detectCores()
-  } else {
+  if (!is.na(omp_threads) & omp_threads > 0) {
+    omp_threads
+  } else if (!is.na(max_workers) & max_workers > 0) {
     max_workers
+  } else {
+    parallel::detectCores()
   }
 }
 
@@ -236,12 +239,20 @@ ncvar_get_time <- function(x, variable_name) {
   ))
 }
 
-with_nc_file <- function(files, code, envir = parent.frame()) {
+with_nc_file <- function(files, code, envir = parent.frame(), quiet = FALSE) {
   for (nme in names(files)) {
-    assign(
-      nme,
-      ncdf4::nc_open(files[[nme]]),
-      envir = envir
+    ifelse(
+      quiet,
+      invisible(capture.output(assign(
+        nme,
+        ncdf4::nc_open(files[[nme]]),
+        envir = envir
+      ))),
+      assign(
+        nme,
+        ncdf4::nc_open(files[[nme]]),
+        envir = envir
+      )
     )
   }
   on.exit({
@@ -251,6 +262,48 @@ with_nc_file <- function(files, code, envir = parent.frame()) {
     }
   })
   eval(substitute(code), envir = envir)
+}
+
+get_cell_width <- function(longitude) {
+  rep(longitude[2] - longitude[1], length(longitude))
+}
+
+get_cell_height <- function(latitude) {
+  unique_diff <- unique(diff(latitude))
+  if (length(unique_diff) == 1) {
+    rep(unique_diff, length(latitude))
+  } else {
+    # Half-height polar cells
+    full_width <- max(unique_diff)
+    c(full_width / 2, rep(full_width, length(latitude) - 2), full_width / 2)
+  }
+}
+
+match_time <- function(time, model) {
+  bins <- c(model$time[1] - model$time_width / 2, model$time + model$time_width / 2)
+  if (is.unsorted(bins)) {
+    bins <- sort(bins)
+  }
+  findInterval(time, bins, rightmost.closed = FALSE)
+}
+
+match_grid <- function(longitude, latitude, model) {
+  latitude_index <- findInterval(
+    latitude,
+    c(model$latitude[1] - model$cell_height[1] / 2, model$latitude + model$cell_height / 2),
+    rightmost.closed = TRUE
+  )
+  longitude_index <- findInterval(
+    longitude,
+    c(model$longitude[1] - model$cell_width[1] / 2, model$longitude + model$cell_width / 2),
+    rightmost.closed = TRUE
+  )
+  longitude_index[longitude_index > length(model$longitude)] <- 1L
+
+  data.frame(
+    latitude = latitude_index,
+    longitude = longitude_index
+  )
 }
 
 read_gridded_data <- function(
@@ -354,6 +407,25 @@ read_climatology <- function(filename) {
     )
 }
 
+compute_posterior <- function(prior, design_matrix, samples, posterior_name) {
+  prior %>%
+    mutate(
+      estimate = posterior_name,
+      value_prior = value,
+      value = value_prior + as.vector(
+        design_matrix[, as.integer(samples$alpha_df$basis_vector)]
+        %*% samples$alpha_df$value
+      ),
+      value_samples = value_prior + as.matrix(
+        design_matrix[, as.integer(samples$alpha_df$basis_vector)]
+        %*% samples$alpha_df$value_samples
+      ),
+      value_q025 = matrixStats::rowQuantiles(value_samples, probs = 0.025),
+      value_q975 = matrixStats::rowQuantiles(value_samples, probs = 0.975)
+    ) %>%
+    select(-value_prior)
+}
+
 discretise_by_breaks <- function(y, breaks, limits) {
   full_breaks <- c(limits[1], breaks, limits[2])
   midpoints <- (head(full_breaks, -1) + tail(full_breaks, -1)) / 2
@@ -362,7 +434,7 @@ discretise_by_breaks <- function(y, breaks, limits) {
 
 grid_df_to_sf <- function(df, variable_name) {
   y_raster <- raster::brick(lapply(variable_name, function(variable_name_i) {
-    y <- df[[variable_name_i]]
+    y <- df %>% arrange(longitude, latitude) %>% pull(variable_name_i)
     latitudes <- sort(unique(df$latitude))
     longitudes <- sort(unique(df$longitude))
     y_matrix <- matrix(
@@ -406,12 +478,81 @@ grid_df_to_sf <- function(df, variable_name) {
   output
 }
 
+# sparse_grid_df_to_sf <- function(df, variable_names, grid_system) {
+#   df <- df %>%
+#     mutate(
+#       longitude = factor(longitude, levels = grid_system$longitude),
+#       latitude = factor(latitude, levels = grid_system$latitude)
+#     )
+#   y_rasters <- lapply(variable_names, function(variable_name_i) {
+#     y_matrix <- with(df, sparseMatrix(
+#       i = as.integer(latitude),
+#       j = as.integer(longitude),
+#       x = df[[variable_name_i]],
+#       dims = c(nlevels(latitude), nlevels(longitude))
+#     ))
+#     # First grid cell is centred on -180, which makes it hard to construct
+#     # compliant polygons; avoid this by splitting horizontal cells in two
+#     y_matrix_wide <- matrix(
+#       NA,
+#       nrow = nrow(y_matrix),
+#       ncol = 2 * ncol(y_matrix)
+#     )
+#     for (i in seq_len(nrow(y_matrix))) {
+#       # First original cell sits on the boundary, so it's value goes to first and
+#       # last new cell
+#       y_matrix_wide[i, 1] <- y_matrix[i, 1]
+#       y_matrix_wide[i, ncol(y_matrix_wide)] <- y_matrix[i, 1]
+#       # Remaining cells simply repeat
+#       y_matrix_wide[
+#         i,
+#         2 : (ncol(y_matrix_wide) - 1)
+#       ] <- rep(y_matrix[i, 2 : ncol(y_matrix)], each = 2)
+#     }
+#     # TODO: may instead want to convert all exact zeros to NA in final data frame
+#     # to get grey values at missing locations
+#     y_matrix_wide[y_matrix_wide == 0] <- NA
+
+#     output_i <- stars::st_as_stars(t(y_matrix_wide)) %>%
+#       stars::st_set_dimensions(
+#         which = c('X1' , 'X2'),
+#         names = c('longitude', 'latitude'),
+#         point = 'area'
+#       ) %>%
+#       # NOTE(jhj): stars uses cell bounds, so values are offset below
+#       stars::st_set_dimensions(
+#         which = 'longitude',
+#         values = seq(
+#           min(grid_system$longitude),
+#           max(grid_system$longitude) + grid_system$cell_width / 2,
+#           by = grid_system$cell_width / 2
+#         )
+#       ) %>%
+#       stars::st_set_dimensions(
+#         which = 'latitude',
+#         values = seq(
+#           min(grid_system$latitude) - grid_system$cell_height / 2,
+#           max(grid_system$latitude) + grid_system$cell_height / 2,
+#           by = grid_system$cell_height
+#         )
+#       )
+#     names(output_i) <- variable_name_i
+#     output_i
+#   })
+
+#   # NOTE: would need to use merge = TRUE here
+#   output <- do.call(c, y_rasters) %>% sf::st_as_sf()
+#   sf::st_crs(output) <- 'WGS84'
+#   output
+# }
+
 REGION_PLOT_SETTINGS <- list(
   'global' = list(
     latitude_lower = -90,
     latitude_upper = 90,
     lowercase_title = 'global',
     titlecase_title = 'Global',
+    numeric_title = 'Global',
     in_supplement = FALSE
   ),
   'n-boreal' = list(
@@ -419,6 +560,7 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = 90,
     lowercase_title = 'northern boreal (50°N-90°N)',
     titlecase_title = 'Northern boreal (50°N-90°N)',
+    numeric_title = '50°N-90°N',
     in_supplement = TRUE
   ),
   'n-temperate' = list(
@@ -426,6 +568,7 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = 50,
     lowercase_title = 'northern temperate (23°N-50°N)',
     titlecase_title = 'Northern temperate (23°N-50°N)',
+    numeric_title = '23°N-50°N',
     in_supplement = TRUE
   ),
   'tropical' = list(
@@ -433,6 +576,7 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = 23,
     lowercase_title = 'tropical (23°S-23°N)',
     titlecase_title = 'Tropical (23°S-23°N)',
+    numeric_title = '23°S-23°N',
     in_supplement = TRUE
   ),
   'n-tropical' = list(
@@ -440,6 +584,7 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = 23,
     lowercase_title = 'northern tropical (0°-23°N)',
     titlecase_title = 'Northern tropical (0°-23°N)',
+    numeric_title = '0°-23°N',
     in_supplement = TRUE
   ),
   's-tropical' = list(
@@ -447,6 +592,7 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = 0,
     lowercase_title = 'southern tropical (23°S-0°)',
     titlecase_title = 'Southern tropical (23°S-0°)',
+    numeric_title = '23°S-0°',
     in_supplement = TRUE
   ),
   's-extratropical' = list(
@@ -454,6 +600,22 @@ REGION_PLOT_SETTINGS <- list(
     latitude_upper = -23,
     lowercase_title = 'southern extratropical (90°S-23°S)',
     titlecase_title = 'Southern extratropical (90°S-23°S)',
+    numeric_title = '90°S-23°S',
+    in_supplement = TRUE
+  )
+)
+
+OSSE_PLOT_SETTINGS <- list(
+  'ALPHA0' = list(
+    posterior_name = 'Bottom-up',
+    in_supplement = TRUE
+  ),
+  'ALPHAV2' = list(
+    posterior_name = 'WOMBAT v2',
+    in_supplement = FALSE
+  ),
+  'ALPHAFREE' = list(
+    posterior_name = 'WOMBAT v2, adj.',
     in_supplement = TRUE
   )
 )
@@ -474,8 +636,12 @@ ELL_PRIOR <- list(
   rate = 1
 )
 
-N_MCMC_SAMPLES <- 5000
-N_MCMC_WARM_UP <- 1000
+# N_MCMC_SAMPLES <- 5000
+# N_MCMC_WARM_UP <- 1000
+N_MCMC_SAMPLES <- 200
+N_MCMC_WARM_UP <- 100
 
 PER_SECONDS_TO_PER_YEAR <- 365.25 * 24 * 60 * 60
 KG_M2_S_TO_PGC_MONTH <- 12.01 / 44.01 * 1e-12 * 365.25 * 24 * 60 * 60 / 12
+GC_M2_DAY_TO_PGC_MONTH <- 1e-15 * 365.25 / 12
+GC_DAY_TO_KGCO2_YEAR <- 44.01 / 12.01 * 1e-3 * 365.25

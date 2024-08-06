@@ -61,8 +61,10 @@ All input datasets go into the `data` directory. There are a few files already t
 
 In addition to those data sets already provided, the following data are needed to run the inversions:
 
+
+- The OCO-2 Level 2 SIF Lite files, available from [NASA's GES DISC](https://disc.gsfc.nasa.gov/datasets/OCO2_L2_Lite_SIF_10r/summary). The Lite files are aggregated as daily files and stored within yearly subdirectories. The parent directory `OCO2_L2_Lite_SIF_10r` should be placed in the data directory.
 - Available from the [OCO-2 v10 MIP website](https://gml.noaa.gov/ccgg/OCO2_v10mip/download.php):
-  - 10s averages of the OCO-2 B10 retreivals, in a file named `OCO2_b10c_10sec_GOOD_r5.nc4`
+  - 10s averages of the OCO-2 B10 retrievals, in a file named `OCO2_b10c_10sec_GOOD_r5.nc4`
   - The ObsPack measurements used by the v10 MIP, `obspack_co2_1_OCO2MIP_v3.2_2021-05-20`. These should be untarred into the data directory.
   - The TCCON retrievals in the file `downloaded_20211217.tgz`. These were not actually used in the paper, but are required for the matching step to work.
 - The Landschutzer ocean fluxes in the file `spco2_MPI-SOM_FFN_v2020.nc`, available from this [NOAA website](https://www.ncei.noaa.gov/data/oceans/ncei/ocads/data/0160558/MPI_SOM-FFN_v2020/)
@@ -95,14 +97,19 @@ tar xzf ~/path/to/WOMBAT_v2_CO2_intermediates.tar.gz
 
 Then you can run the workflow from step 3 onwards as described below.
 
+## FLUXCOM RS ensemble
+
+TODO: describe FLUXCOM data source
+
 # Running the workflow
 
 The workflow of this repository is split into four steps:
 
 1. `1_transport`: Creates GEOS-Chem basis function runs. This includes setting up the inventories, creating the run directories, and setting up the configuration files. You will then need to find a way to run GEOS-Chem for each run.
 2. `2_matching`: Postprocesses the run output from the previous step by extracting the modelled mole-fraction values for each basis function at each observation time and location.
-3. `3_inversion`: Performs the inversions.
-4. `4_results`: Summarise the results as a series of plots and other outputs. This reproduces all the figures in the paper.
+3. `3_sif`: Prepares SIF data for use in the inversions. This includes computing the 10-second observation averages, setting up the SIF inventory, fitting the SIF-GPP linear models, and extracting the SIF values for each GPP basis function at each observation time and location.
+4. `4_inversion`: Performs the inversions.
+5. `5_results`: Summarise the results as a series of plots and other outputs. This reproduces all the figures in the paper.
 
 ## Step 1: running transport
 
@@ -157,12 +164,16 @@ This will create a directory structure in `2_matching/intermediates/runs` and `2
 
 Once that's done, there are two steps to run for each directory. The first step aggregates the basis-function fluxes to a monthly resolution. Scripts for running that on the Gadi supercomputer are in `2_matching/intermediates/runs/<RUN>/run-aggregate-flux-gadi.sh`; the script just uses [CDO](https://code.mpimet.mpg.de/projects/cdo/embedded/index.html) and can be adapted to your needs. The second step extracts those portions of the mole fraction outputs of GEOS-Chem that correspond to observations. Scripts for running that on the Gadi supercomputer are in `2_matching/intermediates/runs/<RUN>/run-matching-gadi.sh`. This calls the R script `2_matching/src/match.R` and can again be adapted to your needs.
 
-## Steps 3 and 4: inversion and results
+## Step 3: incorporating SIF data
+
+TODO.
+
+## Steps 4 and 5: inversion and results
 
 Once steps 1 and 2 are completed (or you've downloaded the intermediate files mentioned earlier), you can run the inversions. The simplest way to do this is to run
 
 ```
-WOMBAT_LOG_LEVEL=debug OMP_NUM_THREADS=8 make -j4 4_results_targets
+WOMBAT_LOG_LEVEL=debug OMP_NUM_THREADS=8 make -j4 5_results_targets
 ```
 
 This should work it's way through the steps, ultimately running the inversion and then generating all the plots and outputs. You can modify the `-j` option and the `OMP_NUM_THREADS` variable to suit your local system.

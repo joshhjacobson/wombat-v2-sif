@@ -70,16 +70,54 @@ scale_fill_fermenter_n <- function(
   )
 }
 
+scale_fill_binned_custom <- function(
+  palette_name,
+  symmetric = FALSE,
+  reverse = FALSE,
+  na.value = 'grey50',
+  guide = 'coloursteps',
+  aesthetics = 'fill',
+  ...
+) {
+  palette_colours <- if (symmetric && palette_name %in% c('RdBu', 'PuOr')) {
+    scales::brewer_pal('div', palette_name, -1)(10)[2:9]
+  } else if (symmetric) {
+    if (palette_name %in% row.names(colorspace::divergingx_palettes())) {
+      colorspace::divergingx_hcl(10, palette = palette_name, rev = reverse)
+    } else {
+      colorspace::diverging_hcl(10, palette = palette_name, rev = reverse)
+    }
+  } else {
+    if (reverse) {
+      colorspace::sequential_hcl(11, palette = palette_name, rev = reverse)[1:9]
+    } else {
+      colorspace::sequential_hcl(11, palette = palette_name, rev = reverse)[3:11]
+    }
+  }
+  palette <- scales::gradient_n_pal(palette_colours, NULL, 'Lab')
+  binned_scale(
+    aesthetics = 'fill',
+    palette = function(x) {
+      palette(seq(0, 1, length.out = length(x)))
+    },
+    na.value = na.value,
+    guide = guide,
+    ...
+  )
+}
+
 plot_map <- function(
   df,
   variable,
   breaks,
   limits,
+  palette,
   show_excess = TRUE,
-  label_precision = '0',
+  label_precision = 0,
   drop_second_labels = FALSE,
-  symmetric = TRUE,
-  bar_width = 13
+  symmetric = FALSE,
+  reverse = FALSE,
+  bar_width = 11
 ) {
   base_labels <- sprintf(paste0('%.', label_precision, 'f'), breaks)
   labels <- if (show_excess) {
@@ -87,8 +125,8 @@ plot_map <- function(
       abs(breaks) == max(abs(breaks)),
       sprintf(
         paste0('%s%.', label_precision, 'f'),
-        ifelse(breaks < 0, '<-', '>'),
-        max(breaks)
+        ifelse(breaks < 0, '< -', '> '),
+        max(abs(breaks))
       ),
       base_labels
     )
@@ -110,7 +148,7 @@ plot_map <- function(
       mapping = aes(x = -180, y = y, xend = 180, yend = y),
       colour = 'black',
       linetype = 'dashed',
-      size = 0.4
+      linewidth = 0.3
     ) +
     geom_text(
       data = data.frame(
@@ -119,29 +157,31 @@ plot_map <- function(
         label = c('23°S', '23°N', '50°N')
       ),
       mapping = aes(x = x, y = y, label = label),
+      size = 8/.pt,
       nudge_y = 10
     ) +
-    scale_fill_fermenter_n(
+    scale_fill_binned_custom(
+      palette,
       breaks = breaks,
-      palette = if (symmetric) 'RdYlBu' else 'PuBu',
-      direction = if (symmetric) -1 else 1,
-      n_colours = if (symmetric) 10 else 9,
       limits = limits,
       labels = labels,
+      symmetric = symmetric,
+      reverse = reverse,
       guide = guide_coloursteps(
         title.position = 'top',
         title.hjust = 0.5,
         axis = FALSE,
-        label.theme = element_text(size = 8),
+        label.theme = element_text(size = 7),
         frame.colour = '#999999',
         barwidth = bar_width,
-        even.steps = FALSE
+        barheight = 0.5,
+        even.steps = TRUE
       ),
       na.value = '#cccccc'
     ) +
     coord_sf(
       default_crs = sf::st_crs('WGS84'),
-      crs = sf::st_crs('+proj=eck4 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m no_defs')
+      crs = sf::st_crs('+proj=eck4 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
     ) +
     theme(
       panel.border = element_blank(),

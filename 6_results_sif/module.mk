@@ -41,6 +41,7 @@ FLUXCOM_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAMD.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/hyperparameter-table.tex \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/sif-gpp-average-slope.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/sif-gpp-map-slope.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/sif-gpp-map-intercept.pdf \
@@ -352,6 +353,13 @@ $(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-%.pdf: \
 		--six-year-average $(SIX_YEAR_AVERAGE_SIF) \
 		--flux-component $* \
 		--region-sf $(REGION_SF_SIF) \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/error-params-table.tex: \
+	$(6_RESULTS_SIF_SRC_DIR)/error-params-table.R \
+	$(HYPERPARAMETER_ESTIMATES)
+	Rscript $< \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
 		--output $@
 
 ## Intermediates

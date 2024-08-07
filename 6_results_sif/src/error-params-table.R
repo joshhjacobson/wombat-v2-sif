@@ -60,8 +60,8 @@ hyperparameter_estimates <- fst::read_fst(args$hyperparameter_estimates) %>%
 
 
 sink(args$output)
-cat('\\begin{tabular}{lccc}\n\\toprule\n')
-cat('Observation group & $\\hat{\\gamma}^Z_g$ & $\\hat{\\rho}^Z_g$ & $\\hat{\\ell}^Z_g$ \\\\\n\\midrule\n')
+cat('\\begin{tabular}{lccl}\n\\toprule\n')
+cat('Observation group & $\\hat{\\gamma}^Z_g$ & $\\hat{\\rho}^Z_g$ & \\multicolumn{1}{c}{$\\hat{\\ell}^Z_g$} \\\\\n\\midrule\n')
 for (i in seq_len(nrow(hyperparameter_estimates))) {
   cat(sprintf(
     '%s & %.03f & %.03f & %.01f %s \\\\\n',

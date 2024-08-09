@@ -132,8 +132,8 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 	$(H_IS) \
 	$(H_SIF)
 	Rscript $< $(OSSE_FLAGS) \
-		--n-samples 200 \
-		--n-warm-up 100 \
+		--n-samples 2500 \
+		--n-warm-up 500 \
 		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \

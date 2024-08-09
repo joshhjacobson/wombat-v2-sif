@@ -228,6 +228,7 @@ $(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf: \
 		--region-sf $(REGION_SF_SIF) \
 		--output $@
 
+# TODO: use "in-situ/flask" in title; maybe increase font sizes?
 $(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/observation-count.R \
 	$(OBSERVATIONS) \

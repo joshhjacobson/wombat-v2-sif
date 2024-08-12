@@ -70,13 +70,12 @@ FLUXCOM_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-true-fluxes.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
-	$(OSSE_ADJUSTED_ALPHAS) \
+	$(OSSE_ALPHAS) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
 		--alpha-v2 $(ALPHA_WOMBAT_V2) \
-		--alpha-positive $(ALPHA_ADJUSTMENT_BASE)-small.fst \
-		--alpha-negative $(ALPHA_ADJUSTMENT_BASE)-negative.fst \
+		--alpha-sim $(ALPHA_SIM) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \

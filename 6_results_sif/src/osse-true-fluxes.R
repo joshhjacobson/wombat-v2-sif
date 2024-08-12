@@ -1,7 +1,6 @@
 library(argparse)
 library(dplyr, warn.conflicts = FALSE)
 library(Matrix)
-library(patchwork)
 
 source(Sys.getenv('UTILS_PARTIAL'))
 source(Sys.getenv('DISPLAY_PARTIAL'))
@@ -9,17 +8,17 @@ source(Sys.getenv('DISPLAY_PARTIAL'))
 parser <- ArgumentParser()
 parser$add_argument('--perturbations-augmented')
 parser$add_argument('--alpha-v2')
-# parser$add_argument('--alpha-small')
-parser$add_argument('--alpha-positive')
-parser$add_argument('--alpha-negative')
+parser$add_argument('--alpha-sim')
+# parser$add_argument('--alpha-positive')
+# parser$add_argument('--alpha-negative')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
 perturbations_augmented <- fst::read_fst(args$perturbations_augmented)
 alpha_v2 <- fst::read_fst(args$alpha_v2)
-# alpha_small <- fst::read_fst(args$alpha_small)
-alpha_positive <- fst::read_fst(args$alpha_positive)
-alpha_negative <- fst::read_fst(args$alpha_negative)
+alpha_sim <- fst::read_fst(args$alpha_sim)
+# alpha_positive <- fst::read_fst(args$alpha_positive)
+# alpha_negative <- fst::read_fst(args$alpha_negative)
 
 perturbations_augmented <- perturbations_augmented %>%
   mutate(
@@ -64,6 +63,15 @@ true_emissions_alpha_v2 <- bottom_up %>%
     )
   )
 
+true_emissions_alpha_sim <- bottom_up %>%
+  mutate(
+    output = 'Simulated',
+    value = value + as.vector(
+      X_global[, as.integer(alpha_sim$basis_vector)]
+      %*% alpha_sim$value
+    )
+  )
+
 # true_emissions_alpha_small <- bottom_up %>%
 #   mutate(
 #     output = 'WOMBAT v2, AS',
@@ -73,30 +81,28 @@ true_emissions_alpha_v2 <- bottom_up %>%
 #     )
 #   )
 
-true_emissions_alpha_positive <- bottom_up %>%
-  mutate(
-    output = 'WOMBAT v2, AP',
-    value = value + as.vector(
-      X_global[, as.integer(alpha_positive$basis_vector)]
-      %*% alpha_positive$value
-    )
-  )
+# true_emissions_alpha_positive <- bottom_up %>%
+#   mutate(
+#     output = 'WOMBAT v2, AP',
+#     value = value + as.vector(
+#       X_global[, as.integer(alpha_positive$basis_vector)]
+#       %*% alpha_positive$value
+#     )
+#   )
 
-true_emissions_alpha_negative <- bottom_up %>%
-  mutate(
-    output = 'WOMBAT v2, AN',
-    value = value + as.vector(
-      X_global[, as.integer(alpha_negative$basis_vector)]
-      %*% alpha_negative$value
-    )
-  )
+# true_emissions_alpha_negative <- bottom_up %>%
+#   mutate(
+#     output = 'WOMBAT v2, AN',
+#     value = value + as.vector(
+#       X_global[, as.integer(alpha_negative$basis_vector)]
+#       %*% alpha_negative$value
+#     )
+#   )
 
 emissions <- bind_rows(
   bottom_up,
   true_emissions_alpha_v2,
-  # true_emissions_alpha_small,
-  true_emissions_alpha_positive,
-  true_emissions_alpha_negative
+  true_emissions_alpha_sim
 ) %>%
   {
     x <- .
@@ -136,22 +142,23 @@ emissions <- bind_rows(
     )),
     output = factor(
       output,
-      levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, AP', 'WOMBAT v2, AN')
+      levels = c('Bottom-up', 'WOMBAT v2', 'Simulated')
     )
   )
 
-colour_key <- c(
-  'Bottom-up' = 'grey50',
-  'WOMBAT v2' = '#5954d6',
-  'WOMBAT v2, AP' = '#00c6f8',
-  # 'WOMBAT v2, AM' = '',
-  'WOMBAT v2, AN' = '#ff9287'
-)
+# colour_key <- c(
+#   'Bottom-up' = 'grey50',
+#   'WOMBAT v2' = '#5954d6',
+#   'WOMBAT v2, AP' = '#00c6f8',
+#   # 'WOMBAT v2, AM' = '',
+#   'WOMBAT v2, AN' = '#ff9287'
+# )
 linetype_key <- c(
   'Bottom-up' = '11',
   'WOMBAT v2' = 'solid',
-  'WOMBAT v2, AP' = '41',
-  'WOMBAT v2, AN' = '1131'
+  'Simulated' = '41'
+  # 'WOMBAT v2, AP' = '41',
+  # 'WOMBAT v2, AN' = '1131'
   # 'WOMBAT v2, AN' = '2212'
 )
 
@@ -162,7 +169,7 @@ output <- ggplot(
   geom_line(
     mapping = aes(
       y = value,
-      colour = output,
+      # colour = output,
       linetype = output
     ),
     linewidth = 0.6,
@@ -170,7 +177,7 @@ output <- ggplot(
   ) +
   facet_wrap(vars(inventory), scales = 'free_y', nrow = 2) +
   scale_x_date(date_labels = '%Y-%m') +
-  scale_colour_manual(values = colour_key) +
+  # scale_colour_manual(values = colour_key) +
   scale_linetype_manual(values = linetype_key) +
   labs(x = 'Time', y = 'Flux [PgC per month]', colour = NULL, linetype = NULL) +
   ggtitle('OSSE true flux components') +

@@ -45,8 +45,10 @@ SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 ALPHA_ADJUSTMENT_CASES = small medium negative
 ALPHA_ADJUSTMENT_BASE = 4_inversion/intermediates/osse-alpha
 OSSE_ADJUSTED_ALPHAS = $(foreach ADJUSTMENT,$(ALPHA_ADJUSTMENT_CASES),$(ALPHA_ADJUSTMENT_BASE)-$(ADJUSTMENT).fst)
+ALPHA_SIM = 4_inversion/intermediates/osse-alpha-sim.fst
+OSSE_ALPHAS = $(ALPHA_WOMBAT_V2) $(ALPHA_SIM)
 
-OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHASMALL ALPHAMD ALPHANEG
+OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHASMALL ALPHAMD ALPHANEG ALPHASIM
 OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHA0-FIXRESP-WOSIF \
 	ALPHA0-FREERESP-WSIF \
@@ -64,9 +66,12 @@ OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHAMD-FREERESP-WSIF \
 	ALPHAMD-FREERESP-WOSIF \
 	ALPHANEG-FIXRESP-WOSIF \
-	ALPHANEG-FREERESP-WSIF
+	ALPHANEG-FREERESP-WSIF \
+	ALPHASIM-FIXRESP-WOSIF \
+	ALPHASIM-FREERESP-WSIF
 OSSE_FLAGS_ALPHA0 = --seed 0 --bio-clim-slice-w 1
 OSSE_FLAGS_ALPHAV2 = --seed 1 --true-alpha $(ALPHA_WOMBAT_V2)
+OSSE_FLAGS_ALPHASIM = --seed 2 --true-alpha $(ALPHA_SIM)
 OSSE_FLAGS_ALPHASMALL = --seed 2 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-small.fst
 OSSE_FLAGS_ALPHAMD = --seed 3 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-medium.fst
 OSSE_FLAGS_ALPHANEG = --seed 4 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-negative.fst
@@ -229,7 +234,7 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 	$(OBSERVATIONS) \
 	$(BASIS_VECTORS) \
 	$(HYPERPARAMETER_ESTIMATES) \
-	$(OSSE_ADJUSTED_ALPHAS) \
+	$(OSSE_ALPHAS) \
 	2_matching/intermediates/runs/base/oco2-hourly.fst \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	3_sif/intermediates/oco2-hourly-sif.fst \
@@ -251,6 +256,27 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 			$(H_LNLG) \
 			$(H_IS) \
 			$(H_SIF) \
+		--output $@
+
+$(ALPHA_WOMBAT_V2): \
+	4_inversion/src/osse-alpha-v2.R \
+	$(SAMPLES_WOMBAT_V2)
+	Rscript $< \
+		--samples-wombat-v2 $(SAMPLES_WOMBAT_V2) \
+		--output $@
+
+$(ALPHA_SIM): \
+	4_inversion/src/osse-alpha-sim.R \
+	$(BASIS_VECTORS) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
+	$(SAMPLES_WOMBAT_V2)
+	Rscript $< $(OSSE_FLAGS) \
+		--fix-resp-linear Region03 \
+		--basis-vectors $(BASIS_VECTORS) \
+		--constraints $(CONSTRAINTS) \
+		--prior $(PRIOR) \
+		--samples-wombat-v2 $(SAMPLES_WOMBAT_V2) \
 		--output $@
 
 ADJUSTED_ALPHA_DEPS = 4_inversion/src/osse-alpha.R \

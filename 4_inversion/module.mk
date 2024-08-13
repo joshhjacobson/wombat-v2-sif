@@ -48,6 +48,9 @@ OSSE_ADJUSTED_ALPHAS = $(foreach ADJUSTMENT,$(ALPHA_ADJUSTMENT_CASES),$(ALPHA_AD
 ALPHA_SIM = 4_inversion/intermediates/osse-alpha-sim.fst
 OSSE_ALPHAS = $(ALPHA_WOMBAT_V2) $(ALPHA_SIM)
 
+ALPHA_PRIOR_CONSTRAINED = 4_inversion/intermediates/osse-alpha-prior-constrained.rds
+ALPHA_PRIOR_UNCONSTRAINED = 4_inversion/intermediates/osse-alpha-prior-unconstrained.rds
+
 OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHASMALL ALPHAMD ALPHANEG ALPHASIM
 OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHA0-FIXRESP-WOSIF \
@@ -85,6 +88,8 @@ OSSE_SAMPLES_BASE = 4_inversion/intermediates/osse-samples
 OSSE_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_SAMPLES_BASE)-$(OSSE_CASE).rds)
 
 OSSE_SAMPLES_CASES += \
+	4_inversion/intermediates/osse-samples-ALPHAV2-FREERESP-WSIF-unconstrained.rds \
+	4_inversion/intermediates/osse-samples-ALPHASIM-FREERESP-WSIF-unconstrained.rds \
 	4_inversion/intermediates/osse-samples-ALPHASMALL-FREERESP-FP-WSIF.rds \
 	4_inversion/intermediates/osse-samples-ALPHANEG-FREERESP-FP-WSIF.rds \
 	4_inversion/intermediates/osse-samples-ALPHASMALL-FREERESP-ALL-WSIF.rds \
@@ -143,6 +148,38 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
 		--constraints $(CONSTRAINTS) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
+		--control \
+			2_matching/intermediates/runs/base/oco2-hourly.fst \
+			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+			3_sif/intermediates/oco2-hourly-sif.fst \
+		--component-name LNLG IS SIF \
+		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_IS) \
+			$(H_SIF) \
+		--output $@
+
+$(OSSE_SAMPLES_BASE)-%-WSIF-unconstrained.rds: \
+	4_inversion/samples-unconstrained.R \
+	$(OSSE_OBSERVATIONS_CASES) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(PRIOR) \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	3_sif/intermediates/oco2-hourly-sif.fst \
+	$(H_LNLG) \
+	$(H_IS) \
+	$(H_SIF)
+	Rscript $< $(OSSE_FLAGS) \
+		--n-samples 200 \
+		--n-warm-up 100 \
+		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
 		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
 		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
 		--control \
@@ -271,13 +308,45 @@ $(ALPHA_SIM): \
 	$(CONSTRAINTS) \
 	$(PRIOR) \
 	$(SAMPLES_WOMBAT_V2)
-	Rscript $< $(OSSE_FLAGS) \
+	Rscript $< \
 		--fix-resp-linear Region03 \
 		--basis-vectors $(BASIS_VECTORS) \
 		--constraints $(CONSTRAINTS) \
 		--prior $(PRIOR) \
 		--samples-wombat-v2 $(SAMPLES_WOMBAT_V2) \
 		--output $@
+
+$(ALPHA_PRIOR_CONSTRAINED): \
+	4_inversion/src/osse-alpha-prior-sample.R \
+	$(BASIS_VECTORS) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
+	$(SAMPLES_WOMBAT_V2)
+	Rscript $< \
+		--n-samples 200 \
+		--fix-resp-linear Region03 \
+		--basis-vectors $(BASIS_VECTORS) \
+		--constraints $(CONSTRAINTS) \
+		--prior $(PRIOR) \
+		--samples-wombat-v2 $(SAMPLES_WOMBAT_V2) \
+		--output $@
+
+$(ALPHA_PRIOR_UNCONSTRAINED): \
+	4_inversion/src/osse-alpha-prior-sample.R \
+	$(BASIS_VECTORS) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
+	$(SAMPLES_WOMBAT_V2)
+	Rscript $< \
+		--n-samples 200 \
+		--fix-resp-linear Region03 \
+		--basis-vectors $(BASIS_VECTORS) \
+		--constraints $(CONSTRAINTS) \
+		--constrain-residual FALSE \
+		--prior $(PRIOR) \
+		--samples-wombat-v2 $(SAMPLES_WOMBAT_V2) \
+		--output $@
+
 
 ADJUSTED_ALPHA_DEPS = 4_inversion/src/osse-alpha.R \
 	$(REGION_MASK) \

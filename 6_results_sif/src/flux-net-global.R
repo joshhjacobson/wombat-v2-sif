@@ -76,12 +76,12 @@ prior_emissions <- perturbations %>%
   select(-inventory_time) %>%
   mutate(estimate = 'Bottom-up')
 
-posterior_emissions_LNLGIS <- compute_posterior(prior_emissions, X_global, samples_LNLGIS, 'Posterior v2') %>%
+posterior_emissions_LNLGIS <- compute_posterior(prior_emissions, X_global, samples_LNLGIS, 'v2 Posterior') %>%
   rename(
     value_low = value_q025,
     value_high = value_q975
   )
-posterior_emissions_LNLGISSIF <- compute_posterior(prior_emissions, X_global, samples_LNLGISSIF, 'Posterior v2S') %>%
+posterior_emissions_LNLGISSIF <- compute_posterior(prior_emissions, X_global, samples_LNLGISSIF, 'v2S Posterior') %>%
   rename(
     value_low = value_q025,
     value_high = value_q975
@@ -127,21 +127,21 @@ emissions <- bind_rows(
     )),
     estimate = factor(
       estimate,
-      levels = c('FLUXCOM', 'Bottom-up', 'Posterior v2', 'Posterior v2S')
+      levels = c('Bottom-up', 'v2 Posterior', 'v2S Posterior', 'FLUXCOM')
     )
   )
 
 colour_key <- c(
-  'FLUXCOM' = 'grey70',
-  'Bottom-up' = 'grey30',
-  'Posterior v2' = 'grey50',
-  'Posterior v2S' = '#fb8b00'
+  'Bottom-up' = 'grey50',
+  'v2 Posterior' = '#56b4e9cc',
+  'v2S Posterior' = '#009e73',
+  'FLUXCOM' = '#e69f00cc'
 )
 linetype_key <- c(
-  'FLUXCOM' = '12',
-  'Bottom-up' = '41',
-  'Posterior v2' = '1131',
-  'Posterior v2S' = 'solid'
+  'Bottom-up' = '11',
+  'v2 Posterior' = '41',
+  'v2S Posterior' = '41',
+  'FLUXCOM' = '1131'
 )
 
 output <- emissions %>%
@@ -165,38 +165,34 @@ output <- emissions %>%
     ),
     linewidth = 0.4
   ) +
-  # facet_wrap(vars(inventory), scales = 'free_y', ncol = 1) +
   facet_wrap(vars(inventory), scales = 'free_y', nrow = 1) +
   scale_x_date(date_labels = '%Y-%m') +
   scale_colour_manual(values = colour_key) +
   scale_fill_manual(values = colour_key) +
   scale_linetype_manual(values = linetype_key) +
-  guides(
-    fill = 'none'
-    # colour = guide_legend(nrow = 2, byrow = TRUE)
+  guides(fill = 'none') +
+  labs(
+    title = 'Global monthly fluxes',
+    x = 'Time',
+    y = 'Flux [PgC per month]',
+    colour = NULL,
+    fill = NULL,
+    linetype = NULL
   ) +
-  labs(x = 'Time', y = 'Flux [PgC per month]', colour = NULL, fill = NULL, linetype = NULL) +
-  ggtitle('Monthly global fluxes') +
   theme(
     plot.margin = margin(t = 1, r = 1, b = 0, l = 1, unit = 'mm'),
-    plot.title = element_text(size = 13, hjust = 0.5),
-    axis.text.x = element_text(size = 9),
+    plot.title = element_text(size = 12, hjust = 0.5),
+    axis.text.x = element_text(size = 8),
     axis.text.y = element_text(size = 7),
-    axis.title.y = element_text(size = 10),
-    strip.text = element_text(size = 11),
+    axis.title.y = element_text(size = 9),
+    strip.text = element_text(size = 10),
     legend.position = 'bottom',
-    legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'mm')
+    legend.margin = margin(t = -2, r = 0, b = 0, l = 0, unit = 'mm')
   )
 
-# ggsave_base(
-#   args$output,
-#   output,
-#   width = 9,
-#   height = 18
-# )
 ggsave_base(
   args$output,
   output,
   width = DISPLAY_SETTINGS$supplement_full_width,
-  height = 6.9
+  height = 6.2
 )

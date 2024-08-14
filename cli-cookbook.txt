@@ -8,6 +8,7 @@ bash 3_sif/modify-timestamps.sh
 chmod +x 4_inversion/modify-timestamps.sh
 bash 4_inversion/modify-timestamps.sh
 
+cdo -gridarea -setgrid,data/fluxcom.05x05.grid data/FLUXCOM_RS_members/GPP_HB.ANNnoPFT.monthly.2015.nc data/fluxcom-05x05-area.nc
 
 # Supposedly these are the only needed sensitivity files (but could simply copy all sensitivities):
 3_inversion/intermediates/sensitivities-base-oco2-hourly-part-1.fst

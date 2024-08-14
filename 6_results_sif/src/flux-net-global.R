@@ -26,11 +26,6 @@ samples_LNLGIS$alpha_df$value_samples <- samples_LNLGIS$alpha_df$value_samples[
 ]
 
 fluxcom_monthly <- fluxcom_monthly_2x25 %>%
-  mutate(
-    time = as.Date(
-      floor_date(time, 'month') + days(floor(days_in_month(time) / 2))
-    )
-  ) %>%
   group_by(inventory, time, method) %>%
   summarise(
     value = GC_M2_DAY_TO_PGC_MONTH * sum(area * value),
@@ -42,6 +37,11 @@ fluxcom_monthly <- fluxcom_monthly_2x25 %>%
     value_low = quantile(value, 0.25),
     value_high = quantile(value, 0.75),
     .groups = 'drop'
+  ) %>%
+  mutate(
+    time = as.Date(
+      floor_date(time, 'month') + days(floor(days_in_month(time) / 2))
+    )
   ) %>%
   rename(value = value_mean) %>%
   mutate(estimate = 'FLUXCOM')

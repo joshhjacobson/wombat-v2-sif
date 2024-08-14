@@ -59,6 +59,7 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-al
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-alpha-prior-constrained.rds --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHAV2-FREERESP-WSIF-unconstrained.rds --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHASIM-FIXRESP-WOSIF-unconstrained.rds --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-observations-ALPHASIM.fst --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHAV2-WSIF.rds --dry-run

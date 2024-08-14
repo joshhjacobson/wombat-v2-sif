@@ -89,7 +89,9 @@ OSSE_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_SAMPLES_BASE)-$(OS
 
 OSSE_SAMPLES_CASES += \
 	4_inversion/intermediates/osse-samples-ALPHAV2-FREERESP-WSIF-unconstrained.rds \
+	4_inversion/intermediates/osse-samples-ALPHAV2-FIXRESP-WOSIF-unconstrained.rds \
 	4_inversion/intermediates/osse-samples-ALPHASIM-FREERESP-WSIF-unconstrained.rds \
+	4_inversion/intermediates/osse-samples-ALPHASIM-FIXRESP-WOSIF-unconstrained.rds \
 	4_inversion/intermediates/osse-samples-ALPHASMALL-FREERESP-FP-WSIF.rds \
 	4_inversion/intermediates/osse-samples-ALPHANEG-FREERESP-FP-WSIF.rds \
 	4_inversion/intermediates/osse-samples-ALPHASMALL-FREERESP-ALL-WSIF.rds \
@@ -160,6 +162,34 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 			$(H_LNLG) \
 			$(H_IS) \
 			$(H_SIF) \
+		--output $@
+
+$(OSSE_SAMPLES_BASE)-%-WOSIF-unconstrained.rds: \
+	4_inversion/samples-unconstrained.R \
+	$(OSSE_OBSERVATIONS_CASES) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(PRIOR) \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	$(H_LNLG) \
+	$(H_IS)
+	Rscript $< $(OSSE_FLAGS) \
+		--n-samples 200 \
+		--n-warm-up 100 \
+		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--overall-observation-mode LN LG IS \
+		--control \
+			2_matching/intermediates/runs/base/oco2-hourly.fst \
+			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+		--component-name LNLG IS \
+		--component-parts "LN|LG" IS \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_IS) \
 		--output $@
 
 $(OSSE_SAMPLES_BASE)-%-WSIF-unconstrained.rds: \

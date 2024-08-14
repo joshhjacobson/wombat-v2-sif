@@ -57,7 +57,8 @@ FLUXCOM_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-resp.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-nee.pdf
 
-6_RESULTS_SIF_TARGETS += $(OSSE_FLUX_DECOMPOSITIONS)
+# 6_RESULTS_SIF_TARGETS += $(OSSE_FLUX_DECOMPOSITIONS)
+6_RESULTS_SIF_TARGETS += $(OSSE_PRIOR_DECOMPOSITIONS)
 
 
 ## Products
@@ -146,10 +147,10 @@ SPECIFIC_CASES = ALPHASMALL
 # 	$(foreach REGION,$(REGIONS),\
 # 	$(foreach OSSE_CASE,$(SPECIFIC_CASES),\
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_$(OSSE_CASE)-$(RESP_TYPE).pdf)))
-OSSE_FLUX_DECOMPOSITIONS += \
-	$(foreach REGION,$(REGIONS),\
-	$(foreach OSSE_CASE,$(SPECIFIC_CASES),\
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_$(OSSE_CASE)-mixed.pdf))
+# OSSE_FLUX_DECOMPOSITIONS += \
+# 	$(foreach REGION,$(REGIONS),\
+# 	$(foreach OSSE_CASE,$(SPECIFIC_CASES),\
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_$(OSSE_CASE)-mixed.pdf))
 # REGIONS = Region01 Region02 Region03 Region04 Region05 Region06 Region07 Region08 Region09 Region10 Region11
 # OSSE_FLUX_DECOMPOSITIONS += \
 # 	$(foreach REGION,$(REGIONS),\
@@ -159,6 +160,11 @@ OSSE_FLUX_DECOMPOSITIONS += \
 # 	$(foreach REGION,$(REGIONS),\
 # 	$(foreach OSSE_CASE,$(SPECIFIC_CASES),\
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_$(OSSE_CASE)-FREERESP.pdf))
+
+REGIONS = Region01 Region02 Region03 Region04 Region05 Region06 Region07 Region08 Region09 Region10 Region11
+OSSE_PRIOR_DECOMPOSITIONS += \
+	$(foreach REGION,$(REGIONS),\
+	$(6_RESULTS_SIF_FIGURES_DIR)/osse-prior-decomposition-$(REGION).pdf)
 
 # $(OSSE_SAMPLES_CASES) \
 
@@ -217,6 +223,17 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-WSIF.pdf: \
 		--samples-fixresp-wsif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FIXRESP-WSIF.rds \
 		--samples-freeresp-wsif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FREERESP-WSIF.rds \
 		--region $(firstword $(subst _, ,$*)) \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/osse-prior-decomposition-%.pdf: \
+	6_results_sif/osse-prior-decomposition-regional.R \
+	$(PERTURBATIONS_AUGMENTED_SIF) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
+		--samples 4_inversion/intermediates/osse-alpha-prior-constrained.rds \
+		--true-alpha $(ALPHA_SIM) \
+		--region $* \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf: \

@@ -61,7 +61,7 @@ output <- lapply(args$input_files, read_fluxcom) %>%
     method = factor(method),
     value = if_else(inventory == 'bio_assim', -value, value)
   ) %>%
-  filter(complete.cases(value)) %>%
+  tidyr::drop_na() %>%
   left_join(cell_area, by = c('longitude', 'latitude'))
 
 log_debug('Saving to {args$output}')

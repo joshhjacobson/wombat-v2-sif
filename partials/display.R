@@ -88,11 +88,12 @@ scale_fill_binned_custom <- function(
       colorspace::diverging_hcl(10, palette = palette_name, rev = reverse)
     }
   } else {
-    if (reverse) {
-      colorspace::sequential_hcl(11, palette = palette_name, rev = reverse)[1:9]
-    } else {
-      colorspace::sequential_hcl(11, palette = palette_name, rev = reverse)[3:11]
-    }
+    # if (reverse) {
+    #   colorspace::sequential_hcl(11, palette = palette_name, rev = reverse)[1:9]
+    # } else {
+    #   colorspace::sequential_hcl(11, palette = palette_name, rev = reverse)[3:11]
+    # }
+    scico::scico(11, palette = palette_name, direction = ifelse(reverse, -1, 1))
   }
   palette <- scales::gradient_n_pal(palette_colours, NULL, 'Lab')
   binned_scale(

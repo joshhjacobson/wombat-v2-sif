@@ -125,11 +125,11 @@ grid_base <- expand.grid(
   longitude = grid_system$longitude
 )
 
-observation_types <- c('obspack', 'oco2_xco2', 'oco2_sif')
+observation_types <- c('oco2_sif', 'oco2_xco2', 'obspack')
 strip_labels <- expression(
-  obspack = 'In situ/flask mole-fraction',
+  oco2_sif = 'OCO-2 SIF',
   oco2_xco2 = 'OCO-2 XCO'[2],
-  oco2_sif = 'OCO-2 SIF'
+  obspack = 'In situ/flask mole-fraction'
 )
 
 output_columns <- lapply(seq_along(observation_types), function(i) {
@@ -159,37 +159,35 @@ output_columns <- lapply(seq_along(observation_types), function(i) {
     summarise(n = 1e-3 * n(), .groups = 'drop')
 
   output_space <- ggplot() +
-    geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = NA) +
+    geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = 'black') +
     geom_stars(
       data = count_space,
       aes(fill = n)
     ) +
     geom_sf(data = region_sf, fill = NA, colour = 'grey35', linewidth = 0.1) +
-    geom_segment(
-      data = data.frame(y = c(-23, 23, 50)),
-      mapping = aes(x = -180, y = y, xend = 180, yend = y),
-      colour = 'black',
-      linetype = 'dashed',
-      linewidth = 0.3
-    ) +
-    geom_text(
-      data = data.frame(
-        x = c(-158, -160, -158),
-        y = c(-23, 23, 50),
-        label = c('23°S', '23°N', '50°N')
-      ),
-      mapping = aes(x = x, y = y, label = label),
-      size = 6/.pt,
-      nudge_y = -8
-    ) +
+    # geom_segment(
+    #   data = data.frame(y = c(-23, 23, 50)),
+    #   mapping = aes(x = -180, y = y, xend = 180, yend = y),
+    #   colour = 'black',
+    #   linetype = 'dashed',
+    #   linewidth = 0.3
+    # ) +
+    # geom_text(
+    #   data = data.frame(
+    #     x = c(-175, -180, -180),
+    #     y = c(-23, 23, 50),
+    #     label = c('23°S', '23°N', '50°N')
+    #   ),
+    #   mapping = aes(x = x, y = y, label = label),
+    #   size = 6/.pt,
+    #   nudge_y = 8
+    # ) +
     coord_sf(
       crs = sf::st_crs('ESRI:54012'),
-      default_crs = sf::st_crs('WGS84'),
-      label_graticule = '',
-      expand = FALSE
+      default_crs = sf::st_crs('WGS84')
     ) +
     scale_fill_binned_custom(
-      'Inferno',
+      'hawaii',
       transform = 'log10',
       breaks = 10 ^ seq(0, 5, by = 0.5),
       limits = c(1, 10^5),
@@ -199,7 +197,11 @@ output_columns <- lapply(seq_along(observation_types), function(i) {
       guide = guide_coloursteps(
         title.position = 'left',
         axis = FALSE,
-        label.theme = element_text(size = 7, colour = '#23373b'),
+        label.theme = element_text(
+          size = 7,
+          colour = '#23373b',
+          margin = margin(0.05, 0, 0.05, 0, unit = 'cm')
+        ),
         frame.colour = NA,
         barwidth = 13,
         barheight = 0.5
@@ -240,18 +242,18 @@ output_columns <- lapply(seq_along(observation_types), function(i) {
 })
 
 output <- wrap_plots(output_columns, ncol = 3, guides = 'collect') & theme(
-  plot.margin = margin(t = 0, r = 0.05, b = 0.1, l = 0.01, unit = 'cm'),
+  plot.margin = margin(t = 0, r = 0.05, b = 0, l = 0.01, unit = 'cm'),
   legend.position = 'bottom',
   legend.title = element_text(size = 8, colour = '#23373b', vjust = 1),
   legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'cm'),
-  legend.box.margin = margin(t = -0.2, r = 0, b = -0.1, l = -1.5, unit = 'cm')
+  legend.box.margin = margin(t = -0.3, r = 0, b = -0.1, l = -1.5, unit = 'cm')
 )
 
 ggsave_base(
   args$output,
   output,
   width = DISPLAY_SETTINGS$supplement_full_width,
-  height = 5.8
+  height = 5.2
 )
 
 # output_space <- ggplot() +

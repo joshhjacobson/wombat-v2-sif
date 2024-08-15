@@ -72,7 +72,7 @@ labels <- ifelse(
 )
 
 output_map <- ggplot() +
-  geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = NA) +
+  geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = 'black') +
   geom_stars(
     data = model_stars,
     aes(fill = value)
@@ -87,27 +87,25 @@ output_map <- ggplot() +
   ) +
   geom_text(
     data = data.frame(
-      x = c(-169, -170, -168),
+      x = c(-180, -180, -180),
       y = c(-23, 23, 50),
       label = c('23°S', '23°N', '50°N')
     ),
     mapping = aes(x = x, y = y, label = label),
     size = 8/.pt,
-    nudge_y = -5
+    nudge_y = 4
   ) +
   coord_sf(
     crs = sf::st_crs('ESRI:54012'),
-    default_crs = sf::st_crs('WGS84'),
-    label_graticule = '',
-    expand = FALSE
+    default_crs = sf::st_crs('WGS84')
   ) +
   scale_fill_binned_custom(
-    'Viridis',
+    'batlow',
     breaks = breaks,
     limits = limits,
     labels = labels,
     guide = guide_coloursteps(
-      title = expression('Slope'),
+      title = 'Slope',
       title.hjust = 0.5,
       label.position = 'left',
       label.theme = element_text(
@@ -129,14 +127,18 @@ output_map <- ggplot() +
   theme(
     panel.border = element_blank(),
     legend.position = 'left',
-    legend.title = element_text(size = 10, colour = '#23373b'),
-    legend.margin = margin(t = 0, r = -0.8, b = 0, l = 0, unit = 'cm'),
+    legend.title = element_text(
+      size = 10,
+      colour = '#23373b',
+      margin = margin(0, 0, 0.25, 0, unit = 'cm')
+    ),
+    legend.margin = margin(t = 0, r = -1, b = 0, l = 0, unit = 'cm'),
     legend.box.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'cm'),
     legend.box.spacing = unit(0, 'cm'),
     plot.title = element_text(
       hjust = 0.5,
       size = 11,
-      margin = margin(t = 0.05, r = 0, b = 0.05, l = 0, unit = 'cm')
+      margin = margin(t = 0.05, r = 0, b = -0.25, l = 0, unit = 'cm')
     ),
     plot.margin = margin(t = 0, b = 0, l = 0, r = 0, unit = 'cm')
   )
@@ -169,9 +171,9 @@ output_season <- model_season %>%
       plot.title = element_text(
         hjust = 0.5,
         size = 11,
-        margin = margin(t = 0.2, r = 0, b = 0.05, l = 0, unit = 'cm')
+        margin = margin(t = 0, r = 0, b = 0.05, l = 0, unit = 'cm')
       ),
-      plot.margin = margin(t = 0, b = 0.1, l = 0.05, r = 0.05, unit = 'cm')
+      plot.margin = margin(t = 0, b = 0.1, l = 0.05, r = 0.1, unit = 'cm')
     )
 
 output <- wrap_plots(
@@ -186,5 +188,5 @@ ggsave_base(
   args$output,
   output,
   width = DISPLAY_SETTINGS$full_width,
-  height = 10.88
+  height = 10.44
 )

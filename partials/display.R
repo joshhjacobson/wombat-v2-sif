@@ -81,12 +81,12 @@ scale_fill_binned_custom <- function(
 ) {
   palette_colours <- if (symmetric && palette_name %in% c('RdBu', 'PuOr')) {
     scales::brewer_pal('div', palette_name, -1)(10)[2:9]
-  } else if (symmetric) {
-    if (palette_name %in% row.names(colorspace::divergingx_palettes())) {
-      colorspace::divergingx_hcl(10, palette = palette_name, rev = reverse)
-    } else {
-      colorspace::diverging_hcl(10, palette = palette_name, rev = reverse)
-    }
+  # } else if (symmetric) {
+  #   if (palette_name %in% row.names(colorspace::divergingx_palettes())) {
+  #     colorspace::divergingx_hcl(10, palette = palette_name, rev = reverse)
+  #   } else {
+  #     colorspace::diverging_hcl(10, palette = palette_name, rev = reverse)
+  #   }
   } else {
     # if (reverse) {
     #   colorspace::sequential_hcl(11, palette = palette_name, rev = reverse)[1:9]
@@ -138,12 +138,12 @@ plot_map <- function(
     labels[seq(2, length(breaks), by = 2)] <- ''
   }
   ggplot() +
-    geom_sf(
+    geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = 'black') +
+    geom_stars(
       data = df,
-      mapping = aes(fill = {{ variable }}),
-      color = NA
+      aes(fill = {{ variable }})
     ) +
-    geom_sf(data = region_sf, fill = NA, colour = '#888888', size = 0.1) +
+    geom_sf(data = region_sf, fill = NA, colour = 'grey35', linewidth = 0.1) +
     geom_segment(
       data = data.frame(y = c(-23, 23, 50)),
       mapping = aes(x = -180, y = y, xend = 180, yend = y),
@@ -153,13 +153,17 @@ plot_map <- function(
     ) +
     geom_text(
       data = data.frame(
-        x = c(-170, -180, -180),
+        x = c(-172, -180, -180),
         y = c(-23, 23, 50),
         label = c('23°S', '23°N', '50°N')
       ),
       mapping = aes(x = x, y = y, label = label),
-      size = 8/.pt,
-      nudge_y = 10
+      size = 7/.pt,
+      nudge_y = 8
+    ) +
+    coord_sf(
+      crs = sf::st_crs('ESRI:54012'),
+      default_crs = sf::st_crs('WGS84')
     ) +
     scale_fill_binned_custom(
       palette,
@@ -171,22 +175,16 @@ plot_map <- function(
       guide = guide_coloursteps(
         title.position = 'top',
         title.hjust = 0.5,
-        axis = FALSE,
-        label.theme = element_text(size = 7),
-        frame.colour = '#999999',
+        label.theme = element_text(size = 7, margin = margin(0.1, 0, 0, 0, unit = 'cm')),
+        frame.colour = NA,
         barwidth = bar_width,
         barheight = 0.5,
         even.steps = TRUE
       ),
-      na.value = '#cccccc'
-    ) +
-    coord_sf(
-      default_crs = sf::st_crs('WGS84'),
-      crs = sf::st_crs('+proj=eck4 +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
+      na.value = NA
     ) +
     theme(
-      panel.border = element_blank(),
-      panel.grid = element_blank()
+      panel.border = element_blank()
     ) +
     labs(x = NULL, y = NULL)
 }

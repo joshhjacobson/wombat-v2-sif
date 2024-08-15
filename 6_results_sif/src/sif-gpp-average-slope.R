@@ -87,7 +87,7 @@ output_map <- ggplot() +
   ) +
   geom_text(
     data = data.frame(
-      x = c(-180, -180, -180),
+      x = c(-175, -180, -180),
       y = c(-23, 23, 50),
       label = c('23°S', '23°N', '50°N')
     ),

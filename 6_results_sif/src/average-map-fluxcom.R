@@ -2,6 +2,7 @@ library(argparse)
 library(dplyr, warn.conflicts = FALSE)
 library(Matrix)
 library(patchwork)
+library(stars)
 
 source(Sys.getenv('UTILS_PARTIAL'))
 source(Sys.getenv('DISPLAY_PARTIAL'))
@@ -13,63 +14,13 @@ parser$add_argument('--region-sf')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
-convert_to_sf <- function(
-  df,
-  mean_breaks,
-  mean_limits,
-  sd_breaks,
-  sd_limits,
-  mad_breaks = NULL,
-  mad_limits = NULL
-) {
-  list(
-    mean = df %>%
-      group_by(estimate) %>%
-      group_map(~ {
-        .x %>%
-          mutate(
-            value = discretise_by_breaks(value_mean, mean_breaks, mean_limits)
-          ) %>%
-          grid_df_to_sf('value') %>%
-          mutate(
-            estimate = .y$estimate
-          )
-      }) %>%
-      bind_rows(),
-    sd = df %>%
-      group_by(estimate) %>%
-      group_map(~ {
-        .x %>%
-          mutate(
-            value = discretise_by_breaks(value_scale, sd_breaks, sd_limits)
-          ) %>%
-          grid_df_to_sf('value') %>%
-          mutate(
-            estimate = .y$estimate
-          )
-      }) %>%
-      bind_rows(),
-    mad = if (!is.null(mad_breaks) & !is.null(mad_limits)) {
-      df %>%
-        filter(estimate == 'FLUXCOM') %>%
-        mutate(
-          value = discretise_by_breaks(value_scale, mad_breaks, mad_limits)
-        ) %>%
-        grid_df_to_sf('value') %>%
-        mutate(
-          estimate = 'FLUXCOM'
-        )
-    } else NULL
-  )
-}
-
 flux_key <- list(
   'gpp' = list(
     name = 'bio_assim',
     label = 'GPP',
     label_precision = 0,
     drop_second_labels = FALSE,
-    palette = 'BluYl',
+    palette = 'bamako',
     reverse = FALSE,
     symmetric = FALSE,
     mean_breaks = round(seq(-12, 0, by = 2), 1),
@@ -86,7 +37,7 @@ flux_key <- list(
     label = 'respiration',
     label_precision = 0,
     drop_second_labels = FALSE,
-    palette = 'Magenta',
+    palette = 'turku',
     reverse = TRUE,
     symmetric = FALSE,
     mean_breaks = round(seq(0, 12, by = 2), 1),
@@ -103,7 +54,7 @@ flux_key <- list(
     label = 'NEE',
     label_precision = 1,
     drop_second_labels = TRUE,
-    palette = 'Tropic',
+    palette = 'bam',
     reverse = FALSE,
     symmetric = TRUE,
     mean_breaks = round(seq(-2.5, 2.5, by = 0.5), 1),
@@ -122,8 +73,13 @@ if (!(args$flux_component %in% names(flux_key))) {
 flux_key <- flux_key[[args$flux_component]]
 
 region_sf <- readRDS(args$region_sf)
+earth_bbox_sf <- rnaturalearth::ne_download(
+  category = 'physical',
+  type = 'wgs84_bounding_box',
+  returnclass = 'sf'
+)
 
-six_year_average_base <- fst::read_fst(args$six_year_average) %>%
+six_year_average_stars <- fst::read_fst(args$six_year_average) %>%
   filter(
     estimate %in% c('LNLGISSIF', 'FLUXCOM', 'FLUXCOM Difference'),
     inventory == flux_key$name,
@@ -136,47 +92,20 @@ six_year_average_base <- fst::read_fst(args$six_year_average) %>%
       'FLUXCOM Difference' ~ 'Difference',
       .default = estimate
     )
-  )
+  ) %>%
+  arrange(longitude, latitude, estimate) %>%
+  st_as_stars(dims = c('longitude', 'latitude', 'estimate'))
 
-# Join the six-year average with the full TransCom grid to display missing values
-six_year_average <- expand.grid(
-  longitude = seq(-180, 177.5, by = 2.5),
-  latitude = seq(-88, 88, by = 2),
-  estimate = c('LNLGISSIF', 'FLUXCOM', 'Difference')
-) %>%
-  left_join(
-    six_year_average_base,
-    by = c('longitude', 'latitude', 'estimate')
-  )
-
-six_year_average_sfs <- convert_to_sf(
-  six_year_average %>% filter(estimate != 'Difference'),
-  flux_key$mean_breaks,
-  flux_key$mean_limits,
-  flux_key$sd_breaks,
-  flux_key$sd_limits,
-  flux_key$mad_breaks,
-  flux_key$mad_limits
-)
-
-six_year_average_diff_sfs <- convert_to_sf(
-  six_year_average %>% filter(estimate == 'Difference'),
-  flux_key$diff_breaks,
-  flux_key$diff_limits,
-  flux_key$sd_breaks,
-  flux_key$sd_limits
-)
-
-flux_mean_label <- expression('Flux [kgCO'[2]~m^{-2}~yr^{-1}*']')
-flux_sd_label <- expression('Posterior st. dev. [kgCO'[2]~m^{-2}~yr^{-1}*']')
+flux_mean_label <- bquote(.(flux_key$label)~'flux [kgCO'[2]~m^{-2}~yr^{-1}*']')
+flux_sd_label <- expression('Post. std. dev. [kgCO'[2]~m^{-2}~yr^{-1}*']')
 flux_mad_label <- expression('Median abs. dev. [kgCO'[2]~m^{-2}~yr^{-1}*']')
 
-# TODO: use uneven colour splits
-
-average_mean_fluxcom <- six_year_average_sfs$mean %>%
+average_mean_fluxcom <- six_year_average_stars %>%
   filter(estimate == 'FLUXCOM') %>%
+  st_set_crs('WGS84') %>%
+  st_transform('ESRI:54012') %>%
   plot_map(
-    value,
+    value_mean,
     flux_key$mean_breaks,
     flux_key$mean_limits,
     flux_key$palette,
@@ -186,29 +115,31 @@ average_mean_fluxcom <- six_year_average_sfs$mean %>%
     drop_second_labels = flux_key$drop_second_labels,
     show_excess = TRUE
   ) +
-    labs(fill = flux_mean_label) +
-    ggtitle('FLUXCOM mean')
+    labs(fill = flux_mean_label, title = 'FLUXCOM mean')
 
-average_mad_fluxcom <- six_year_average_sfs$mad %>%
+average_mad_fluxcom <- six_year_average_stars %>%
   filter(estimate == 'FLUXCOM') %>%
+  st_set_crs('WGS84') %>%
+  st_transform('ESRI:54012') %>%
   plot_map(
-    value,
+    value_scale,
     flux_key$mad_breaks,
     flux_key$mad_limits,
-    'PuBu',
+    'lipari',
     show_excess = TRUE,
     drop_second_labels = FALSE,
     label_precision = 2,
     symmetric = FALSE,
     reverse = TRUE
   ) +
-    labs(fill = flux_mad_label) +
-    ggtitle('FLUXCOM median abs. dev.')
+    labs(fill = flux_mad_label, title = 'FLUXCOM median abs. dev.')
 
-average_posterior_mean_wombat <- six_year_average_sfs$mean %>%
+average_posterior_mean_wombat <- six_year_average_stars %>%
   filter(estimate == 'LNLGISSIF') %>%
+  st_set_crs('WGS84') %>%
+  st_transform('ESRI:54012') %>%
   plot_map(
-    value,
+    value_mean,
     flux_key$mean_breaks,
     flux_key$mean_limits,
     flux_key$palette,
@@ -218,48 +149,53 @@ average_posterior_mean_wombat <- six_year_average_sfs$mean %>%
     drop_second_labels = flux_key$drop_second_labels,
     show_excess = TRUE
   ) +
-    labs(fill = flux_mean_label) +
-    ggtitle('WOMBAT v2S posterior mean')
+    labs(fill = flux_mean_label, title = 'WOMBAT v2.S post. mean')
 
-average_posterior_sd_wombat <- six_year_average_sfs$sd %>%
+average_posterior_sd_wombat <- six_year_average_stars %>%
   filter(estimate == 'LNLGISSIF') %>%
+  st_set_crs('WGS84') %>%
+  st_transform('ESRI:54012') %>%
   plot_map(
-    value,
+    value_scale,
     flux_key$sd_breaks,
     flux_key$sd_limits,
-    'BuPu',
+    'lapaz',
     show_excess = TRUE,
     drop_second_labels = FALSE,
     label_precision = 2,
     symmetric = FALSE,
     reverse = TRUE
   ) +
-    labs(fill = flux_sd_label) +
-    ggtitle('WOMBAT v2S posterior st. dev.')
+    labs(fill = flux_sd_label, title = 'WOMBAT v2.S post. std. dev.')
 
-average_posterior_mean_diff <- six_year_average_diff_sfs$mean %>%
+average_posterior_mean_diff <- six_year_average_stars %>%
   filter(estimate == 'Difference') %>%
+  st_set_crs('WGS84') %>%
+  st_transform('ESRI:54012') %>%
   plot_map(
-    value,
+    value_mean,
     flux_key$diff_breaks,
     flux_key$diff_limits,
-    'RdBu',
-    reverse = TRUE,
+    'vik',
     symmetric = TRUE,
     label_precision = flux_key$label_precision,
     drop_second_labels = TRUE,
     show_excess = TRUE
   ) +
-    labs(fill = expression('Flux difference [kgCO'[2]~m^{-2}~yr^{-1}*']')) +
-    ggtitle('WOMBAT v2S - FLUXCOM mean')
+    labs(
+      fill = bquote(.(flux_key$label)~'difference [kgCO'[2]~m^{-2}~yr^{-1}*']'),
+      title = 'WOMBAT v2.S - FLUXCOM mean'
+    )
 
-average_posterior_sd_diff <- six_year_average_diff_sfs$sd %>%
+average_posterior_sd_diff <- six_year_average_stars %>%
   filter(estimate == 'Difference') %>%
+  st_set_crs('WGS84') %>%
+  st_transform('ESRI:54012') %>%
   plot_map(
-    value,
+    value_scale,
     flux_key$sd_breaks,
     flux_key$sd_limits,
-    'BuPu',
+    'lapaz',
     show_excess = TRUE,
     drop_second_labels = FALSE,
     label_precision = 2,
@@ -267,24 +203,26 @@ average_posterior_sd_diff <- six_year_average_diff_sfs$sd %>%
     reverse = TRUE
   ) +
     labs(fill = flux_sd_label) +
-    ggtitle('Posterior st. dev. (v2S - FLUXCOM)')
+    ggtitle('Post. std. dev. (v2.S - FLUXCOM)')
 
 base_theme <- theme(
   legend.position = 'bottom',
   legend.margin = margin(t = -0.4, l = 0.05, b = -0.2, r = 0.05, unit = 'cm'),
-  legend.title = element_text(size = 8),
+  legend.title = element_text(
+    size = 8,
+    margin = margin(0, 0, 0.05, 0, unit = 'cm')
+  ),
   plot.title = element_text(
     hjust = 0.5,
-    vjust = 1,
     size = 9,
     margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'cm')
   ),
-  plot.margin = margin(t = 0.4, b = 0.2, l = 0.05, r = 0.05, unit = 'cm')
+  plot.margin = margin(t = 0.4, b = 0.2, l = 0, r = 0, unit = 'cm')
 )
 
 top_theme <- base_theme +
   theme(
-    plot.margin = margin(t = 0.3, b = 0.2, l = 0.05, r = 0.05, unit = 'cm')
+    plot.margin = margin(t = 0, b = 0.2, l = 0, r = 0, unit = 'cm')
   )
 
 output <- wrap_plots(
@@ -298,17 +236,9 @@ output <- wrap_plots(
   ncol = 2
 )
 
-output <- wrap_plots(
-  wrap_elements(
-      panel = grid::textGrob(sprintf('Average %s from January 2015 to December 2020', flux_key$label))
-    ),
-    output,
-    heights = c(0.05, 1)
-)
-
 ggsave_base(
   args$output,
   output,
   width = DISPLAY_SETTINGS$full_width,
-  height = 17.12
+  height = 15.68
 )

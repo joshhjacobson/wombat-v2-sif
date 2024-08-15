@@ -40,6 +40,7 @@ OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-c
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-residual-assim-2x25-2018.nc
 OMP_NUM_THREADS=64 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sensitivities-oco2-hourly-sif.fst --dry-run
 
+OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/constraints.rds --dry-run
 OMP_NUM_THREADS=100 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/prior.rds --dry-run
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/observations.fst --dry-run
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/H-SIF.mat.lz4 --dry-run
@@ -78,7 +79,10 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-sa
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion_targets --dry-run
 
+touch 4_inversion/src/osse-alpha-prior-sample.R
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif_targets --dry-run
+mkdir 6_results_sif/figures/prior-decomposition-no-resid-3e-7
+mv 6_results_sif/figures/osse-prior-decomposition-* 6_results_sif/figures/prior-decomposition-no-resid-3e-7
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/perturbations-augmented.fst --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/perturbations-augmented-zonal.fst --dry-run

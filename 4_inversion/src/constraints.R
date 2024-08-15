@@ -1,5 +1,5 @@
 library(argparse)
-library(dplyr)
+library(dplyr, warn.conflicts = FALSE)
 library(Rcpp)
 library(Matrix)
 library(logger)
@@ -12,6 +12,7 @@ parser <- ArgumentParser()
 parser$add_argument('--basis-vectors')
 parser$add_argument('--control-emissions')
 parser$add_argument('--perturbations')
+parser$add_argument('--fuzz-factor', type = 'numeric', default = 1e-10)
 parser$add_argument('--output')
 args <- parser$parse_args()
 
@@ -29,8 +30,8 @@ perturbations_region <- perturbations %>%
   )
 baseline_region_cell <- perturbations_region %>%
   group_by(region, inventory, longitude, latitude, time) %>%
-  summarise(value = sum(value)) %>%
-  ungroup()
+  summarise(value = sum(value), .groups = 'drop')
+
 F_cell <- with(
   perturbations_region %>%
     left_join(
@@ -53,8 +54,8 @@ perturbations_region_clim <- perturbations_region %>%
   filter(component != 'residual')
 baseline_region_clim <- perturbations_region %>%
   group_by(region, inventory, longitude, latitude, time) %>%
-  summarise(value = sum(value)) %>%
-  ungroup()
+  summarise(value = sum(value), .groups = 'drop')
+
 F_clim <- with(
   perturbations_region %>%
     left_join(
@@ -99,7 +100,7 @@ with(
 
 F <- rbind(F_cell, F_clim)
 baseline <- rbind(baseline_region_cell, baseline_region_clim)
-g <- pmax(1e-10, c(g_cell, g_clim))
+g <- pmax(args$fuzz_factor, c(g_cell, g_clim))
 
 get_redundant_indices <- function(row_indices, column_indices) {
   F_alt <- slam::as.simple_triplet_matrix(-1e7 * F[row_indices, column_indices])

@@ -228,10 +228,12 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-WSIF.pdf: \
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-prior-decomposition-%.pdf: \
 	6_results_sif/osse-prior-decomposition-regional.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
+	$(ALPHA_PRIOR_UNCONSTRAINED) \
+	$(ALPHA_SIM) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
-		--samples 4_inversion/intermediates/osse-alpha-prior-constrained.rds \
+		--samples $(ALPHA_PRIOR_UNCONSTRAINED) \
 		--true-alpha $(ALPHA_SIM) \
 		--region $* \
 		--output $@

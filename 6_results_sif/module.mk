@@ -30,6 +30,21 @@ FLUXCOM_MONTHLY_2x25_FILES = \
 FLUXCOM_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25.fst
 FLUXCOM_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25-zonal.fst
 
+XBASE_FLUXES = GPP NEE
+XBASE_YEARS = 2015 2016 2017 2018 2019 2020
+XBASE_MONTHLY_BASE = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/xbase_monthly
+XBASE_MONTHLY_FILES = \
+	$(foreach FLUX,$(XBASE_FLUXES),\
+	$(foreach YEAR,$(XBASE_YEARS),\
+	$(XBASE_MONTHLY_BASE)_$(FLUX)_$(YEAR).nc))
+XBASE_MONTHLY_2x25_BASE = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/xbase-monthly-2x25
+XBASE_MONTHLY_2x25_FILES = $(foreach FLUX,$(XBASE_FLUXES),$(XBASE_MONTHLY_2x25_BASE)-$(FLUX).nc)
+XBASE_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/xbase-monthly-2x25.fst
+XBASE_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/xbase-monthly-2x25-zonal.fst
+XBASE_LAND_FRACTION_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/xbase-land-fraction-2x25.nc
+
+LAND_FRACTION = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/land-fraction-2x25.fst
+
 # 6_RESULTS_SIF_TARGETS += \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex \
@@ -396,6 +411,64 @@ $(SIX_YEAR_AVERAGE_SIF): \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
 		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
 		--output $@
+
+$(LAND_FRACTION): \
+	$(6_RESULTS_SIF_SRC_DIR)/land-fraction.R \
+	$(XBASE_LAND_FRACTION_2x25)
+	Rscript $< \
+		--land-fraction $(XBASE_LAND_FRACTION_2x25) \
+		--output $@
+
+$(XBASE_LAND_FRACTION_2x25): \
+	$(GEOS_2X25_GRID) \
+	$(XBASE_05X05_GRID)
+	cdo -v -z zip_6 \
+		-setctomiss,0 \
+		-remapcon,$(GEOS_2X25_GRID) \
+		-setmisstoc,0 \
+		-setgrid,$(XBASE_05X05_GRID) \
+		-select,name=land_fraction \
+		$(XBASE_DIRECTORY)/GPP_2015_050_monthly.nc \
+		$@
+
+$(XBASE_MONTHLY_2x25_ZONAL): \
+	$(6_RESULTS_SIF_SRC_DIR)/xbase-monthly-zonal.R \
+	$(XBASE_MONTHLY_2x25) \
+	$(AREA_1X1)
+	Rscript $< \
+		--xbase-monthly-2x25 $(XBASE_MONTHLY_2x25) \
+		--area-1x1 $(AREA_1X1) \
+		--output $@
+
+$(XBASE_MONTHLY_2x25): \
+	$(6_RESULTS_SIF_SRC_DIR)/xbase-monthly.R \
+	$(XBASE_MONTHLY_2x25_FILES) \
+	$(CONTROL_EMISSIONS)
+	Rscript $< \
+		--input-files $(XBASE_MONTHLY_2x25_FILES) \
+		--control-emissions $(CONTROL_EMISSIONS) \
+		--output $@
+
+$(XBASE_MONTHLY_2x25_BASE)-%.nc: \
+	$(GEOS_2X25_GRID) \
+	$(XBASE_05X05_GRID) \
+	$(XBASE_MONTHLY_FILES)
+	cdo -v -z zip_6 \
+		-setctomiss,0 \
+		-remapcon,$(GEOS_2X25_GRID) \
+		-setgrid,$(XBASE_05X05_GRID) \
+		-select,name=$* \
+		$(XBASE_MONTHLY_BASE)_$*_{2015,2016,2017,2018,2019,2020}.nc \
+		$@
+
+$(XBASE_MONTHLY_BASE)_%.nc:
+	cdo -v -z zip_6 \
+		-mul \
+		-selvar,$(firstword $(subst _, ,$*)) \
+		$(XBASE_DIRECTORY)/$*_050_monthly.nc \
+		-selvar,land_fraction \
+		$(XBASE_DIRECTORY)/$*_050_monthly.nc \
+		$@
 
 $(FLUXCOM_MONTHLY_2x25_ZONAL): \
 	$(6_RESULTS_SIF_SRC_DIR)/fluxcom-monthly-zonal.R \

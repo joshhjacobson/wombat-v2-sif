@@ -9,6 +9,7 @@ chmod +x 4_inversion/modify-timestamps.sh
 bash 4_inversion/modify-timestamps.sh
 
 cdo -gridarea -setgrid,data/fluxcom.05x05.grid data/FLUXCOM_RS_members/GPP_HB.ANNnoPFT.monthly.2015.nc data/fluxcom-05x05-area.nc
+cdo -gridarea -setgrid,data/xbase.05x05.grid -select,name=GPP data/X-Base/GPP_2015_050_monthly.nc data/x-base-05x05-area.nc
 
 # Supposedly these are the only needed sensitivity files (but could simply copy all sensitivities):
 3_inversion/intermediates/sensitivities-base-oco2-hourly-part-1.fst
@@ -93,6 +94,12 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/osse-
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/fluxcom-monthly-2x25-GPP-SVM.nc --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/fluxcom-monthly-2x25.fst --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/fluxcom-monthly-2x25-zonal.fst --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/xbase_monthly_GPP_2015.nc --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/xbase-monthly-2x25-GPP.nc --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/xbase-land-fraction-2x25.nc --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/land-fraction-2x25.fst --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/xbase-monthly-2x25.fst --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/xbase-monthly-2x25-zonal.fst --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/region-map.pdf --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/observation-count.pdf --dry-run

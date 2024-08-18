@@ -30,8 +30,10 @@ FLUXCOM_MONTHLY_2x25_FILES = \
 FLUXCOM_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25.fst
 FLUXCOM_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/fluxcom-monthly-2x25-zonal.fst
 
-XBASE_FLUXES = GPP NEE
+XBASE_FLUXES = GPP TER NEE
 XBASE_YEARS = 2015 2016 2017 2018 2019 2020
+XBASE_TER_BASE = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/xbase_TER_unweighted
+XBASE_TER_FILES = $(foreach YEAR,$(XBASE_YEARS),$(XBASE_TER_BASE)_$(YEAR).nc)
 XBASE_MONTHLY_BASE = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/xbase_monthly
 XBASE_MONTHLY_FILES = \
 	$(foreach FLUX,$(XBASE_FLUXES),\
@@ -461,13 +463,42 @@ $(XBASE_MONTHLY_2x25_BASE)-%.nc: \
 		$(XBASE_MONTHLY_BASE)_$*_{2015,2016,2017,2018,2019,2020}.nc \
 		$@
 
-$(XBASE_MONTHLY_BASE)_%.nc:
+$(XBASE_MONTHLY_BASE)_NEE_%.nc:
 	cdo -v -z zip_6 \
 		-mul \
-		-selvar,$(firstword $(subst _, ,$*)) \
-		$(XBASE_DIRECTORY)/$*_050_monthly.nc \
+		-selvar,NEE \
+		$(XBASE_DIRECTORY)/NEE_$*_050_monthly.nc \
 		-selvar,land_fraction \
-		$(XBASE_DIRECTORY)/$*_050_monthly.nc \
+		$(XBASE_DIRECTORY)/NEE_$*_050_monthly.nc \
+		$@
+
+$(XBASE_MONTHLY_BASE)_GPP_%.nc:
+	cdo -v -z zip_6 \
+		-mul \
+		-selvar,GPP \
+		$(XBASE_DIRECTORY)/GPP_$*_050_monthly.nc \
+		-selvar,land_fraction \
+		$(XBASE_DIRECTORY)/GPP_$*_050_monthly.nc \
+		$@
+
+$(XBASE_MONTHLY_BASE)_TER_%.nc: \
+	$(XBASE_TER_FILES)
+	cdo -v -z zip_6 \
+		-mul \
+		-selvar,TER \
+		$(XBASE_TER_BASE)_$*.nc \
+		-selvar,land_fraction \
+		$(XBASE_DIRECTORY)/GPP_$*_050_monthly.nc \
+		$@
+
+$(XBASE_TER_BASE)_%.nc:
+	cdo -v -z zip_6 \
+		-chname,NEE,TER \
+		-add \
+		-selvar,NEE \
+		$(XBASE_DIRECTORY)/NEE_$*_050_monthly.nc \
+		-selvar,GPP \
+		$(XBASE_DIRECTORY)/GPP_$*_050_monthly.nc \
 		$@
 
 $(FLUXCOM_MONTHLY_2x25_ZONAL): \

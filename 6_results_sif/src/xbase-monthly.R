@@ -11,6 +11,7 @@ args <- parser$parse_args()
 
 flux_key <- c(
   'GPP' = 'bio_assim',
+  'TER' = 'bio_resp_tot',
   'NEE' = 'nee'
 )
 
@@ -45,7 +46,7 @@ log_debug('Reading aggregated X-Base data')
 output <- lapply(args$input_files, read_xbase) %>%
   bind_rows() %>%
   mutate(
-    inventory = factor(inventory, levels = c('bio_assim', 'nee')),
+    inventory = factor(inventory, levels = c('bio_assim', 'bio_resp_tot', 'nee')),
     value = if_else(inventory == 'bio_assim', -value, value)
   ) %>%
   tidyr::drop_na() %>%

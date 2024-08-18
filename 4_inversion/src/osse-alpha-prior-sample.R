@@ -15,7 +15,6 @@ parser$add_argument('--fix-resp-linear', nargs = '+', default = sprintf('Region%
 parser$add_argument('--prior')
 parser$add_argument('--constraints')
 parser$add_argument('--constrain-residual', type = 'logical', default = TRUE)
-parser$add_argument('--fuzz-factor', type = 'numeric', default = 1e-10)
 parser$add_argument('--basis-vectors')
 parser$add_argument('--samples-wombat-v2')
 parser$add_argument('--output')
@@ -45,11 +44,13 @@ constraints <- readRDS(args$constraints)
 if (args$constrain_residual) {
   log_trace('Constraining residual')
   F_constraint <- rbind(constraints$F_sign, constraints$F_residual)[, alpha_to_include]
-  g_constraint <- c(pmax(args$fuzz_factor, constraints$g_sign), constraints$g_residual)
+  g_constraint <- c(pmax(1e-10, constraints$g_sign), constraints$g_residual)
+  # g_constraint <- c(constraints$g_sign, constraints$g_residual)
 } else {
   log_trace('Not constraining residual')
   F_constraint <- constraints$F_sign[, alpha_to_include]
-  g_constraint <- pmax(args$fuzz_factor, constraints$g_sign)
+  g_constraint <- pmax(1e-10, constraints$g_sign)
+  # g_constraint <- constraints$g_sign
 }
 
 hist(constraints$g_sign)

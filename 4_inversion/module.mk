@@ -357,7 +357,6 @@ $(ALPHA_PRIOR_CONSTRAINED): \
 		--fix-resp-linear Region03 \
 		--prior $(PRIOR) \
 		--constraints $(CONSTRAINTS) \
-		--fuzz-factor 1e-7 \
 		--basis-vectors $(BASIS_VECTORS) \
 		--samples-wombat-v2 $(SAMPLES_WOMBAT_V2) \
 		--output $@
@@ -374,7 +373,6 @@ $(ALPHA_PRIOR_UNCONSTRAINED): \
 		--prior $(PRIOR) \
 		--constraints $(CONSTRAINTS) \
 		--constrain-residual FALSE \
-		--fuzz-factor 3e-7 \
 		--basis-vectors $(BASIS_VECTORS) \
 		--samples-wombat-v2 $(SAMPLES_WOMBAT_V2) \
 		--output $@
@@ -677,9 +675,11 @@ $(SENSITIVITIES_BASE_PART_1) &: \
 $(CONSTRAINTS): \
 	4_inversion/src/constraints-new.R \
 	$(BASIS_VECTORS) \
+	$(CONTROL_EMISSIONS) \
 	$(PERTURBATIONS)
 	Rscript $< \
 		--basis-vectors $(BASIS_VECTORS) \
+		--control-emissions $(CONTROL_EMISSIONS) \
 		--perturbations $(PERTURBATIONS) \
 		--output $@
 

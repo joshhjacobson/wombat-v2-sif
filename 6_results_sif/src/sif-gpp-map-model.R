@@ -25,7 +25,7 @@ term_key <- list(
     name = 'slope',
     scale_factor = 1e-6,
     legend_title = expression('Slope [(mW'~m^{-2}~µm^{-1}~sr^{-1}*') / (kgCO'[2]~m^{-2}~s^{-1}*')]'),
-    palette = 'Viridis',
+    palette = 'batlow',
     breaks = seq(0, 4, by = 0.5),
     limits = c(0, 4),
     label_precision = 1,
@@ -37,7 +37,7 @@ term_key <- list(
     name = 'intercept',
     scale_factor = 1,
     legend_title = expression('Intercept [W'~m^{-2}~µm^{-1}~sr^{-1}*']'),
-    palette = 'PuOr',
+    palette = 'roma',
     breaks = seq(-0.6, 0.6, by = 0.2),
     limits = c(-0.6, 0.6),
     label_precision = 1,
@@ -87,34 +87,15 @@ if (term_key$drop_second_labels) {
 }
 
 output <- ggplot() +
-  geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = NA) +
+  geom_sf(data = earth_bbox_sf, fill = '#dddddd', colour = 'black') +
   geom_stars(
     data = model_stars,
     aes(fill = value)
   ) +
   geom_sf(data = region_sf, fill = NA, colour = 'grey35', linewidth = 0.1) +
-  geom_segment(
-    data = data.frame(y = c(-23, 23, 50)),
-    mapping = aes(x = -180, y = y, xend = 180, yend = y),
-    colour = 'black',
-    linetype = 'dashed',
-    linewidth = 0.2
-  ) +
-  geom_text(
-    data = data.frame(
-      x = c(-165, -170, -170),
-      y = c(-23, 23, 50),
-      label = c('23°S', '23°N', '50°N')
-    ),
-    mapping = aes(x = x, y = y, label = label),
-    size = 6/.pt,
-    nudge_y = 8
-  ) +
   coord_sf(
     crs = sf::st_crs('ESRI:54012'),
-    default_crs = sf::st_crs('WGS84'),
-    label_graticule = '',
-    expand = FALSE
+    default_crs = sf::st_crs('WGS84')
   ) +
   facet_wrap(~month, nrow = 4) +
   scale_fill_binned_custom(
@@ -127,36 +108,29 @@ output <- ggplot() +
       title = term_key$legend_title,
       title.position = 'top',
       title.hjust = 0.5,
-      label.theme = element_text(size = 7),
+      label.theme = element_text(size = 7, colour = '#23373b'),
       frame.colour = NA,
       barwidth = 13,
       barheight = 0.55
     ),
     na.value = NA
   ) +
-  labs(
-    x = NULL,
-    y = NULL,
-    title = sprintf('SIF-GPP regression %s', term_key$name),
-  ) +
+  labs(x = NULL, y = NULL) +
   theme(
     panel.border = element_blank(),
     panel.grid = element_blank(),
     legend.position = 'bottom',
     legend.margin = margin(t = 0, l = 0, b = 0, r = 0, unit = 'cm'),
-    legend.title = element_text(size = 9),
-    strip.text = element_text(size = 9),
-    plot.title = element_text(
-      hjust = 0.5,
-      size = 12,
-      margin = margin(t = 0, r = 0, b = 0.1, l = 0, unit = 'cm')
-    ),
-    plot.margin = margin(t = 0, b = 0, l = 0.1, r = 0.05, unit = 'cm')
+    legend.title = element_text(size = 9, colour = '#23373b'),
+    strip.text = element_text(size = 9, margin = margin(0, 0, 0.02, 0, unit = 'cm')),
+    panel.spacing.y = unit(0.2, 'cm'),
+    plot.title = element_blank(),
+    plot.margin = margin(t = 0, r = 0.05, b = 0, l = 0.05, unit = 'cm')
   )
 
 ggsave_base(
   args$output,
   output,
-  width = DISPLAY_SETTINGS$full_width,
-  height = 14.62
+  width = DISPLAY_SETTINGS$supplement_full_width,
+  height = 14.5
 )

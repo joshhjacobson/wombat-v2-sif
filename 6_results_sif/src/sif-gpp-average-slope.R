@@ -81,7 +81,7 @@ output_map <- ggplot() +
   geom_segment(
     data = data.frame(y = c(-23, 23, 50)),
     mapping = aes(x = -180, y = y, xend = 180, yend = y),
-    colour = '#23373b',
+    colour = 'black',
     linetype = 'dashed',
     linewidth = 0.4
   ) +

@@ -86,7 +86,7 @@ scale_fill_binned_custom <- function(
   palette_name,
   symmetric = FALSE,
   reverse = FALSE,
-  na.value = 'grey50',
+  na.value = 'black',
   guide = 'coloursteps',
   aesthetics = 'fill',
   ...
@@ -150,7 +150,7 @@ plot_map <- function(
     labels[seq(2, length(breaks), by = 2)] <- ''
   }
   ggplot() +
-    geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = 'black') +
+    geom_sf(data = earth_bbox_sf, fill = '#dddddd', colour = 'black') +
     geom_stars(
       data = df,
       aes(fill = {{ variable }})
@@ -161,17 +161,17 @@ plot_map <- function(
       mapping = aes(x = -180, y = y, xend = 180, yend = y),
       colour = 'black',
       linetype = 'dashed',
-      linewidth = 0.3
+      linewidth = 0.4
     ) +
     geom_text(
       data = data.frame(
-        x = c(-172, -180, -180),
+        x = c(-173, -180, -180),
         y = c(-23, 23, 50),
         label = c('23°S', '23°N', '50°N')
       ),
       mapping = aes(x = x, y = y, label = label),
       size = 7/.pt,
-      nudge_y = 8
+      nudge_y = 6
     ) +
     coord_sf(
       crs = sf::st_crs('ESRI:54012'),
@@ -187,7 +187,11 @@ plot_map <- function(
       guide = guide_coloursteps(
         title.position = 'top',
         title.hjust = 0.5,
-        label.theme = element_text(size = 7, margin = margin(0.1, 0, 0, 0, unit = 'cm')),
+        label.theme = element_text(
+          size = 7,
+          colour = '#23373b',
+          margin = margin(0.1, 0, 0, 0, unit = 'cm')
+        ),
         frame.colour = NA,
         barwidth = bar_width,
         barheight = 0.5,

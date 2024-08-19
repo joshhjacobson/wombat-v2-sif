@@ -321,7 +321,7 @@ printf(
     collapse = '|'
   )
 )
-cat('RLT & Component & True Flux & \\multicolumn{2}{c|}{RMSE [PgC per month]} & \\multicolumn{2}{c}{CRPS} \\\\\n')
+cat('RLT & Component & True Flux & \\multicolumn{2}{c|}{RMSE [PgC/month]} & \\multicolumn{2}{c}{CRPS} \\\\\n')
 cat('\\cmidrule(lr){4-5} \\cmidrule(lr){6-7}\n')
 printf(
   '& & & %s \\\\\n\\midrule\n',

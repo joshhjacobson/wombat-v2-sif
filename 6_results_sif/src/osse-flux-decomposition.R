@@ -210,7 +210,7 @@ output <- wrap_plots(lapply(sort(unique(emissions$inventory)), function(inventor
     scale_colour_manual(values = colour_key) +
     scale_fill_manual(values = colour_key) +
     scale_linetype_manual(values = linetype_key) +
-    labs(x = 'Time', y = 'Flux [PgC per month]', colour = NULL, fill = NULL, linetype = NULL) +
+    labs(x = 'Time', y = 'Flux [PgC/month]', colour = NULL, fill = NULL, linetype = NULL) +
     guides(fill = 'none') +
     ggtitle(inventory_i)
 }), ncol = 2, nrow = 2, guides = 'collect') &

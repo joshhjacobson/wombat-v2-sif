@@ -74,10 +74,10 @@ metrics_zonal <- osse_fluxes %>%
   ) %>%
   mutate(
     metric = factor(c(
-      'rmse' = 'RMSE [PgC per month]',
+      'rmse' = 'RMSE [PgC/month]',
       'mcrps' = 'CRPS'
     )[metric], c(
-      'RMSE [PgC per month]',
+      'RMSE [PgC/month]',
       'CRPS'
     ))
   )

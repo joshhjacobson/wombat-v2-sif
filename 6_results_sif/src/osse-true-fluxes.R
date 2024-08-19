@@ -179,7 +179,7 @@ output <- ggplot(
   scale_x_date(date_labels = '%Y-%m') +
   # scale_colour_manual(values = colour_key) +
   scale_linetype_manual(values = linetype_key) +
-  labs(x = 'Time', y = 'Flux [PgC per month]', colour = NULL, linetype = NULL) +
+  labs(x = 'Time', y = 'Flux [PgC/month]', colour = NULL, linetype = NULL) +
   ggtitle('OSSE true flux components') +
   theme(
     plot.margin = margin(t = 1, r = 1, b = 1, l = 1, unit = 'mm'),

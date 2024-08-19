@@ -174,7 +174,7 @@ output <- emissions %>%
   labs(
     title = 'Global monthly fluxes',
     x = 'Time',
-    y = 'Flux [PgC per month]',
+    y = 'Flux [PgC/month]',
     colour = NULL,
     fill = NULL,
     linetype = NULL

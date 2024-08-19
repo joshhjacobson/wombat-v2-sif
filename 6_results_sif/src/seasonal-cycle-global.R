@@ -76,12 +76,12 @@ prior_emissions <- perturbations %>%
   select(-inventory_month) %>%
   mutate(estimate = 'Bottom-up')
 
-posterior_emissions_LNLGIS <- compute_posterior(prior_emissions, X_global, samples_LNLGIS, 'Posterior v2') %>%
+posterior_emissions_LNLGIS <- compute_posterior(prior_emissions, X_global, samples_LNLGIS, 'v2.0 posterior') %>%
   rename(
     value_low = value_q025,
     value_high = value_q975
   )
-posterior_emissions_LNLGISSIF <- compute_posterior(prior_emissions, X_global, samples_LNLGISSIF, 'Posterior v2S') %>%
+posterior_emissions_LNLGISSIF <- compute_posterior(prior_emissions, X_global, samples_LNLGISSIF, 'v2.S posterior') %>%
   rename(
     value_low = value_q025,
     value_high = value_q975
@@ -127,21 +127,21 @@ emissions <- bind_rows(
     )),
     estimate = factor(
       estimate,
-      levels = c('FLUXCOM', 'Bottom-up', 'Posterior v2', 'Posterior v2S')
+      levels = c('FLUXCOM', 'Bottom-up', 'v2.0 posterior', 'v2.S posterior')
     )
   )
 
 colour_key <- c(
   'FLUXCOM' = 'grey70',
   'Bottom-up' = 'grey30',
-  'Posterior v2' = 'grey50',
-  'Posterior v2S' = '#fb8b00'
+  'v2.0 posterior' = 'grey50',
+  'v2.S posterior' = '#fb8b00'
 )
 linetype_key <- c(
   'FLUXCOM' = '12',
   'Bottom-up' = '41',
-  'Posterior v2' = '1131',
-  'Posterior v2S' = 'solid'
+  'v2.0 posterior' = '1131',
+  'v2.S posterior' = 'solid'
 )
 
 output <- emissions %>%
@@ -178,7 +178,7 @@ output <- emissions %>%
     fill = 'none'
     # colour = guide_legend(nrow = 2, byrow = TRUE)
   ) +
-  labs(x = 'Month', y = 'Flux [PgC per month]', colour = NULL, fill = NULL, linetype = NULL) +
+  labs(x = 'Month', y = 'Flux [PgC/month]', colour = NULL, fill = NULL, linetype = NULL) +
   ggtitle('Average seasonal cycle of global fluxes') +
   theme(
     plot.margin = margin(t = 1, r = 1, b = 0, l = 1, unit = 'mm'),

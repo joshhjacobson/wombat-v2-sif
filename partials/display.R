@@ -19,7 +19,19 @@ DISPLAY_SETTINGS <- list(
   full_width = 14.32,
   supplement_full_width = 16.5,
   full_height = 20,
-  png_plot_dpi = 320
+  png_plot_dpi = 320,
+  colour_key = c(
+    'Prior mode' = 'grey50',
+    'v2.0 posterior' = '#6699cc',
+    'v2.S posterior' = '#228833',
+    'FLUXCOM' = '#ddaa33'
+  ),
+  linetype_key = c(
+    'Prior mode' = '11',
+    'v2.0 posterior' = '41',
+    'v2.S posterior' = '41',
+    'FLUXCOM' = '1131'
+  )
 )
 
 get_legend <- function(plot_object){

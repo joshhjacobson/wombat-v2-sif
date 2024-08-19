@@ -88,19 +88,18 @@ region_colours <- rep('black', 23)
 region_colours[with(region_sf,
   region >= 12 & region != 23
 )] <- c(
-  '#bbbbff',
-  '#9999ff',
-  '#7777ff'
+  '#d1e5f0',
+  '#92c5de',
+  '#4393c3'
 )[ocean_region_colours]
 region_colours[with(region_sf,
   region <= 11 | region == 23
 )] <- c(
-  '#bbffbb',
-  '#77ff77',
-  '#99ff99'
+  '#d9f0d3',
+  '#5aae61',
+  '#acd39e'
 )[land_region_colours]
 names(region_colours) <- region_sf$region_code
-# region_colours['T10'] <- '#bbffbb'
 
 region_sf$colour <- region_colours
 

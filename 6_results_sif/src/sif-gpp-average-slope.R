@@ -72,7 +72,7 @@ labels <- ifelse(
 )
 
 output_map <- ggplot() +
-  geom_sf(data = earth_bbox_sf, fill = 'grey85', colour = 'black') +
+  geom_sf(data = earth_bbox_sf, fill = '#dddddd', colour = 'black') +
   geom_stars(
     data = model_stars,
     aes(fill = value)
@@ -81,7 +81,7 @@ output_map <- ggplot() +
   geom_segment(
     data = data.frame(y = c(-23, 23, 50)),
     mapping = aes(x = -180, y = y, xend = 180, yend = y),
-    colour = 'black',
+    colour = '#23373b',
     linetype = 'dashed',
     linewidth = 0.4
   ) +
@@ -119,27 +119,19 @@ output_map <- ggplot() +
     ),
     na.value = NA
   ) +
-  labs(
-    x = NULL,
-    y = NULL,
-    title = sprintf('Season-average SIF-GPP regression slope'),
-  ) +
+  labs(x = NULL, y = NULL) +
   theme(
     panel.border = element_blank(),
     legend.position = 'left',
     legend.title = element_text(
-      size = 10,
+      size = 9,
       colour = '#23373b',
       margin = margin(0, 0, 0.25, 0, unit = 'cm')
     ),
     legend.margin = margin(t = 0, r = -1, b = 0, l = 0, unit = 'cm'),
     legend.box.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'cm'),
     legend.box.spacing = unit(0, 'cm'),
-    plot.title = element_text(
-      hjust = 0.5,
-      size = 11,
-      margin = margin(t = 0.05, r = 0, b = -0.25, l = 0, unit = 'cm')
-    ),
+    plot.title = element_blank(),
     plot.margin = margin(t = 0, b = 0, l = 0, r = 0, unit = 'cm')
   )
 
@@ -152,6 +144,7 @@ output_season <- model_season %>%
         ymax = value_q75
       ),
       colour = 'grey15',
+      shape = 15,
       size = 0.3,
       linewidth = 0.6
     ) +
@@ -159,20 +152,12 @@ output_season <- model_season %>%
       breaks = model_season$month,
       labels = model_season$month_label
     ) +
-    labs(
-      x = NULL,
-      y = 'Slope',
-      title = 'Global-average SIF-GPP regression slope'
-    ) +
+    labs(x = NULL, y = 'Slope') +
     theme(
-      axis.title.y = element_text(size = 10),
-      axis.text.y = element_text(size = 7),
-      axis.text.x = element_text(size = 9),
-      plot.title = element_text(
-        hjust = 0.5,
-        size = 11,
-        margin = margin(t = 0, r = 0, b = 0.05, l = 0, unit = 'cm')
-      ),
+      axis.title.y = element_text(size = 9, colour = '#23373b'),
+      axis.text.y = element_text(size = 7, colour = '#23373b'),
+      axis.text.x = element_text(size = 8, colour = '#23373b'),
+      plot.title = element_blank(),
       plot.margin = margin(t = 0, b = 0.1, l = 0.05, r = 0.1, unit = 'cm')
     )
 
@@ -188,5 +173,5 @@ ggsave_base(
   args$output,
   output,
   width = DISPLAY_SETTINGS$full_width,
-  height = 10.44
+  height = 9.76
 )

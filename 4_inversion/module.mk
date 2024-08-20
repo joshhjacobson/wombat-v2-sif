@@ -48,8 +48,7 @@ OSSE_ADJUSTED_ALPHAS = $(foreach ADJUSTMENT,$(ALPHA_ADJUSTMENT_CASES),$(ALPHA_AD
 ALPHA_SIM = 4_inversion/intermediates/osse-alpha-sim.fst
 OSSE_ALPHAS = $(ALPHA_WOMBAT_V2) $(ALPHA_SIM)
 
-ALPHA_PRIOR_CONSTRAINED = 4_inversion/intermediates/osse-alpha-prior-constrained.rds
-ALPHA_PRIOR_UNCONSTRAINED = 4_inversion/intermediates/osse-alpha-prior-unconstrained.rds
+SAMPLES_PRIOR = 4_inversion/intermediates/samples-prior-region-constraint.rds
 
 OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHASMALL ALPHAMD ALPHANEG ALPHASIM
 OSSE_CASES = ALPHA0-FIXRESP-WSIF \
@@ -334,49 +333,25 @@ $(ALPHA_WOMBAT_V2): \
 
 $(ALPHA_SIM): \
 	4_inversion/src/osse-alpha-sim.R \
-	$(BASIS_VECTORS) \
-	$(CONSTRAINTS) \
-	$(PRIOR) \
-	$(SAMPLES_WOMBAT_V2)
+	$(SAMPLES_PRIOR)
 	Rscript $< \
-		--fix-resp-linear Region03 \
-		--basis-vectors $(BASIS_VECTORS) \
-		--constraints $(CONSTRAINTS) \
-		--prior $(PRIOR) \
-		--samples-wombat-v2 $(SAMPLES_WOMBAT_V2) \
+		--samples-prior $(SAMPLES_PRIOR) \
 		--output $@
 
-$(ALPHA_PRIOR_CONSTRAINED): \
-	4_inversion/src/osse-alpha-prior-sample.R \
-	$(BASIS_VECTORS) \
-	$(CONSTRAINTS) \
+$(SAMPLES_PRIOR): \
+	4_inversion/src/sample-prior-region-constraint.R \
 	$(PRIOR) \
-	$(SAMPLES_WOMBAT_V2)
+	$(CONSTRAINTS) \
+	$(BASIS_VECTORS) \
+	$(PERTURBATIONS_AUGMENTED)
 	Rscript $< \
-		--n-samples 200 \
+		--n-samples 1000 \
 		--fix-resp-linear Region03 \
 		--prior $(PRIOR) \
 		--constraints $(CONSTRAINTS) \
 		--basis-vectors $(BASIS_VECTORS) \
-		--samples-wombat-v2 $(SAMPLES_WOMBAT_V2) \
+		--perturbations $(PERTURBATIONS_AUGMENTED) \
 		--output $@
-
-$(ALPHA_PRIOR_UNCONSTRAINED): \
-	4_inversion/src/osse-alpha-prior-sample.R \
-	$(BASIS_VECTORS) \
-	$(CONSTRAINTS) \
-	$(PRIOR) \
-	$(SAMPLES_WOMBAT_V2)
-	Rscript $< \
-		--n-samples 200 \
-		--fix-resp-linear Region03 \
-		--prior $(PRIOR) \
-		--constraints $(CONSTRAINTS) \
-		--constrain-residual FALSE \
-		--basis-vectors $(BASIS_VECTORS) \
-		--samples-wombat-v2 $(SAMPLES_WOMBAT_V2) \
-		--output $@
-
 
 ADJUSTED_ALPHA_DEPS = 4_inversion/src/osse-alpha.R \
 	$(REGION_MASK) \

@@ -15,6 +15,7 @@ documentation
 utils
 
 # Temporary
+rcpp-cache
 .vscode
 cli-cookbook.txt
 */*.R

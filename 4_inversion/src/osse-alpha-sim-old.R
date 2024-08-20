@@ -10,11 +10,9 @@ source(Sys.getenv('UTILS_PARTIAL'))
 sourceCpp(Sys.getenv('HMC_EXACT_CPP_PARTIAL'))
 
 parser <- ArgumentParser()
-parser$add_argument('--n-samples', type = 'integer')
 parser$add_argument('--fix-resp-linear', nargs = '+', default = sprintf('Region%02d', 1:11))
 parser$add_argument('--prior')
 parser$add_argument('--constraints')
-parser$add_argument('--constrain-residual', type = 'logical', default = TRUE)
 parser$add_argument('--basis-vectors')
 parser$add_argument('--samples-wombat-v2')
 parser$add_argument('--output')
@@ -41,17 +39,8 @@ alpha_prior_precision_base <- prior$precision[alpha_to_include, alpha_to_include
 n_alpha <- sum(alpha_to_include)
 
 constraints <- readRDS(args$constraints)
-if (args$constrain_residual) {
-  log_trace('Constraining residual')
-  F_constraint <- rbind(constraints$F_sign, constraints$F_residual)[, alpha_to_include]
-  g_constraint <- c(pmax(1e-10, constraints$g_sign), constraints$g_residual)
-  # g_constraint <- c(constraints$g_sign, constraints$g_residual)
-} else {
-  log_trace('Not constraining residual')
-  F_constraint <- constraints$F_sign[, alpha_to_include]
-  g_constraint <- pmax(1e-10, constraints$g_sign)
-  # g_constraint <- constraints$g_sign
-}
+F_constraint <- rbind(constraints$F_sign, constraints$F_residual)[, alpha_to_include]
+g_constraint <- c(constraints$g_sign, constraints$g_residual)
 
 all_regions_fixed <- identical(args$fix_resp_linear, sprintf('Region%02d', 1:11))
 all_regions_free <- any(args$fix_resp_linear %in% c('NULL', 'null', 'None', 'none', 'NA', 'na'))
@@ -130,8 +119,7 @@ residual_bio_indices_i <- lapply(bio_regions, function(region_i) {
 n_times <- length(residual_bio_indices_i[[1]]) / 2
 
 rho_bio_clim <- mean(samples$rho_bio_clim)
-# w_bio_linear <- c(100, 200)
-w_bio_linear <- colMeans(samples$w_bio_clim)
+w_bio_linear <- c(100, 200)
 w_bio_season <- colMeans(samples$w_bio_clim)
 kappa_bio_resid <- mean(samples$kappa_bio_resid)
 rho_bio_resid <- mean(samples$rho_bio_resid)
@@ -182,34 +170,6 @@ get_alpha_prior_precision <- function(
   output
 }
 
-sample_from_region <- function(region_name, Q, n_samples) {
-
-  indices_subset <- with(
-    basis_vectors[alpha_to_include, ],
-    inventory %in% c('bio_assim', 'bio_resp_tot') & region == region_name
-  )
-
-  F_constraint_subset <- F_constraint[, indices_subset]
-  keep_F <- rowSums(abs(F_constraint_subset)) != 0
-  F_constraint_subset <- F_constraint_subset[keep_F, ]
-  g_constraint_subset <- g_constraint[keep_F]
-  Q_subset <- Q[indices_subset, indices_subset]
-
-  list(
-    indices = indices_subset,
-    samples = sampleHmcConstrained(
-      rep(0, ncol(Q_subset)),
-      rep(0, ncol(Q_subset)),
-      R = chol(Q_subset),
-      F = F_constraint_subset,
-      g = g_constraint_subset,
-      totalTime = pi / 2,
-      debug = FALSE,
-      nSamples = n_samples
-    )
-  )
-}
-
 alpha_prior_precision <- get_alpha_prior_precision(
   rho_bio_clim,
   w_bio_linear,
@@ -218,41 +178,27 @@ alpha_prior_precision <- get_alpha_prior_precision(
   rho_bio_resid,
   w_bio_resid
 )
-# chol_alpha_prior_precision <- chol(alpha_prior_precision)
-
+chol_alpha_prior_precision <- chol(alpha_prior_precision)
 
 log_debug('Simulating alpha')
-# alpha_samples <- sampleHmcConstrained(
-#   rep(0, n_alpha),
-#   rep(0, n_alpha),
-#   chol_alpha_prior_precision,
-#   F_constraint,
-#   g_constraint,
-#   pi / 2,
-#   nSamples = args$n_samples,
-#   debug = TRUE,
-#   bounceLimit = 100000
-# )
-alpha_samples <- matrix(NA, nrow = args$n_samples, ncol = sum(alpha_to_include))
-for (region_name in levels(basis_vectors$region)) {
-  log_trace('Sampling for {region_name}')
-  region_samples <- sample_from_region(region_name, alpha_prior_precision, args$n_samples)
-  alpha_samples[, region_samples$indices] <- region_samples$samples
-}
-
-alpha_df <- cbind(
-  basis_vectors[alpha_to_include, ],
-  data.frame(value = colMeans(alpha_samples))
+alpha_sim <- sampleHmcConstrained(
+  rep(0, n_alpha),
+  rep(0, n_alpha),
+  chol_alpha_prior_precision,
+  F_constraint,
+  g_constraint,
+  pi / 2,
+  nSamples = 1,
+  debug = TRUE,
+  bounceLimit = 100000
 )
-alpha_df$value_samples <- t(alpha_samples)
 
-output <- list(
-  alpha = alpha_samples,
-  alpha_df = alpha_df,
-  n_samples = args$n_samples
+output <- cbind(
+  basis_vectors[alpha_to_include, ],
+  data.frame(value = alpha_sim)
 )
 
 log_debug('Saving to {args$output}')
-saveRDS(output, args$output)
+fst::write_fst(output, args$output)
 
 log_debug('Done')

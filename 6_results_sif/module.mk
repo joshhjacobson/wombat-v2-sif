@@ -178,7 +178,7 @@ SPECIFIC_CASES = ALPHASMALL
 # 	$(foreach OSSE_CASE,$(SPECIFIC_CASES),\
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_$(OSSE_CASE)-FREERESP.pdf))
 
-REGIONS = Region01 Region02 Region03 Region04 Region05 Region06 Region07 Region08 Region09 Region10 Region11
+REGIONS = global Region01 Region02 Region03 Region04 Region05 Region06 Region07 Region08 Region09 Region10 Region11
 OSSE_PRIOR_DECOMPOSITIONS += \
 	$(foreach REGION,$(REGIONS),\
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-prior-decomposition-$(REGION).pdf)
@@ -245,13 +245,11 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-WSIF.pdf: \
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-prior-decomposition-%.pdf: \
 	6_results_sif/osse-prior-decomposition-regional.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
-	$(ALPHA_PRIOR_UNCONSTRAINED) \
-	$(ALPHA_SIM) \
+	$(SAMPLES_PRIOR) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
-		--samples $(ALPHA_PRIOR_UNCONSTRAINED) \
-		--true-alpha $(ALPHA_SIM) \
+		--samples $(SAMPLES_PRIOR) \
 		--region $* \
 		--output $@
 

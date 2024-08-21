@@ -4,7 +4,7 @@
 source('partials/utils.R')
 source('partials/display.R')
 
-library(argparse)
+# library(argparse)
 library(dplyr, warn.conflicts = FALSE)
 library(ggrepel)
 library(lubridate, warn.conflicts = FALSE)
@@ -16,8 +16,8 @@ library(patchwork)
 # args <- parser$parse_args()
 
 args <- list(
-  samples = '4_inversion/intermediates/osse-samples-ALPHASMALL-FREERESP-WSIF.rds',
-  output_base = '6_results_sif/figures/archive/osse/traceplots/traceplots-ALPHASMALL-FREERESP-WSIF-longrun'
+  samples = '4_inversion/intermediates/osse-samples-ALPHASIM-FIXRESP-WSIF.rds',
+  output_base = '6_results_sif/figures/archive/osse/traceplots/traceplots-ALPHASIM-FIXRESP-WSIF'
 )
 
 

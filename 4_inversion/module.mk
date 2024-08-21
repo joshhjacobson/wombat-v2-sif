@@ -50,7 +50,7 @@ OSSE_ALPHAS = $(ALPHA_WOMBAT_V2) $(ALPHA_SIM)
 
 SAMPLES_PRIOR = 4_inversion/intermediates/samples-prior-region-constraint.rds
 
-OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHASMALL ALPHAMD ALPHANEG ALPHASIM
+OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHASMALL ALPHASIM
 OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHA0-FIXRESP-WOSIF \
 	ALPHA0-FREERESP-WSIF \
@@ -63,13 +63,9 @@ OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHASMALL-FIXRESP-WOSIF \
 	ALPHASMALL-FREERESP-WSIF \
 	ALPHASMALL-FREERESP-WOSIF \
-	ALPHAMD-FIXRESP-WSIF \
-	ALPHAMD-FIXRESP-WOSIF \
-	ALPHAMD-FREERESP-WSIF \
-	ALPHAMD-FREERESP-WOSIF \
-	ALPHANEG-FIXRESP-WOSIF \
-	ALPHANEG-FREERESP-WSIF \
 	ALPHASIM-FIXRESP-WOSIF \
+	ALPHASIM-FIXRESP-WSIF \
+	ALPHASIM-FREERESP-WOSIF \
 	ALPHASIM-FREERESP-WSIF
 OSSE_FLAGS_ALPHA0 = --seed 0 --bio-clim-slice-w 1
 OSSE_FLAGS_ALPHAV2 = --seed 1 --true-alpha $(ALPHA_WOMBAT_V2)
@@ -106,6 +102,7 @@ $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 	$(HYPERPARAMETER_ESTIMATES) \
 	$(CONSTRAINTS) \
 	$(PRIOR) \
+	$(SAMPLES_PRIOR) \
 	2_matching/intermediates/runs/base/oco2-hourly.fst \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	$(H_LNLG) \
@@ -116,6 +113,7 @@ $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
+		--prior-samples $(SAMPLES_PRIOR) \
 		--constraints $(CONSTRAINTS) \
 		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
 		--overall-observation-mode LN LG IS \
@@ -136,6 +134,7 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 	$(HYPERPARAMETER_ESTIMATES) \
 	$(CONSTRAINTS) \
 	$(PRIOR) \
+	$(SAMPLES_PRIOR) \
 	2_matching/intermediates/runs/base/oco2-hourly.fst \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	3_sif/intermediates/oco2-hourly-sif.fst \
@@ -148,6 +147,7 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
+		--prior-samples $(SAMPLES_PRIOR) \
 		--constraints $(CONSTRAINTS) \
 		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
 		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
@@ -519,6 +519,7 @@ $(RESIDUAL_1ST_STAGE): \
 	$(OBSERVATIONS) \
 	$(BASIS_VECTORS) \
 	$(PRIOR) \
+	$(SAMPLES_PRIOR) \
 	$(CONSTRAINTS) \
 	$(H_LNLG) \
 	$(H_IS) \
@@ -527,6 +528,7 @@ $(RESIDUAL_1ST_STAGE): \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
+		--prior-samples $(SAMPLES_PRIOR) \
 		--constraints $(CONSTRAINTS) \
 		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
 		--control \

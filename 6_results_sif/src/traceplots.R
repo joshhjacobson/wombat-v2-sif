@@ -15,9 +15,14 @@ library(patchwork)
 # parser$add_argument('--output-base')
 # args <- parser$parse_args()
 
+# args <- list(
+#   samples = '4_inversion/intermediates/osse-samples-ALPHASIM-FIXRESP-WSIF.rds',
+#   output_base = '6_results_sif/figures/archive/osse/traceplots/traceplots-ALPHASIM-FIXRESP-WSIF'
+# )
+
 args <- list(
-  samples = '4_inversion/intermediates/osse-samples-ALPHASIM-FIXRESP-WSIF.rds',
-  output_base = '6_results_sif/figures/archive/osse/traceplots/traceplots-ALPHASIM-FIXRESP-WSIF'
+  samples = '4_inversion/intermediates/samples-LNLGISSIF.rds',
+  output_base = '6_results_sif/figures/traceplots-LNLGISSIF'
 )
 
 

@@ -78,7 +78,7 @@ emissions_zonal <- lapply(zones, function(zonal_band) {
     group_by(inventory_month, inventory, month) %>%
     summarise(value = sum(value), .groups = 'drop') %>%
     select(-inventory_month) %>%
-    mutate(estimate = 'Prior mode')
+    mutate(estimate = 'SiB4')
 
   posterior_emissions_LNLGIS <- compute_posterior(prior_emissions, X_zone, samples_LNLGIS, 'v2.0 posterior')
   posterior_emissions_LNLGISSIF <- compute_posterior(prior_emissions, X_zone, samples_LNLGISSIF, 'v2.S posterior')
@@ -124,7 +124,7 @@ emissions_zonal <- lapply(zones, function(zonal_band) {
     )),
     estimate = factor(
       estimate,
-      levels = c('Prior mode', 'v2.0 posterior', 'v2.S posterior', 'FLUXCOM')
+      levels = c('FLUXCOM', 'SiB4', 'v2.0 posterior', 'v2.S posterior')
     ),
     zone = factor(
       zone,

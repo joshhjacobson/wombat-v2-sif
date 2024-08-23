@@ -43,39 +43,27 @@ XBASE_MONTHLY_2x25_BASE = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/xbase-monthly-2x25
 XBASE_MONTHLY_2x25_FILES = $(foreach FLUX,$(XBASE_FLUXES),$(XBASE_MONTHLY_2x25_BASE)-$(FLUX).nc)
 XBASE_MONTHLY_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/xbase-monthly-2x25.fst
 XBASE_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/xbase-monthly-2x25-zonal.fst
-XBASE_LAND_FRACTION_2x25 = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/xbase-land-fraction-2x25.nc
-
-LAND_FRACTION = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/land-fraction-2x25.fst
 
 # 6_RESULTS_SIF_TARGETS += \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHA0.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAV2.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-monthly-ALPHAMD.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHA0.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAV2.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-ALPHAMD.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table-supp.tex \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/hyperparameter-table.tex \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/error-params-table.tex \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/sif-gpp-average-slope.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/sif-gpp-map-slope.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/sif-gpp-map-intercept.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-global.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-global.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf \
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-latitude-profile.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-gpp.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-resp.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-nee.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-gpp.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-resp.pdf \
-# 	$(6_RESULTS_SIF_FIGURES_DIR)/average-map-fluxcom-nee.pdf
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/average-maps-gpp.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/average-maps-resp.pdf \
+# 	$(6_RESULTS_SIF_FIGURES_DIR)/average-maps-nee.pdf
+
 
 # 6_RESULTS_SIF_TARGETS += $(OSSE_FLUX_DECOMPOSITIONS)
-6_RESULTS_SIF_TARGETS += $(OSSE_PRIOR_DECOMPOSITIONS)
 
 
 ## Products
@@ -83,17 +71,16 @@ LAND_FRACTION = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/land-fraction-2x25.fst
 
 ## Figures
 
-# TODO: update all maps for consistency
-
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-true-fluxes.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
-	$(OSSE_ALPHAS) \
+	$(OSSE_ADJUSTED_ALPHAS) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
 		--alpha-v2 $(ALPHA_WOMBAT_V2) \
-		--alpha-sim $(ALPHA_SIM) \
+		--alpha-positive $(ALPHA_ADJUSTMENT_BASE)-positive.fst \
+		--alpha-negative $(ALPHA_ADJUSTMENT_BASE)-negative.fst \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table.tex: \
@@ -156,9 +143,9 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-zonal-%.pdf: \
 		--output $@
 
 # REGIONS = n-boreal n-temperate tropical n-tropical s-tropical s-extratropical
-REGIONS = global
+# REGIONS = global
 # RESP_TYPES = FIXRESP FREERESP
-SPECIFIC_CASES = ALPHASMALL
+# SPECIFIC_CASES = ALPHASMALL
 # OSSE_FLUX_DECOMPOSITIONS = \
 # 	$(foreach RESP_TYPE,$(RESP_TYPES),\
 # 	$(foreach REGION,$(REGIONS),\
@@ -178,11 +165,6 @@ SPECIFIC_CASES = ALPHASMALL
 # 	$(foreach OSSE_CASE,$(SPECIFIC_CASES),\
 # 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-$(REGION)_$(OSSE_CASE)-FREERESP.pdf))
 
-REGIONS = global Region01 Region02 Region03 Region04 Region05 Region06 Region07 Region08 Region09 Region10 Region11
-OSSE_PRIOR_DECOMPOSITIONS += \
-	$(foreach REGION,$(REGIONS),\
-	$(6_RESULTS_SIF_FIGURES_DIR)/osse-prior-decomposition-$(REGION).pdf)
-
 # $(OSSE_SAMPLES_CASES) \
 
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-FIXRESP.pdf: \
@@ -200,6 +182,7 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-FIXRESP.pdf: \
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-FREERESP.pdf: \
 	6_results_sif/osse-flux-decomposition-regional.R \
 	$(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
+	$(OSSE_SAMPLES_CASES) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< $(OSSE_FLAGS_ALPHA) \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
@@ -211,46 +194,25 @@ $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-FREERESP.pdf: \
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-mixed.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/osse-flux-decomposition.R \
 	$(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
+	$(OSSE_SAMPLES_CASES) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< $(OSSE_FLAGS_ALPHA) \
 		--perturbations-augmented-zonal $(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
 		--samples-fixresp-wosif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FIXRESP-WOSIF.rds \
 		--samples-freeresp-wsif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FREERESP-WSIF.rds \
-		--region $(firstword $(subst _, ,$*)) \
-		--output $@
-
-$(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-FIXLW-mixed.pdf: \
-	$(6_RESULTS_SIF_SRC_DIR)/osse-flux-decomposition.R \
-	$(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
-	$(OSSE_SAMPLES_BASE)-ALPHASMALL-FREERESP-FIXLW-WSIF.rds \
-	$(DISPLAY_PARTIAL)
-	Rscript $< $(OSSE_FLAGS_ALPHA) \
-		--perturbations-augmented-zonal $(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
-		--samples-fixresp-wosif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FIXRESP-WOSIF.rds \
-		--samples-freeresp-wsif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FREERESP-FIXLW-WSIF.rds \
 		--region $(firstword $(subst _, ,$*)) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/osse-flux-decomposition-%-WSIF.pdf: \
 	6_results_sif/osse-flux-decomposition-regional.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
+	$(OSSE_SAMPLES_CASES) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< $(OSSE_FLAGS_ALPHA) \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
 		--samples-fixresp-wsif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FIXRESP-WSIF.rds \
 		--samples-freeresp-wsif $(OSSE_SAMPLES_BASE)-$(lastword $(subst _, ,$*))-FREERESP-WSIF.rds \
 		--region $(firstword $(subst _, ,$*)) \
-		--output $@
-
-$(6_RESULTS_SIF_FIGURES_DIR)/osse-prior-decomposition-%.pdf: \
-	6_results_sif/osse-prior-decomposition-regional.R \
-	$(PERTURBATIONS_AUGMENTED_SIF) \
-	$(SAMPLES_PRIOR) \
-	$(DISPLAY_PARTIAL)
-	Rscript $< \
-		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
-		--samples $(SAMPLES_PRIOR) \
-		--region $* \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf: \
@@ -261,7 +223,6 @@ $(6_RESULTS_SIF_FIGURES_DIR)/region-map.pdf: \
 		--region-sf $(REGION_SF_SIF) \
 		--output $@
 
-# TODO: use "in-situ/flask" in title; maybe increase font sizes?
 $(6_RESULTS_SIF_FIGURES_DIR)/observation-count.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/observation-count.R \
 	$(OBSERVATIONS) \
@@ -297,74 +258,99 @@ $(6_RESULTS_SIF_FIGURES_DIR)/sif-gpp-map-%.pdf: \
 		--term $* \
 		--output $@
 
-$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf: \
-	$(6_RESULTS_SIF_SRC_DIR)/flux-net-global.R \
+$(6_RESULTS_SIF_FIGURES_DIR)/flux-global.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/flux-net-global-seasonal.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
-	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_WOMBAT_V2) \
 	$(SAMPLES_LNLGISSIF) \
-	$(FLUXCOM_MONTHLY_2x25) \
+	$(XBASE_MONTHLY_2x25) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
-		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGIS $(SAMPLES_WOMBAT_V2) \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
-		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
+		--xbase-monthly-2x25 $(XBASE_MONTHLY_2x25) \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-global.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/flux-net-global.R \
+	$(PERTURBATIONS_AUGMENTED_SIF) \
+	$(SAMPLES_WOMBAT_V2) \
+	$(SAMPLES_LNLGISSIF) \
+	$(XBASE_MONTHLY_2x25) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
+		--samples-LNLGIS $(SAMPLES_WOMBAT_V2) \
+		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
+		--xbase-monthly-2x25 $(XBASE_MONTHLY_2x25) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/flux-net-zonal.R \
 	$(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
-	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_WOMBAT_V2) \
 	$(SAMPLES_LNLGISSIF) \
-	$(FLUXCOM_MONTHLY_2x25_ZONAL) \
+	$(XBASE_MONTHLY_2x25_ZONAL) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented-zonal $(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
-		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGIS $(SAMPLES_WOMBAT_V2) \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
-		--fluxcom-monthly-2x25-zonal $(FLUXCOM_MONTHLY_2x25_ZONAL) \
+		--xbase-monthly-2x25-zonal $(XBASE_MONTHLY_2x25_ZONAL) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-global.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/seasonal-cycle-global.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
-	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_WOMBAT_V2) \
 	$(SAMPLES_LNLGISSIF) \
-	$(FLUXCOM_MONTHLY_2x25) \
+	$(XBASE_MONTHLY_2x25) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
-		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGIS $(SAMPLES_WOMBAT_V2) \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
-		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
+		--xbase-monthly-2x25 $(XBASE_MONTHLY_2x25) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/seasonal-cycle-zonal.R \
 	$(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
-	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_WOMBAT_V2) \
 	$(SAMPLES_LNLGISSIF) \
-	$(FLUXCOM_MONTHLY_2x25_ZONAL) \
+	$(XBASE_MONTHLY_2x25_ZONAL) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented-zonal $(PERTURBATIONS_AUGMENTED_SIF_ZONAL) \
-		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGIS $(SAMPLES_WOMBAT_V2) \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
-		--fluxcom-monthly-2x25-zonal $(FLUXCOM_MONTHLY_2x25_ZONAL) \
+		--xbase-monthly-2x25-zonal $(XBASE_MONTHLY_2x25_ZONAL) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/seasonal-latitude-profile.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/seasonal-latitude-profile.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
-	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_WOMBAT_V2) \
 	$(SAMPLES_LNLGISSIF) \
-	$(FLUXCOM_MONTHLY_2x25) \
+	$(XBASE_MONTHLY_2x25) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
-		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGIS $(SAMPLES_WOMBAT_V2) \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
-		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
+		--xbase-monthly-2x25 $(XBASE_MONTHLY_2x25) \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/average-maps-%.pdf: \
+	$(6_RESULTS_SIF_SRC_DIR)/average-maps.R \
+	$(SIX_YEAR_AVERAGE_SIF) \
+	$(REGION_SF_SIF) \
+	$(DISPLAY_PARTIAL)
+	Rscript $< \
+		--six-year-average $(SIX_YEAR_AVERAGE_SIF) \
+		--flux-component $* \
+		--region-sf $(REGION_SF_SIF) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/average-map-wombat-%.pdf: \
@@ -401,35 +387,16 @@ $(6_RESULTS_SIF_FIGURES_DIR)/error-params-table.tex: \
 $(SIX_YEAR_AVERAGE_SIF): \
 	$(6_RESULTS_SIF_SRC_DIR)/six-year-average.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
-	$(SAMPLES_LNLGIS) \
+	$(SAMPLES_WOMBAT_V2) \
 	$(SAMPLES_LNLGISSIF) \
-	$(FLUXCOM_MONTHLY_2x25) \
+	$(XBASE_MONTHLY_2x25) \
 	$(UTILS_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
-		--samples-LNLGIS $(SAMPLES_LNLGIS) \
+		--samples-LNLGIS $(SAMPLES_WOMBAT_V2) \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
-		--fluxcom-monthly-2x25 $(FLUXCOM_MONTHLY_2x25) \
+		--xbase-monthly-2x25 $(XBASE_MONTHLY_2x25) \
 		--output $@
-
-$(LAND_FRACTION): \
-	$(6_RESULTS_SIF_SRC_DIR)/land-fraction.R \
-	$(XBASE_LAND_FRACTION_2x25)
-	Rscript $< \
-		--land-fraction $(XBASE_LAND_FRACTION_2x25) \
-		--output $@
-
-$(XBASE_LAND_FRACTION_2x25): \
-	$(GEOS_2X25_GRID) \
-	$(XBASE_05X05_GRID)
-	cdo -v -z zip_6 \
-		-setctomiss,0 \
-		-remapcon,$(GEOS_2X25_GRID) \
-		-setmisstoc,0 \
-		-setgrid,$(XBASE_05X05_GRID) \
-		-select,name=land_fraction \
-		$(XBASE_DIRECTORY)/GPP_2015_050_monthly.nc \
-		$@
 
 $(XBASE_MONTHLY_2x25_ZONAL): \
 	$(6_RESULTS_SIF_SRC_DIR)/xbase-monthly-zonal.R \

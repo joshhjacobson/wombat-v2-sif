@@ -5,13 +5,13 @@ library(Matrix)
 source(Sys.getenv('UTILS_PARTIAL'))
 source(Sys.getenv('DISPLAY_PARTIAL'))
 
-# parser <- ArgumentParser()
-# parser$add_argument('--perturbations-augmented')
-# parser$add_argument('--samples-LNLGIS')
-# parser$add_argument('--samples-LNLGISSIF')
-# parser$add_argument('--xbase-monthly-2x25')
-# parser$add_argument('--output')
-# args <- parser$parse_args()
+parser <- ArgumentParser()
+parser$add_argument('--perturbations-augmented')
+parser$add_argument('--samples-LNLGIS')
+parser$add_argument('--samples-LNLGISSIF')
+parser$add_argument('--xbase-monthly-2x25')
+parser$add_argument('--output')
+args <- parser$parse_args()
 
 perturbations_base <- fst::read_fst(args$perturbations_augmented)
 samples_LNLGIS <- readRDS(args$samples_LNLGIS)
@@ -84,7 +84,7 @@ prior_emissions <- perturbations %>%
   group_by(inventory_season_latitude, inventory, season, latitude) %>%
   summarise(value = sum(value), .groups = 'drop') %>%
   select(-inventory_season_latitude) %>%
-  mutate(estimate = 'Prior mode')
+  mutate(estimate = 'SiB4')
 
 posterior_emissions_LNLGIS <- compute_posterior(
   prior_emissions,
@@ -137,7 +137,7 @@ emissions <- bind_rows(
     )),
     estimate = factor(
       estimate,
-      levels = c('Prior mode', 'v2.0 posterior', 'v2.S posterior', 'FLUXCOM')
+      levels = c('FLUXCOM', 'SiB4', 'v2.0 posterior', 'v2.S posterior')
     )
   )
 

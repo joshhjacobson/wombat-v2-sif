@@ -25,10 +25,10 @@ flux_key <- list(
     symmetric = FALSE,
     mean_breaks = round(seq(-12, 0, by = 2), 1),
     mean_limits = c(-14, 0),
-    diff_breaks = round(seq(-8, 8, by = 2), 1),
-    diff_limits = c(-10, 10),
-    sd_breaks = round(seq(0, 0.25, by = 0.05), 3),
-    sd_limits = c(0, 0.25 + 1.5 * 0.05)
+    diff_breaks = round(seq(-6, 6, by = 2), 1),
+    diff_limits = c(-8, 8),
+    sd_breaks = round(seq(0, 0.4, by = 0.1), 1),
+    sd_limits = c(0, 0.4 + 1.5 * 0.1)
   ),
   'resp' = list(
     name = 'bio_resp_tot',
@@ -40,10 +40,10 @@ flux_key <- list(
     symmetric = FALSE,
     mean_breaks = round(seq(0, 12, by = 2), 1),
     mean_limits = c(0, 14),
-    diff_breaks = round(seq(-8, 8, by = 2), 1),
-    diff_limits = c(-10, 10),
-    sd_breaks = round(seq(0, 0.25, by = 0.05), 3),
-    sd_limits = c(0, 0.25 + 1.5 * 0.05)
+    diff_breaks = round(seq(-6, 6, by = 2), 1),
+    diff_limits = c(-8, 8),
+    sd_breaks = round(seq(0, 0.4, by = 0.1), 1),
+    sd_limits = c(0, 0.4 + 1.5 * 0.1)
   ),
   'nee' = list(
     name = 'nee',
@@ -53,12 +53,12 @@ flux_key <- list(
     palette = 'bam',
     reverse = TRUE,
     symmetric = TRUE,
-    mean_breaks = round(seq(-2.5, 2.5, by = 0.5), 1),
-    mean_limits = c(-2.5, 2.5),
+    mean_breaks = round(seq(-1.5, 1.5, by = 0.5), 1),
+    mean_limits = c(-2, 2),
     diff_breaks = round(seq(-2.5, 2.5, by = 0.5), 1),
     diff_limits = c(-3, 3),
     sd_breaks = round(seq(0, 0.1, by = 0.025), 3),
-    sd_limits = c(0, 0.1 + 1.5 * 0.025)
+    sd_limits = c(0, 0.125)
   )
 )
 if (!(args$flux_component %in% names(flux_key))) {
@@ -97,8 +97,8 @@ average_posterior_mean_wombat <- six_year_average_stars %>%
     reverse = flux_key$reverse,
     symmetric = flux_key$symmetric,
     label_precision = flux_key$label_precision,
-    drop_second_labels = flux_key$drop_second_labels,
-    show_excess = TRUE
+    drop_second_labels = FALSE,
+    show_excess = ifelse(flux_key$name == 'nee', FALSE, TRUE)
   ) +
     labs(fill = flux_label, title = 'WOMBAT v2.S post. mean')
 
@@ -110,11 +110,12 @@ average_posterior_sd_wombat <- six_year_average_stars %>%
     value_scale,
     flux_key$sd_breaks,
     flux_key$sd_limits,
-    'lapaz',
+    'devon',
     symmetric = FALSE,
     reverse = TRUE,
+    trim_colours = TRUE,
     drop_second_labels = FALSE,
-    label_precision = 2,
+    label_precision = ifelse(flux_key$name == 'nee', 3, 1),
     show_excess = TRUE
   ) +
     labs(fill = flux_label, title = 'WOMBAT v2.S post. std. dev.')
@@ -129,8 +130,8 @@ average_diff_wombat <- six_year_average_stars %>%
     flux_key$diff_limits,
     'vik',
     symmetric = TRUE,
-    label_precision = flux_key$label_precision,
-    drop_second_labels = ifelse(flux_key$name == 'nee', TRUE, FALSE),
+    label_precision = min(c(1, flux_key$label_precision)),
+    drop_second_labels = flux_key$drop_second_labels,
     show_excess = FALSE
   ) +
     labs(fill = diff_label, title = 'WOMBAT v2.S - v2.0')
@@ -145,8 +146,8 @@ average_diff_fluxcom <- six_year_average_stars %>%
     flux_key$diff_limits,
     'vik',
     symmetric = TRUE,
-    label_precision = flux_key$label_precision,
-    drop_second_labels = ifelse(flux_key$name == 'nee', TRUE, FALSE),
+    label_precision = min(c(1, flux_key$label_precision)),
+    drop_second_labels = flux_key$drop_second_labels,
     show_excess = FALSE
   ) +
     labs(fill = diff_label, title = 'WOMBAT v2.S - FLUXCOM')
@@ -170,18 +171,24 @@ output <- wrap_plots(
     average_posterior_mean_wombat + top_theme,
     average_posterior_sd_wombat + top_theme,
     ncol = 2
-  ),
+  ) &
+    theme(
+      legend.position = 'bottom',
+      legend.margin = margin(t = -0.4, r = 0, b = -0.2, l = 0, unit = 'cm')
+    ),
   wrap_plots(
     average_diff_wombat + base_theme,
     average_diff_fluxcom + base_theme,
     ncol = 2,
     guides = 'collect'
-  ),
+  ) &
+    theme(
+      legend.position = 'bottom',
+      legend.margin = margin(t = -0.4, r = 0, b = 0, l = 0, unit = 'cm')
+    ),
   nrow = 2
 ) &
   theme(
-    legend.position = 'bottom',
-    legend.margin = margin(t = -0.4, r = 0.05, b = -0.2, l = 0.05, unit = 'cm'),
     legend.title = element_text(
       size = 8,
       colour = '#23373b',

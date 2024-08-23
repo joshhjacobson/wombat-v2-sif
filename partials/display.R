@@ -21,16 +21,18 @@ DISPLAY_SETTINGS <- list(
   full_height = 20,
   png_plot_dpi = 320,
   colour_key = c(
-    'Prior mode' = 'grey50',
+    'FLUXCOM' = '#ddaa33',
+    'SiB4' = 'grey50',
     'v2.0 posterior' = '#6699cc',
     'v2.S posterior' = '#228833',
-    'FLUXCOM' = '#ddaa33'
+    'Bottom-up' = 'grey50'
   ),
   linetype_key = c(
-    'Prior mode' = '11',
+    'FLUXCOM' = '1131',
+    'SiB4' = '11',
     'v2.0 posterior' = '41',
     'v2.S posterior' = '41',
-    'FLUXCOM' = '1131'
+    'Bottom-up' = '11'
   )
 )
 
@@ -145,21 +147,22 @@ scale_fill_binned_custom <- function(
   palette_name,
   symmetric = FALSE,
   reverse = FALSE,
+  trim_colours = FALSE,
   na.value = 'black',
   guide = 'coloursteps',
   aesthetics = 'fill',
   ...
 ) {
   n_colours <- ifelse(symmetric, 10, 9)
-  palette <- scales::gradient_n_pal(
-    scico::scico(
-      n_colours,
-      palette = palette_name,
-      direction = ifelse(reverse, -1, 1)
-    ),
-    NULL,
-    'Lab'
+  palette_colours <- scico::scico(
+    n_colours,
+    palette = palette_name,
+    direction = ifelse(reverse, -1, 1)
   )
+  if (trim_colours) {
+    palette_colours <- palette_colours[4:n_colours - 2]
+  }
+  palette <- scales::gradient_n_pal(palette_colours, NULL, 'Lab')
   binned_scale(
     aesthetics = 'fill',
     palette = function(x) {
@@ -182,6 +185,7 @@ plot_map <- function(
   drop_second_labels = FALSE,
   symmetric = FALSE,
   reverse = FALSE,
+  trim_colours = FALSE,
   bar_width = 11
 ) {
   base_labels <- sprintf(paste0('%.', label_precision, 'f'), breaks)
@@ -236,6 +240,7 @@ plot_map <- function(
       labels = labels,
       symmetric = symmetric,
       reverse = reverse,
+      trim_colours = trim_colours,
       guide = guide_coloursteps(
         title.position = 'top',
         title.hjust = 0.5,

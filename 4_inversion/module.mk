@@ -305,7 +305,7 @@ $(SAMPLES_LNLGISSIF): \
 	$(H_IS) \
 	$(H_SIF)
 	Rscript $< \
-		--fix-resp-linear Region03
+		--fix-resp-linear Region03 \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \

@@ -28,7 +28,6 @@ FOSSIL_INVENTORY_PATH = data/fossil-mipv10
 FIRES_INVENTORY_PATH = data/GFED4.1s_Aleya_hemco_080321
 XBASE_DIRECTORY = data/X-Base
 XBASE_05X05_GRID = data/xbase.05x05.grid
-ALPHA_WOMBAT_V2 = data/wombat-v2-alpha-LNLGIS.fst
 SAMPLES_WOMBAT_V2 = data/wombat-v2-samples-LNLGIS.rds
 
 all:

@@ -46,11 +46,12 @@ SAMPLES_LNLG = 4_inversion/intermediates/samples-LNLG.rds
 SAMPLES_LNLGIS = 4_inversion/intermediates/samples-LNLGIS.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 
-ALPHA_ADJUSTMENT_CASES = small negative
+ALPHA_WOMBAT_V2 = 4_inversion/intermediates/alpha-wombat-v2.fst
+ALPHA_ADJUSTMENT_CASES = positive negative
 ALPHA_ADJUSTMENT_BASE = 4_inversion/intermediates/osse-alpha
 OSSE_ADJUSTED_ALPHAS = $(foreach ADJUSTMENT,$(ALPHA_ADJUSTMENT_CASES),$(ALPHA_ADJUSTMENT_BASE)-$(ADJUSTMENT).fst)
 
-OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHASMALL ALPHANEG
+OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHAP ALPHAN
 OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHA0-FIXRESP-WOSIF \
 	ALPHA0-FREERESP-WSIF \
@@ -59,18 +60,18 @@ OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHAV2-FIXRESP-WOSIF \
 	ALPHAV2-FREERESP-WSIF \
 	ALPHAV2-FREERESP-WOSIF \
-	ALPHASMALL-FIXRESP-WSIF \
-	ALPHASMALL-FIXRESP-WOSIF \
-	ALPHASMALL-FREERESP-WSIF \
-	ALPHASMALL-FREERESP-WOSIF \
-	ALPHANEG-FIXRESP-WOSIF \
-	ALPHANEG-FIXRESP-WSIF \
-	ALPHANEG-FREERESP-WOSIF \
-	ALPHANEG-FREERESP-WSIF
+	ALPHAP-FIXRESP-WSIF \
+	ALPHAP-FIXRESP-WOSIF \
+	ALPHAP-FREERESP-WSIF \
+	ALPHAP-FREERESP-WOSIF \
+	ALPHAN-FIXRESP-WSIF \
+	ALPHAN-FIXRESP-WOSIF \
+	ALPHAN-FREERESP-WSIF \
+	ALPHAN-FREERESP-WOSIF
 OSSE_FLAGS_ALPHA0 = --seed 0 --bio-clim-slice-w 1
 OSSE_FLAGS_ALPHAV2 = --seed 1 --true-alpha $(ALPHA_WOMBAT_V2)
-OSSE_FLAGS_ALPHASMALL = --seed 2 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-small.fst
-OSSE_FLAGS_ALPHANEG = --seed 3 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-negative.fst
+OSSE_FLAGS_ALPHAP = --seed 2 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-positive.fst
+OSSE_FLAGS_ALPHAN = --seed 3 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-negative.fst
 OSSE_FLAGS_ALPHA = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_FLAGS_$(findstring $(OSSE_BASE_CASE), $*)))
 OSSE_FLAGS_FREERESP = --fix-resp-linear Region03
 OSSE_FLAGS_RESP = $(OSSE_FLAGS_$(findstring FREERESP, $*))
@@ -180,13 +181,13 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 			$(H_SIF) \
 		--output $@
 
-ADJUSTED_ALPHA_DEPS = 4_inversion/src/osse-alpha.R \
+ADJUSTED_ALPHA_DEPS = 4_inversion/src/osse-alpha-adjusted.R \
 	$(REGION_MASK) \
 	$(SIB4_CLIMATOLOGY_ASSIM_2X25) \
 	$(SIB4_CLIMATOLOGY_RESP_TOT_2X25) \
 	$(BASIS_VECTORS) \
 	$(CONTROL_EMISSIONS)
-ADJUSTED_ALPHA_CALL = Rscript 4_inversion/src/osse-alpha.R \
+ADJUSTED_ALPHA_CALL = Rscript 4_inversion/src/osse-alpha-adjusted.R \
 	--region-mask $(REGION_MASK) \
 	--sib4-climatology-assim $(SIB4_CLIMATOLOGY_ASSIM_2X25) \
 	--sib4-climatology-resp-tot $(SIB4_CLIMATOLOGY_RESP_TOT_2X25) \
@@ -195,7 +196,7 @@ ADJUSTED_ALPHA_CALL = Rscript 4_inversion/src/osse-alpha.R \
 	--alpha-wombat-v2 $(ALPHA_WOMBAT_V2) \
 	--fix-resp-linear Region03
 
-$(ALPHA_ADJUSTMENT_BASE)-small.fst: \
+$(ALPHA_ADJUSTMENT_BASE)-positive.fst: \
 	$(ADJUSTED_ALPHA_DEPS)
 	$(ADJUSTED_ALPHA_CALL) \
 		--delta 0.1 \
@@ -205,6 +206,13 @@ $(ALPHA_ADJUSTMENT_BASE)-negative.fst: \
 	$(ADJUSTED_ALPHA_DEPS)
 	$(ADJUSTED_ALPHA_CALL) \
 		--delta -0.1 \
+		--output $@
+
+$(ALPHA_WOMBAT_V2): \
+	4_inversion/src/osse-alpha-v2.R \
+	$(SAMPLES_WOMBAT_V2)
+	Rscript $< \
+		--samples-wombat-v2 $(SAMPLES_WOMBAT_V2) \
 		--output $@
 
 # Real-data inversions

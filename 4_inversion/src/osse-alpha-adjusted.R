@@ -2,6 +2,9 @@ library(argparse)
 library(dplyr, warn.conflicts = FALSE)
 library(Rcpp)
 
+rcpp_cache_dir <- Sys.getenv('RCPP_CACHE_DIR')
+options(rcpp.cache.dir = if (rcpp_cache_dir == '') tempdir() else rcpp_cache_dir)
+
 source(Sys.getenv('UTILS_PARTIAL'))
 sourceCpp(Sys.getenv('UTILS_CPP_PARTIAL'))
 

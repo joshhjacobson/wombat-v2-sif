@@ -1,9 +1,7 @@
 $(shell mkdir -p 3_sif/intermediates)
 $(shell mkdir -p 3_sif/figures)
 
-SIB4_SIF_MONTHLY = 3_sif/intermediates/sib4-monthly-sif.nc
 SIB4_SIF_HOURLY = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-sif-$(SIB4_YEAR).nc)
-SIB4_SIF_MONTHLY_2X25 = 3_sif/intermediates/sib4-monthly-sif-2x25.nc
 SIB4_SIF_ASSIM_HOURLY_2X25 = $(foreach SIB4_YEAR,$(SIB4_INPUT_YEARS),3_sif/intermediates/sib4-hourly-sif-assim-2x25-$(SIB4_YEAR).nc)
 MODEL_SIF_ASSIM = 3_sif/intermediates/model-sif-assim.fst
 
@@ -76,10 +74,6 @@ $(MODEL_SIF_ASSIM): \
 		--output $@
 
 # SIF and ASSIM inventories
-$(SIB4_SIF_MONTHLY_2X25): \
-	$(GEOS_2X25_GRID) \
-	$(SIB4_SIF_MONTHLY)
-	cdo -w -f nc2 -z zip_6 -remapcon,$(GEOS_2X25_GRID) $(SIB4_SIF_MONTHLY) $@
 
 $(SIB4_SIF_ASSIM_HOURLY_2X25) &: \
 	3_sif/src/regrid-sif-assim.sh \
@@ -95,14 +89,6 @@ $(SIB4_SIF_ASSIM_HOURLY_2X25) &: \
 # SiB4 SIF units are listed as W/m2/nm/sr but are actually W/m^2/µm/sr
 # See SIF section in SiB4 technical description: https://hdl.handle.net/10217/200691
 # Also see the related paper on the canopy scaling method: https://doi.org/10.1111/gcb.12948
-$(SIB4_SIF_MONTHLY):
-	cdo -v -z zip_6 \
-		-setattribute,sif@units=W/m^2/µm/sr \
-		-monmean \
-		-vertsum \
-		-select,name=sif \
-		$(SIB4_HOURLY_DIRECTORY)/sib4-hourly-{2014,2015,2016,2017,2018,2019,2020}-* \
-		$@
 
 $(SIB4_SIF_HOURLY) &: \
 	$(SIB4_HOURLY_DIRECTORY)
@@ -117,6 +103,7 @@ $(SIB4_SIF_HOURLY) &: \
 		3_sif/intermediates/sib4-hourly-sif-
 
 # Observations (units: W/m^2/µm/sr)
+
 $(OCO2_OBSERVATIONS_SIF): \
 	3_sif/src/observations-sif.R \
 	$(OCO2_SIF_DIRECTORY)

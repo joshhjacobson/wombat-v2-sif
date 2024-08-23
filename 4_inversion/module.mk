@@ -1,5 +1,8 @@
 $(shell mkdir -p 4_inversion/intermediates)
 
+ALPHA_PRECISION_PARTIAL = 4_inversion/src/partials/alpha-precision.R
+export ALPHA_PRECISION_PARTIAL
+
 SIB4_CLIMATOLOGY_ASSIM_2X25 = 4_inversion/intermediates/sib4-climatology-assim-2x25.nc
 SIB4_CLIMATOLOGY_RESP_TOT_2X25 = 4_inversion/intermediates/sib4-climatology-resp-tot-2x25.nc
 
@@ -8,6 +11,7 @@ PERTURBATIONS = 4_inversion/intermediates/perturbations.fst
 OBSERVATIONS = 4_inversion/intermediates/observations.fst
 BASIS_VECTORS = 4_inversion/intermediates/basis-vectors.fst
 CONSTRAINTS = 4_inversion/intermediates/constraints.rds
+PRIOR_BASE = 4_inversion/intermediates/prior-base.rds
 PRIOR = 4_inversion/intermediates/prior.rds
 SENSITIVITIES_BASE_PART_1 = 4_inversion/intermediates/sensitivities-base-oco2-hourly-part-1.fst \
 	4_inversion/intermediates/sensitivities-base-obspack-hourly-assim-0-part-1.fst \
@@ -42,15 +46,11 @@ SAMPLES_LNLG = 4_inversion/intermediates/samples-LNLG.rds
 SAMPLES_LNLGIS = 4_inversion/intermediates/samples-LNLGIS.rds
 SAMPLES_LNLGISSIF = 4_inversion/intermediates/samples-LNLGISSIF.rds
 
-ALPHA_ADJUSTMENT_CASES = small medium negative
+ALPHA_ADJUSTMENT_CASES = small negative
 ALPHA_ADJUSTMENT_BASE = 4_inversion/intermediates/osse-alpha
 OSSE_ADJUSTED_ALPHAS = $(foreach ADJUSTMENT,$(ALPHA_ADJUSTMENT_CASES),$(ALPHA_ADJUSTMENT_BASE)-$(ADJUSTMENT).fst)
-ALPHA_SIM = 4_inversion/intermediates/osse-alpha-sim.fst
-OSSE_ALPHAS = $(ALPHA_WOMBAT_V2) $(ALPHA_SIM)
 
-SAMPLES_PRIOR = 4_inversion/intermediates/samples-prior-region-constraint.rds
-
-OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHASMALL ALPHASIM
+OSSE_BASE_CASES = ALPHA0 ALPHAV2 ALPHASMALL ALPHANEG
 OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHA0-FIXRESP-WOSIF \
 	ALPHA0-FREERESP-WSIF \
@@ -63,16 +63,14 @@ OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHASMALL-FIXRESP-WOSIF \
 	ALPHASMALL-FREERESP-WSIF \
 	ALPHASMALL-FREERESP-WOSIF \
-	ALPHASIM-FIXRESP-WOSIF \
-	ALPHASIM-FIXRESP-WSIF \
-	ALPHASIM-FREERESP-WOSIF \
-	ALPHASIM-FREERESP-WSIF
+	ALPHANEG-FIXRESP-WOSIF \
+	ALPHANEG-FIXRESP-WSIF \
+	ALPHANEG-FREERESP-WOSIF \
+	ALPHANEG-FREERESP-WSIF
 OSSE_FLAGS_ALPHA0 = --seed 0 --bio-clim-slice-w 1
 OSSE_FLAGS_ALPHAV2 = --seed 1 --true-alpha $(ALPHA_WOMBAT_V2)
-OSSE_FLAGS_ALPHASIM = --seed 2 --true-alpha $(ALPHA_SIM)
 OSSE_FLAGS_ALPHASMALL = --seed 2 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-small.fst
-OSSE_FLAGS_ALPHAMD = --seed 3 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-medium.fst
-OSSE_FLAGS_ALPHANEG = --seed 4 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-negative.fst
+OSSE_FLAGS_ALPHANEG = --seed 3 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-negative.fst
 OSSE_FLAGS_ALPHA = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_FLAGS_$(findstring $(OSSE_BASE_CASE), $*)))
 OSSE_FLAGS_FREERESP = --fix-resp-linear Region03
 OSSE_FLAGS_RESP = $(OSSE_FLAGS_$(findstring FREERESP, $*))
@@ -82,21 +80,12 @@ OSSE_OBSERVATIONS_CASES = $(foreach OSSE_BASE_CASE,$(OSSE_BASE_CASES),$(OSSE_OBS
 OSSE_SAMPLES_BASE = 4_inversion/intermediates/osse-samples
 OSSE_SAMPLES_CASES = $(foreach OSSE_CASE,$(OSSE_CASES),$(OSSE_SAMPLES_BASE)-$(OSSE_CASE).rds)
 
-OSSE_SAMPLES_CASES += \
-	4_inversion/intermediates/osse-samples-ALPHAV2-FREERESP-WSIF-unconstrained.rds \
-	4_inversion/intermediates/osse-samples-ALPHAV2-FIXRESP-WOSIF-unconstrained.rds \
-	4_inversion/intermediates/osse-samples-ALPHASIM-FREERESP-WSIF-unconstrained.rds \
-	4_inversion/intermediates/osse-samples-ALPHASIM-FIXRESP-WOSIF-unconstrained.rds \
-	4_inversion/intermediates/osse-samples-ALPHASMALL-FREERESP-FP-WSIF.rds \
-	4_inversion/intermediates/osse-samples-ALPHANEG-FREERESP-FP-WSIF.rds \
-	4_inversion/intermediates/osse-samples-ALPHASMALL-FREERESP-ALL-WSIF.rds \
-	4_inversion/intermediates/osse-samples-ALPHANEG-FREERESP-ALL-WSIF.rds
-
 
 # OSSE inversions
 
 $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 	4_inversion/src/samples.R \
+	$(ALPHA_PRECISION_PARTIAL) \
 	$(OSSE_OBSERVATIONS_CASES) \
 	$(BASIS_VECTORS) \
 	$(HYPERPARAMETER_ESTIMATES) \
@@ -113,7 +102,6 @@ $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
-		--prior-samples $(SAMPLES_PRIOR) \
 		--constraints $(CONSTRAINTS) \
 		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
 		--overall-observation-mode LN LG IS \
@@ -129,6 +117,7 @@ $(OSSE_SAMPLES_BASE)-%-WOSIF.rds: \
 
 $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 	4_inversion/src/samples.R \
+	$(ALPHA_PRECISION_PARTIAL) \
 	$(OSSE_OBSERVATIONS_CASES) \
 	$(BASIS_VECTORS) \
 	$(HYPERPARAMETER_ESTIMATES) \
@@ -145,139 +134,6 @@ $(OSSE_SAMPLES_BASE)-%-WSIF.rds: \
 		--n-samples 200 \
 		--n-warm-up 100 \
 		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
-		--basis-vectors $(BASIS_VECTORS) \
-		--prior $(PRIOR) \
-		--prior-samples $(SAMPLES_PRIOR) \
-		--constraints $(CONSTRAINTS) \
-		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
-		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
-		--control \
-			2_matching/intermediates/runs/base/oco2-hourly.fst \
-			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-			3_sif/intermediates/oco2-hourly-sif.fst \
-		--component-name LNLG IS SIF \
-		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
-		--component-transport-matrix \
-			$(H_LNLG) \
-			$(H_IS) \
-			$(H_SIF) \
-		--output $@
-
-$(OSSE_SAMPLES_BASE)-%-WOSIF-unconstrained.rds: \
-	4_inversion/samples-unconstrained.R \
-	$(OSSE_OBSERVATIONS_CASES) \
-	$(BASIS_VECTORS) \
-	$(HYPERPARAMETER_ESTIMATES) \
-	$(PRIOR) \
-	2_matching/intermediates/runs/base/oco2-hourly.fst \
-	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-	$(H_LNLG) \
-	$(H_IS)
-	Rscript $< $(OSSE_FLAGS) \
-		--n-samples 200 \
-		--n-warm-up 100 \
-		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
-		--basis-vectors $(BASIS_VECTORS) \
-		--prior $(PRIOR) \
-		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
-		--overall-observation-mode LN LG IS \
-		--control \
-			2_matching/intermediates/runs/base/oco2-hourly.fst \
-			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-		--component-name LNLG IS \
-		--component-parts "LN|LG" IS \
-		--component-transport-matrix \
-			$(H_LNLG) \
-			$(H_IS) \
-		--output $@
-
-$(OSSE_SAMPLES_BASE)-%-WSIF-unconstrained.rds: \
-	4_inversion/samples-unconstrained.R \
-	$(OSSE_OBSERVATIONS_CASES) \
-	$(BASIS_VECTORS) \
-	$(HYPERPARAMETER_ESTIMATES) \
-	$(PRIOR) \
-	2_matching/intermediates/runs/base/oco2-hourly.fst \
-	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-	3_sif/intermediates/oco2-hourly-sif.fst \
-	$(H_LNLG) \
-	$(H_IS) \
-	$(H_SIF)
-	Rscript $< $(OSSE_FLAGS) \
-		--n-samples 200 \
-		--n-warm-up 100 \
-		--observations $(OSSE_OBSERVATIONS_BASE)-$(firstword $(subst -, ,$*)).fst \
-		--basis-vectors $(BASIS_VECTORS) \
-		--prior $(PRIOR) \
-		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
-		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
-		--control \
-			2_matching/intermediates/runs/base/oco2-hourly.fst \
-			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-			3_sif/intermediates/oco2-hourly-sif.fst \
-		--component-name LNLG IS SIF \
-		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
-		--component-transport-matrix \
-			$(H_LNLG) \
-			$(H_IS) \
-			$(H_SIF) \
-		--output $@
-
-
-$(OSSE_SAMPLES_BASE)-%-FREERESP-FP-WSIF.rds: \
-	4_inversion/samples-flat-prior.R \
-	$(OSSE_OBSERVATIONS_CASES) \
-	$(BASIS_VECTORS) \
-	4_inversion/intermediates/hyperparameter-estimates-flat-prior-bio.fst \
-	$(CONSTRAINTS) \
-	4_inversion/intermediates/prior-flat-bio.fst \
-	2_matching/intermediates/runs/base/oco2-hourly.fst \
-	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-	3_sif/intermediates/oco2-hourly-sif.fst \
-	$(H_LNLG) \
-	$(H_IS) \
-	$(H_SIF)
-	Rscript $< \
-		--fix-resp-linear Region03 \
-		--n-samples 200 \
-		--n-warm-up 100 \
-		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
-		--basis-vectors $(BASIS_VECTORS) \
-		--prior 4_inversion/intermediates/prior-flat-bio.fst \
-		--constraints $(CONSTRAINTS) \
-		--hyperparameter-estimates 4_inversion/intermediates/hyperparameter-estimates-flat-prior-bio.fst \
-		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
-		--control \
-			2_matching/intermediates/runs/base/oco2-hourly.fst \
-			2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-			3_sif/intermediates/oco2-hourly-sif.fst \
-		--component-name LNLG IS SIF \
-		--component-parts "LN|LG" IS "LN_SIF|LG_SIF" \
-		--component-transport-matrix \
-			$(H_LNLG) \
-			$(H_IS) \
-			$(H_SIF) \
-		--output $@
-
-# NOTE(jhj): for these inversions, the observations came from alpha's with RLT free in all land regions
-$(OSSE_SAMPLES_BASE)-%-FREERESP-ALL-WSIF.rds: \
-	4_inversion/src/samples.R \
-	$(OSSE_OBSERVATIONS_CASES) \
-	$(BASIS_VECTORS) \
-	$(HYPERPARAMETER_ESTIMATES) \
-	$(CONSTRAINTS) \
-	$(PRIOR) \
-	2_matching/intermediates/runs/base/oco2-hourly.fst \
-	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
-	3_sif/intermediates/oco2-hourly-sif.fst \
-	$(H_LNLG) \
-	$(H_IS) \
-	$(H_SIF)
-	Rscript $< \
-		--fix-resp-linear none \
-		--n-samples 200 \
-		--n-warm-up 100 \
-		--observations $(OSSE_OBSERVATIONS_BASE)-$*.fst \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
 		--constraints $(CONSTRAINTS) \
@@ -324,35 +180,6 @@ $(OSSE_OBSERVATIONS_BASE)-%.fst: \
 			$(H_SIF) \
 		--output $@
 
-$(ALPHA_WOMBAT_V2): \
-	4_inversion/src/osse-alpha-v2.R \
-	$(SAMPLES_WOMBAT_V2)
-	Rscript $< \
-		--samples-wombat-v2 $(SAMPLES_WOMBAT_V2) \
-		--output $@
-
-$(ALPHA_SIM): \
-	4_inversion/src/osse-alpha-sim.R \
-	$(SAMPLES_PRIOR)
-	Rscript $< \
-		--samples-prior $(SAMPLES_PRIOR) \
-		--output $@
-
-$(SAMPLES_PRIOR): \
-	4_inversion/src/sample-prior-region-constraint.R \
-	$(PRIOR) \
-	$(CONSTRAINTS) \
-	$(BASIS_VECTORS) \
-	$(PERTURBATIONS_AUGMENTED)
-	Rscript $< \
-		--n-samples 1000 \
-		--fix-resp-linear Region03 \
-		--prior $(PRIOR) \
-		--constraints $(CONSTRAINTS) \
-		--basis-vectors $(BASIS_VECTORS) \
-		--perturbations $(PERTURBATIONS_AUGMENTED) \
-		--output $@
-
 ADJUSTED_ALPHA_DEPS = 4_inversion/src/osse-alpha.R \
 	$(REGION_MASK) \
 	$(SIB4_CLIMATOLOGY_ASSIM_2X25) \
@@ -374,12 +201,6 @@ $(ALPHA_ADJUSTMENT_BASE)-small.fst: \
 		--delta 0.1 \
 		--output $@
 
-$(ALPHA_ADJUSTMENT_BASE)-medium.fst: \
-	$(ADJUSTED_ALPHA_DEPS)
-	$(ADJUSTED_ALPHA_CALL) \
-		--delta 0.35 \
-		--output $@
-
 $(ALPHA_ADJUSTMENT_BASE)-negative.fst: \
 	$(ADJUSTED_ALPHA_DEPS)
 	$(ADJUSTED_ALPHA_CALL) \
@@ -390,6 +211,7 @@ $(ALPHA_ADJUSTMENT_BASE)-negative.fst: \
 
 $(SAMPLES_IS): \
 	4_inversion/src/samples.R \
+	$(ALPHA_PRECISION_PARTIAL) \
 	$(OBSERVATIONS) \
 	$(BASIS_VECTORS) \
 	$(HYPERPARAMETER_ESTIMATES) \
@@ -414,6 +236,7 @@ $(SAMPLES_IS): \
 
 $(SAMPLES_LNLG): \
 	4_inversion/src/samples.R \
+	$(ALPHA_PRECISION_PARTIAL) \
 	$(OBSERVATIONS) \
 	$(BASIS_VECTORS) \
 	$(HYPERPARAMETER_ESTIMATES) \
@@ -438,6 +261,7 @@ $(SAMPLES_LNLG): \
 
 $(SAMPLES_LNLGIS): \
 	4_inversion/src/samples.R \
+	$(ALPHA_PRECISION_PARTIAL) \
 	$(OBSERVATIONS) \
 	$(BASIS_VECTORS) \
 	$(HYPERPARAMETER_ESTIMATES) \
@@ -468,6 +292,7 @@ $(SAMPLES_LNLGIS): \
 # for Region03 only; in other inversions, the default is to fix it for all land regions.
 $(SAMPLES_LNLGISSIF): \
 	4_inversion/src/samples.R \
+	$(ALPHA_PRECISION_PARTIAL) \
 	$(OBSERVATIONS) \
 	$(BASIS_VECTORS) \
 	$(HYPERPARAMETER_ESTIMATES) \
@@ -513,6 +338,7 @@ $(HYPERPARAMETER_ESTIMATES): \
 ## Inversions (1st stage) to get a residual for hyperparameter estimates
 $(RESIDUAL_1ST_STAGE): \
 	4_inversion/src/residual.R \
+	$(ALPHA_PRECISION_PARTIAL) \
 	2_matching/intermediates/runs/base/oco2-hourly.fst \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	3_sif/intermediates/oco2-hourly-sif.fst \
@@ -528,7 +354,6 @@ $(RESIDUAL_1ST_STAGE): \
 		--observations $(OBSERVATIONS) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--prior $(PRIOR) \
-		--prior-samples $(SAMPLES_PRIOR) \
 		--constraints $(CONSTRAINTS) \
 		--overall-observation-mode LN LG IS LN_SIF LG_SIF \
 		--control \
@@ -649,19 +474,25 @@ $(SENSITIVITIES_BASE_PART_1) &: \
 
 ## Preliminaries
 
-$(CONSTRAINTS): \
-	4_inversion/src/constraints-new.R \
+$(PRIOR): \
+	4_inversion/src/prior.R \
+	$(ALPHA_PRECISION_PARTIAL) \
+	$(PRIOR_BASE) \
+	$(CONSTRAINTS) \
 	$(BASIS_VECTORS) \
 	$(CONTROL_EMISSIONS) \
 	$(PERTURBATIONS)
 	Rscript $< \
+		--fix-resp-linear Region03 \
+		--prior-base $(PRIOR_BASE) \
+		--constraints $(CONSTRAINTS) \
 		--basis-vectors $(BASIS_VECTORS) \
 		--control-emissions $(CONTROL_EMISSIONS) \
 		--perturbations $(PERTURBATIONS) \
 		--output $@
 
-$(PRIOR): \
-	4_inversion/src/prior.R \
+$(PRIOR_BASE): \
+	4_inversion/src/prior-base.R \
 	$(PERTURBATIONS) \
 	$(BASIS_VECTORS)
 	# NOTE(jhj): the GpGp package may complain if the number of threads is greater
@@ -671,11 +502,35 @@ $(PRIOR): \
 		--perturbations $(PERTURBATIONS) \
 		--output $@
 
+$(CONSTRAINTS): \
+	4_inversion/src/constraints.R \
+	$(BASIS_VECTORS) \
+	$(CONTROL_EMISSIONS) \
+	$(PERTURBATIONS)
+	Rscript $< \
+		--basis-vectors $(BASIS_VECTORS) \
+		--control-emissions $(CONTROL_EMISSIONS) \
+		--perturbations $(PERTURBATIONS) \
+		--output $@
+
 $(BASIS_VECTORS): \
 	4_inversion/src/basis-vectors.R \
 	$(PERTURBATIONS)
 	Rscript $< \
 		--perturbations $(PERTURBATIONS) \
+		--output $@
+
+$(PERTURBATIONS): \
+	4_inversion/src/perturbations.R
+	Rscript $< \
+		--runs 1_transport/intermediates/runs 1_transport/intermediates/runs-r10-r15-rNZ \
+		--matched-runs 2_matching/intermediates/runs 2_matching/intermediates/runs-r10-r15-rNZ \
+		--output $@
+
+$(CONTROL_EMISSIONS): \
+	4_inversion/src/control-emissions.R
+	Rscript $< \
+		--matched-runs 2_matching/intermediates/runs \
 		--output $@
 
 $(OBSERVATIONS): \
@@ -691,19 +546,6 @@ $(OBSERVATIONS): \
 		--control-sif $(CONTROL_SIF) \
 		--start-date $(INVERSION_START_DATE) \
 		--end-date $(INVERSION_END_DATE) \
-		--output $@
-
-$(PERTURBATIONS): \
-	4_inversion/src/perturbations.R
-	Rscript $< \
-		--runs 1_transport/intermediates/runs 1_transport/intermediates/runs-r10-r15-rNZ \
-		--matched-runs 2_matching/intermediates/runs 2_matching/intermediates/runs-r10-r15-rNZ \
-		--output $@
-
-$(CONTROL_EMISSIONS): \
-	4_inversion/src/control-emissions.R
-	Rscript $< \
-		--matched-runs 2_matching/intermediates/runs \
 		--output $@
 
 $(SIB4_CLIMATOLOGY_ASSIM_2X25): \

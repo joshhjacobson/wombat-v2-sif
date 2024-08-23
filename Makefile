@@ -26,12 +26,9 @@ GEOS_CHEM_RESTART_FILE = data/GEOSChem.Restart.20140901_0000z.nc4
 GEOS_2X25_GRID = data/geos.2x25.grid
 FOSSIL_INVENTORY_PATH = data/fossil-mipv10
 FIRES_INVENTORY_PATH = data/GFED4.1s_Aleya_hemco_080321
-FLUXCOM_DIRECTORY = data/FLUXCOM_RS_members
-FLUXCOM_05X05_GRID = data/fluxcom.05x05.grid
 XBASE_DIRECTORY = data/X-Base
 XBASE_05X05_GRID = data/xbase.05x05.grid
 ALPHA_WOMBAT_V2 = data/wombat-v2-alpha-LNLGIS.fst
-SAMPLES_WOMBAT_V2 = data/wombat-v2-samples-LNLGIS.rds
 
 all:
 	echo "Please refer to the README for instructions on how to run this project"

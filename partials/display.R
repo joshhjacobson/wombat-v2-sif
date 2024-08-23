@@ -34,6 +34,65 @@ DISPLAY_SETTINGS <- list(
   )
 )
 
+REGION_PLOT_SETTINGS <- list(
+  'global' = list(
+    latitude_lower = -90,
+    latitude_upper = 90,
+    lowercase_title = 'global',
+    titlecase_title = 'Global',
+    numeric_title = 'Global',
+    in_supplement = FALSE
+  ),
+  'n-boreal' = list(
+    latitude_lower = 50,
+    latitude_upper = 90,
+    lowercase_title = 'northern boreal (50°N-90°N)',
+    titlecase_title = 'Northern boreal (50°N-90°N)',
+    numeric_title = '50°N-90°N',
+    in_supplement = TRUE
+  ),
+  'n-temperate' = list(
+    latitude_lower = 23,
+    latitude_upper = 50,
+    lowercase_title = 'northern temperate (23°N-50°N)',
+    titlecase_title = 'Northern temperate (23°N-50°N)',
+    numeric_title = '23°N-50°N',
+    in_supplement = TRUE
+  ),
+  'tropical' = list(
+    latitude_lower = -23,
+    latitude_upper = 23,
+    lowercase_title = 'tropical (23°S-23°N)',
+    titlecase_title = 'Tropical (23°S-23°N)',
+    numeric_title = '23°S-23°N',
+    in_supplement = TRUE
+  ),
+  'n-tropical' = list(
+    latitude_lower = 0,
+    latitude_upper = 23,
+    lowercase_title = 'northern tropical (0°-23°N)',
+    titlecase_title = 'Northern tropical (0°-23°N)',
+    numeric_title = '0°-23°N',
+    in_supplement = TRUE
+  ),
+  's-tropical' = list(
+    latitude_lower = -23,
+    latitude_upper = 0,
+    lowercase_title = 'southern tropical (23°S-0°)',
+    titlecase_title = 'Southern tropical (23°S-0°)',
+    numeric_title = '23°S-0°',
+    in_supplement = TRUE
+  ),
+  's-extratropical' = list(
+    latitude_lower = -90,
+    latitude_upper = -23,
+    lowercase_title = 'southern extratropical (90°S-23°S)',
+    titlecase_title = 'Southern extratropical (90°S-23°S)',
+    numeric_title = '90°S-23°S',
+    in_supplement = TRUE
+  )
+)
+
 get_legend <- function(plot_object){
   tmp <- ggplot_gtable(ggplot_build(plot_object))
   legend_index <- which(sapply(tmp$grobs, function(x) x$name) == 'guide-box')
@@ -91,23 +150,16 @@ scale_fill_binned_custom <- function(
   aesthetics = 'fill',
   ...
 ) {
-  palette_colours <- if (symmetric && palette_name %in% c('RdBu', 'PuOr')) {
-    scales::brewer_pal('div', palette_name, -1)(10)[2:9]
-  # } else if (symmetric) {
-  #   if (palette_name %in% row.names(colorspace::divergingx_palettes())) {
-  #     colorspace::divergingx_hcl(10, palette = palette_name, rev = reverse)
-  #   } else {
-  #     colorspace::diverging_hcl(10, palette = palette_name, rev = reverse)
-  #   }
-  } else {
-    # if (reverse) {
-    #   colorspace::sequential_hcl(11, palette = palette_name, rev = reverse)[1:9]
-    # } else {
-    #   colorspace::sequential_hcl(11, palette = palette_name, rev = reverse)[3:11]
-    # }
-    scico::scico(11, palette = palette_name, direction = ifelse(reverse, -1, 1))
-  }
-  palette <- scales::gradient_n_pal(palette_colours, NULL, 'Lab')
+  n_colours <- ifelse(symmetric, 10, 9)
+  palette <- scales::gradient_n_pal(
+    scico::scico(
+      n_colours,
+      palette = palette_name,
+      direction = ifelse(reverse, -1, 1)
+    ),
+    NULL,
+    'Lab'
+  )
   binned_scale(
     aesthetics = 'fill',
     palette = function(x) {

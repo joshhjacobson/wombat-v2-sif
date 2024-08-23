@@ -11,6 +11,7 @@ rcpp_cache_dir <- Sys.getenv('RCPP_CACHE_DIR')
 options(rcpp.cache.dir = if (rcpp_cache_dir == '') tempdir() else rcpp_cache_dir)
 
 source(Sys.getenv('UTILS_PARTIAL'))
+source(Sys.getenv('ALPHA_PRECISION_PARTIAL'))
 sourceCpp(Sys.getenv('UTILS_CPP_PARTIAL'))
 sourceCpp(Sys.getenv('HMC_EXACT_CPP_PARTIAL'))
 
@@ -104,7 +105,6 @@ parser$add_argument('--basis-vectors')
 parser$add_argument('--control', nargs = '+')
 parser$add_argument('--constraints')
 parser$add_argument('--prior')
-parser$add_argument('--prior-samples')
 parser$add_argument('--hyperparameter-estimates')
 parser$add_argument('--observations')
 parser$add_argument('--overall-observation-mode', nargs = '+')
@@ -156,7 +156,6 @@ stopifnot(!anyNA(observations$error))
 
 basis_vectors <- read_fst(args$basis_vectors)
 prior <- readRDS(args$prior)
-prior_samples <- readRDS(args$prior_samples)
 
 n_all_alpha <- nrow(basis_vectors)
 # NOTE(mgnb): values of alpha fixed to zero are given infinite precision
@@ -173,40 +172,13 @@ alpha_prior_mean <- prior$mean[alpha_to_include]
 alpha_prior_precision_base <- prior$precision[alpha_to_include, alpha_to_include]
 n_alpha <- length(alpha_prior_mean)
 
-get_region_intercept_indices <- function(region_name) {
-  bio_inventories_region <- if (region_name %in% args$fix_resp_linear) {
-    'bio_assim'
-  } else {
-    c('bio_assim', 'bio_resp_tot')
-  }
-  with(
-    basis_vectors[alpha_to_include, ],
-    which(
-      (region == region_name) &
-      (inventory %in% bio_inventories_region) &
-      (component == 'intercept')
-    )
-  )
-}
-# Assign prior intercepts
-for (region_i in seq_len(ncol(prior_samples$intercepts))) {
-  region_name <- colnames(prior_samples$intercepts)[region_i]
-  bio_intercept_indices_i <- get_region_intercept_indices(region_name)
-
-  bio_intercept_i <- prior_samples$intercepts[, region_i]
-  if (region_name %in% args$fix_resp_linear) {
-    bio_intercept_i <- bio_intercept_i[1]
-  }
-
-  stopifnot(length(bio_intercept_indices_i) == length(bio_intercept_i))
-  alpha_prior_mean[bio_intercept_indices_i] <- bio_intercept_i
-}
-
 bio_inventories <- c('bio_assim', 'bio_resp_tot')
 bio_regions <- sort(unique(basis_vectors$region))[1 : 11]
 resp_bio_all_fixed <- identical(args$fix_resp_linear, as.character(bio_regions))
 resp_bio_all_free <- any(tolower(args$fix_resp_linear) %in% c('null', 'none', 'na'))
 n_bio_regions <- length(bio_regions)
+
+bio_indices <- get_bio_indices(basis_vectors[alpha_to_include, ])
 
 part_indices <- seq_along(args$component_name)
 observations$component_name <- ''
@@ -408,111 +380,6 @@ yt_Q_epsilon_y_parts <- lapply(hyperparameter_group_indices, function(i) {
   }
 })
 
-get_diagonal_pairs <- function(indices_list) {
-  cbind(
-    # NOTE(mgnb): if resp is present, the rbind cause these to alternate between assim/resp
-    as.vector(do.call(rbind, indices_list)),
-    as.vector(do.call(rbind, indices_list))
-  )
-}
-get_off_diagonal_pairs <- function(indices_list) {
-  rbind(
-    cbind(indices_list$bio_assim, indices_list$bio_resp_tot),
-    cbind(indices_list$bio_resp_tot, indices_list$bio_assim)
-  )
-}
-
-if (resp_bio_all_fixed) {
-  climatology_bio_assim_linear_indices <- with(basis_vectors[alpha_to_include, ], list(
-    bio_assim = which(inventory == 'bio_assim' & component %in% c('intercept', 'trend'))
-  ))
-  climatology_bio_assim_linear_diagonals <- get_diagonal_pairs(climatology_bio_assim_linear_indices)
-} else if (resp_bio_all_free) {
-  climatology_bio_linear_indices <- with(basis_vectors[alpha_to_include, ], list(
-    bio_assim = which(inventory == 'bio_assim' & component %in% c('intercept', 'trend')),
-    bio_resp_tot = which(inventory == 'bio_resp_tot' & component %in% c('intercept', 'trend'))
-  ))
-  climatology_bio_linear_diagonals <- get_diagonal_pairs(climatology_bio_linear_indices)
-  climatology_bio_linear_off_diagonals <- get_off_diagonal_pairs(climatology_bio_linear_indices)
-} else {
-  climatology_bio_assim_linear_indices <- with(basis_vectors[alpha_to_include, ], list(
-    bio_assim = which(
-      inventory == 'bio_assim' &
-        component %in% c('intercept', 'trend') &
-        region %in% args$fix_resp_linear
-    )
-  ))
-  climatology_bio_linear_indices <- with(basis_vectors[alpha_to_include, ], list(
-    bio_assim = which(
-      inventory == 'bio_assim' &
-        component %in% c('intercept', 'trend') &
-        !(region %in% args$fix_resp_linear)
-    ),
-    bio_resp_tot = which(
-      inventory == 'bio_resp_tot' &
-        component %in% c('intercept', 'trend') &
-        !(region %in% args$fix_resp_linear)
-    )
-  ))
-  climatology_bio_assim_linear_diagonals <- get_diagonal_pairs(climatology_bio_assim_linear_indices)
-  climatology_bio_linear_diagonals <- get_diagonal_pairs(climatology_bio_linear_indices)
-  climatology_bio_linear_off_diagonals <- get_off_diagonal_pairs(climatology_bio_linear_indices)
-}
-
-climatology_bio_non_linear_indices <- with(basis_vectors[alpha_to_include, ], list(
-  bio_assim = which(inventory == 'bio_assim' & !(component %in% c('intercept', 'trend', 'residual'))),
-  bio_resp_tot = which(inventory == 'bio_resp_tot' & !(component %in% c('intercept', 'trend', 'residual')))
-))
-climatology_bio_non_linear_diagonals <- get_diagonal_pairs(climatology_bio_non_linear_indices)
-climatology_bio_non_linear_off_diagonals <- get_off_diagonal_pairs(climatology_bio_non_linear_indices)
-
-residual_bio_indices_i <- lapply(bio_regions, function(region_i) {
-  which(with(basis_vectors[alpha_to_include, ], {
-    region == region_i & inventory != 'ocean' & component == 'residual'
-  }))
-})
-
-n_times <- length(residual_bio_indices_i[[1]]) / 2
-
-get_alpha_prior_precision <- function(
-  rho_bio_clim, w_bio_clim,
-  kappa_bio_resid, rho_bio_resid, w_bio_resid
-) {
-  output <- alpha_prior_precision_base
-
-  # Bio climatology process
-  Q_pair <- solve(rbind(
-    c(1 / w_bio_clim[1], rho_bio_clim / sqrt(prod(w_bio_clim))),
-    c(rho_bio_clim / sqrt(prod(w_bio_clim)), 1 / w_bio_clim[2])
-  ))
-  if (resp_bio_all_fixed) {
-    output[climatology_bio_assim_linear_diagonals] <- w_bio_clim[1]
-  } else if (resp_bio_all_free) {
-    output[climatology_bio_linear_diagonals] <- diag(Q_pair)
-    output[climatology_bio_linear_off_diagonals] <- Q_pair[1, 2]
-  } else {
-    output[climatology_bio_assim_linear_diagonals] <- w_bio_clim[1]
-    output[climatology_bio_linear_diagonals] <- diag(Q_pair)
-    output[climatology_bio_linear_off_diagonals] <- Q_pair[1, 2]
-  }
-  output[climatology_bio_non_linear_diagonals] <- diag(Q_pair)
-  output[climatology_bio_non_linear_off_diagonals] <- Q_pair[1, 2]
-
-  # Residual process
-  Q_ar <- ar1_Q(n_times, kappa_bio_resid, sparse = FALSE)
-  Q_cross <- solve(rbind(
-    c(1 / w_bio_resid[1], rho_bio_resid / sqrt(prod(w_bio_resid))),
-    c(rho_bio_resid / sqrt(prod(w_bio_resid)), 1 / w_bio_resid[2])
-  ))
-  Q <- kronecker(Q_ar, Q_cross)
-  for (i in seq_along(bio_regions)) {
-    indices <- residual_bio_indices_i[[i]]
-    output[indices, indices] <- Q
-  }
-
-  output
-}
-
 log_pdf_climatology_bio <- function(rho, w) {
   if (rho < -1 || rho > 1) return(-Inf)
   if (any(w < 0)) return(-Inf)
@@ -523,13 +390,13 @@ log_pdf_climatology_bio <- function(rho, w) {
 
   if (resp_bio_all_fixed) {
     log_pdf_linear <- sum(dnorm(
-      alpha_current[climatology_bio_assim_linear_indices$bio_assim],
-      alpha_prior_mean[climatology_bio_assim_linear_indices$bio_assim],
+      alpha_current[bio_indices$bio_assim_linear_indices$bio_assim],
+      alpha_prior_mean[bio_indices$bio_assim_linear_indices$bio_assim],
       sd = 1 / sqrt(w[1]),
       log = TRUE
     ))
   } else {
-    linear_indices <- as.vector(do.call(rbind, climatology_bio_linear_indices))
+    linear_indices <- as.vector(do.call(rbind, bio_indices$bio_linear_indices))
     Q_linear <- kronecker(
       diag(length(linear_indices) / 2),
       Q_pair
@@ -543,14 +410,14 @@ log_pdf_climatology_bio <- function(rho, w) {
   }
   if (!resp_bio_all_fixed && !resp_bio_all_free) {
     log_pdf_linear <- log_pdf_linear + sum(dnorm(
-      alpha_current[climatology_bio_assim_linear_indices$bio_assim],
-      alpha_prior_mean[climatology_bio_assim_linear_indices$bio_assim],
+      alpha_current[bio_indices$bio_assim_linear_indices$bio_assim],
+      alpha_prior_mean[bio_indices$bio_assim_linear_indices$bio_assim],
       sd = 1 / sqrt(w[1]),
       log = TRUE
     ))
   }
 
-  non_linear_indices <- as.vector(do.call(rbind, climatology_bio_non_linear_indices))
+  non_linear_indices <- as.vector(do.call(rbind, bio_indices$bio_non_linear_indices))
   Q_non_linear <- kronecker(
     diag(length(non_linear_indices) / 2),
     Q_pair
@@ -573,7 +440,7 @@ log_pdf_residual_bio <- function(kappa, rho, w, alpha) {
   if (rho < -1 | rho > 1) return(-Inf)
   if (any(w < 0)) return(-Inf)
 
-  Q_ar <- ar1_Q(n_times, kappa, sparse = FALSE)
+  Q_ar <- ar1_Q(bio_indices$n_times, kappa, sparse = FALSE)
   Q_cross <- solve(rbind(
     c(1 / w[1], rho / sqrt(prod(w))),
     c(rho / sqrt(prod(w)), 1 / w[2])
@@ -581,8 +448,8 @@ log_pdf_residual_bio <- function(kappa, rho, w, alpha) {
   Q <- kronecker(Q_ar, Q_cross)
   log_likelihoods <- sapply(seq_along(bio_regions), function(i) {
     dmvnorm(
-      alpha_current[residual_bio_indices_i[[i]]],
-      alpha_prior_mean[residual_bio_indices_i[[i]]],
+      alpha_current[bio_indices$bio_residual_indices_i[[i]]],
+      alpha_prior_mean[bio_indices$bio_residual_indices_i[[i]]],
       precision = Q,
       log = TRUE
     )
@@ -654,7 +521,9 @@ for (iteration in 2 : args$n_samples) {
     w_bio_clim_current,
     kappa_bio_resid_current,
     rho_bio_resid_current,
-    w_bio_resid_current
+    w_bio_resid_current,
+    bio_indices,
+    alpha_prior_precision_base
   )
   alpha_precision <- (
     Reduce(`+`, lapply(seq_len(n_hyperparameter_groups), function(i) {

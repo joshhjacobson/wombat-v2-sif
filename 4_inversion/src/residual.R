@@ -8,6 +8,7 @@ rcpp_cache_dir <- Sys.getenv('RCPP_CACHE_DIR')
 options(rcpp.cache.dir = if (rcpp_cache_dir == '') tempdir() else rcpp_cache_dir)
 
 source(Sys.getenv('UTILS_PARTIAL'))
+source(Sys.getenv('ALPHA_PRECISION_PARTIAL'))
 sourceCpp(Sys.getenv('HMC_EXACT_CPP_PARTIAL'))
 
 parser <- ArgumentParser()
@@ -20,7 +21,6 @@ parser$add_argument('--component-transport-matrix', nargs = '+')
 parser$add_argument('--observations')
 parser$add_argument('--basis-vectors')
 parser$add_argument('--prior')
-parser$add_argument('--prior-samples')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
@@ -65,34 +65,14 @@ stopifnot(nlevels(observations$observation_id) == nrow(observations))
 
 basis_vectors <- fst::read_fst(args$basis_vectors)
 prior <- readRDS(args$prior)
-prior_samples <- readRDS(args$prior_samples)
 
-n_alpha <- nrow(basis_vectors)
+n_all_alpha <- nrow(basis_vectors)
 # NOTE(mgnb): values of alpha fixed to zero are given infinite precision
 alpha_to_include <- is.finite(diag(prior$precision))
 
 alpha_prior_mean <- prior$mean[alpha_to_include]
 alpha_prior_precision <- prior$precision[alpha_to_include, alpha_to_include]
-
-# Assign prior intercepts
-for (region_i in seq_len(ncol(prior_samples$intercepts))) {
-  region_name <- colnames(prior_samples$intercepts)[region_i]
-  bio_intercept_indices_i <- with(basis_vectors[alpha_to_include, ],
-    which(
-      (region == region_name) &
-      (inventory %in% c('bio_assim', 'bio_resp_tot')) &
-      (component == 'intercept')
-    )
-  )
-
-  bio_intercept_i <- prior_samples$intercepts[, region_i]
-  if (any(is.na(bio_intercept_i))) {
-    bio_intercept_i[is.na(bio_intercept_i)] <- 0
-  }
-
-  stopifnot(length(bio_intercept_indices_i) == length(bio_intercept_i))
-  alpha_prior_mean[bio_intercept_indices_i] <- bio_intercept_i
-}
+n_alpha <- length(alpha_prior_mean)
 
 part_indices <- seq_along(args$component_name)
 observations$component_name <- ''
@@ -118,8 +98,8 @@ H_parts <- lapply(part_indices, function(part_i) {
     nrow() %>%
     as.double()
 
-  n_i <- n_observations_i * n_alpha
-  log_trace('Total size to load is {n_i} = {n_observations_i} x {n_alpha}')
+  n_i <- n_observations_i * n_all_alpha
+  log_trace('Total size to load is {n_i} = {n_observations_i} x {n_all_alpha}')
 
   fn <- pipe(sprintf('lz4 -v %s -', args$component_transport_matrix[part_i]), 'rb')
   H_vec <- readBin(fn, 'double', n_i)

@@ -84,7 +84,7 @@ prior_emissions <- perturbations %>%
   group_by(inventory_season_latitude, inventory, season, latitude) %>%
   summarise(value = sum(value), .groups = 'drop') %>%
   select(-inventory_season_latitude) %>%
-  mutate(estimate = 'SiB4')
+  mutate(estimate = 'Bottom-up')
 
 posterior_emissions_LNLGIS <- compute_posterior(
   prior_emissions,
@@ -137,7 +137,7 @@ emissions <- bind_rows(
     )),
     estimate = factor(
       estimate,
-      levels = c('FLUXCOM', 'SiB4', 'v2.0 posterior', 'v2.S posterior')
+      levels = c('FLUXCOM', 'Bottom-up', 'v2.0 posterior', 'v2.S posterior')
     )
   )
 

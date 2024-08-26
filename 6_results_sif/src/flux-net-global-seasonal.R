@@ -67,7 +67,7 @@ prior_emissions_monthly <- perturbations_monthly %>%
   group_by(inventory_time, inventory, time) %>%
   summarise(value = sum(value), .groups = 'drop') %>%
   select(-inventory_time) %>%
-  mutate(estimate = 'SiB4')
+  mutate(estimate = 'Bottom-up')
 
 posterior_emissions_monthly_LNLGIS <- compute_posterior(
   prior_emissions_monthly,
@@ -120,7 +120,7 @@ emissions_monthly <- bind_rows(
     )),
     estimate = factor(
       estimate,
-      levels = c('FLUXCOM', 'SiB4', 'v2.0 posterior', 'v2.S posterior')
+      levels = c('FLUXCOM', 'Bottom-up', 'v2.0 posterior', 'v2.S posterior')
     )
   )
 
@@ -167,7 +167,7 @@ prior_emissions_seasonal <- perturbations_seasonal %>%
   group_by(inventory_month, inventory, month) %>%
   summarise(value = sum(value), .groups = 'drop') %>%
   select(-inventory_month) %>%
-  mutate(estimate = 'SiB4')
+  mutate(estimate = 'Bottom-up')
 
 posterior_emissions_seasonal_LNLGIS <- compute_posterior(
   prior_emissions_seasonal,
@@ -220,7 +220,7 @@ emissions_seasonal <- bind_rows(
     )),
     estimate = factor(
       estimate,
-      levels = c('FLUXCOM', 'SiB4', 'v2.0 posterior', 'v2.S posterior')
+      levels = c('FLUXCOM', 'Bottom-up', 'v2.0 posterior', 'v2.S posterior')
     )
   )
 

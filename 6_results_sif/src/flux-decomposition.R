@@ -7,17 +7,12 @@ source(Sys.getenv('DISPLAY_PARTIAL'))
 
 parser <- ArgumentParser()
 parser$add_argument('--perturbations-augmented')
-parser$add_argument('--samples-fixresp-wsif')
-parser$add_argument('--samples-fixresp-wosif')
-parser$add_argument('--samples-freeresp-wsif')
-parser$add_argument('--samples-freeresp-wosif')
-parser$add_argument('--true-alpha')
+parser$add_argument('--samples-LNLGIS')
+parser$add_argument('--samples-LNLGISSIF')
 parser$add_argument('--region')
 parser$add_argument('--output')
-args <- parser$parse_known_args()[[1]]
+args <- parser$parse_args()
 
-
-true_alpha <- if (!is.null(args$true_alpha)) fst::read_fst(args$true_alpha) else NULL
 perturbations <- fst::read_fst(args$perturbations_augmented)
 
 if (args$region != 'global') {
@@ -69,37 +64,24 @@ prior_emissions <- perturbations_region %>%
   select(-inventory_minor_component_time) %>%
   mutate(estimate = 'Bottom-up')
 
-true_emissions <- prior_emissions %>%
-  mutate(estimate = 'Truth')
-
-if (!is.null(true_alpha)) {
-  log_debug('Adjusting bottom-up with true alpha from {args$true_alpha}')
-  true_emissions <- true_emissions %>%
-    mutate(
-      value = value + as.vector(
-        X_region[, as.integer(true_alpha$basis_vector)]
-        %*% true_alpha$value
-      )
-    )
-}
-
 list_samples <- list(
-  list(name = 'With SIF, fixed RLT', path = args$samples_fixresp_wsif),
-  list(name = 'Without SIF, fixed RLT', path = args$samples_fixresp_wosif),
-  list(name = 'With SIF, free RLT', path = args$samples_freeresp_wsif),
-  list(name = 'Without SIF, free RLT', path = args$samples_freeresp_wosif)
+  list(name = 'v2.0 posterior', path = args$samples_LNLGIS),
+  list(name = 'v2.S posterior', path = args$samples_LNLGISSIF)
 )
 
 posterior_emissions <- lapply(list_samples, function(samples_i) {
-  if (is.null(samples_i$path)) return(NULL)
   samples <- readRDS(samples_i$path)
+  # TODO: remove once we have full LNLGISSIF samples
+  samples$alpha_df$value_samples <- samples$alpha_df$value_samples[
+    , 
+    1:400
+  ]
   compute_posterior(prior_emissions, X_region, samples, samples_i$name)
 }) %>% bind_rows()
 
 emissions <- bind_rows(
   prior_emissions,
-  posterior_emissions,
-  true_emissions
+  posterior_emissions
 ) %>%
   {
     x <- .
@@ -121,7 +103,7 @@ emissions <- bind_rows(
     )
   } %>%
   filter(!(
-    inventory == 'bio_resp_tot' & minor_component == 'linear' & grepl('fixed RLT', estimate, fixed = TRUE)
+    inventory == 'bio_resp_tot' & minor_component == 'linear' & grepl('v2.0', estimate, fixed = TRUE)
   )) %>%
   mutate(
     inventory = factor(c(
@@ -145,12 +127,9 @@ emissions <- bind_rows(
     estimate = factor(
       estimate,
       levels = c(
-        'Truth',
         'Bottom-up',
-        'Without SIF, fixed RLT',
-        'With SIF, fixed RLT',
-        'Without SIF, free RLT',
-        'With SIF, free RLT'
+        'v2.0 posterior',
+        'v2.S posterior'
       )
     )
   )

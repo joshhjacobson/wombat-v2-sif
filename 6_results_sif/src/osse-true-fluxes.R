@@ -54,7 +54,7 @@ bottom_up <- perturbations %>%
 
 true_emissions_alpha_v2 <- bottom_up %>%
   mutate(
-    output = 'v2.0 post. mean',
+    output = 'v2.0 mean',
     value = value + as.vector(
       X_global[, as.integer(alpha_v2$basis_vector)]
       %*% alpha_v2$value
@@ -63,7 +63,7 @@ true_emissions_alpha_v2 <- bottom_up %>%
 
 true_emissions_alpha_positive <- bottom_up %>%
   mutate(
-    output = 'v2.0 adj. pos.',
+    output = 'Positive shift',
     value = value + as.vector(
       X_global[, as.integer(alpha_positive$basis_vector)]
       %*% alpha_positive$value
@@ -72,7 +72,7 @@ true_emissions_alpha_positive <- bottom_up %>%
 
 true_emissions_alpha_negative <- bottom_up %>%
   mutate(
-    output = 'v2.0 adj. neg.',
+    output = 'Negative shift',
     value = value + as.vector(
       X_global[, as.integer(alpha_negative$basis_vector)]
       %*% alpha_negative$value
@@ -123,21 +123,21 @@ emissions <- bind_rows(
     )),
     output = factor(
       output,
-      levels = c('Bottom-up', 'v2.0 post. mean', 'v2.0 adj. pos.', 'v2.0 adj. neg.')
+      levels = c('Bottom-up', 'v2.0 mean', 'Positive shift', 'Negative shift')
     )
   )
 
 colour_key <- c(
-  'Bottom-up' = 'grey50',
-  'v2.0 post. mean' = '#5954d6',
-  'v2.0 adj. pos.' = '#00c6f8',
-  'v2.0 adj. neg.' = '#ff9287'
+  'Bottom-up' = '#777777',
+  'v2.0 mean' = '#33bbee',
+  'Positive shift' = '#0077bb',
+  'Negative shift' = '#ee7733'
 )
 linetype_key <- c(
   'Bottom-up' = '11',
-  'v2.0 post. mean' = 'solid',
-  'v2.0 adj. pos.' = '41',
-  'v2.0 adj. neg.' = '41'
+  'v2.0 mean' = 'solid',
+  'Positive shift' = '41',
+  'Negative shift' = '41'
 )
 
 output <- ggplot(
@@ -150,8 +150,7 @@ output <- ggplot(
       colour = output,
       linetype = output
     ),
-    linewidth = 0.6,
-    alpha = 0.8
+    linewidth = 0.5,
   ) +
   facet_wrap(vars(inventory), scales = 'free_y', nrow = 2) +
   scale_x_date(date_labels = '%Y-%m') +
@@ -159,21 +158,25 @@ output <- ggplot(
   scale_linetype_manual(values = linetype_key) +
   labs(x = 'Time', y = 'Flux [PgC/month]', colour = NULL, linetype = NULL) +
   theme(
-    plot.margin = margin(t = 1, r = 1, b = 1, l = 1, unit = 'mm'),
+    plot.margin = margin(t = 0, r = 0.1, b = 0, l = 0.1, unit = 'cm'),
     plot.title = element_blank(),
-    legend.position = 'right',
-    legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'mm'),
-    legend.text = element_text(size = 8),
-    axis.text.x = element_text(size = 9),
-    axis.text.y = element_text(size = 7),
-    axis.title.x = element_text(size = 9),
-    axis.title.y = element_text(size = 10),
-    strip.text = element_text(size = 9)
+    axis.text.x = element_text(size = 8, colour = '#23373b'),
+    axis.title.x = element_text(
+      size = 10,
+      colour = '#23373b',
+      margin = margin(t = 0.2, r = 0, b = 0, l = 0, unit = 'cm')
+    ),
+    axis.text.y = element_text(size = 7, colour = '#23373b'),
+    axis.title.y = element_text(size = 10, colour = '#23373b'),
+    strip.text = element_text(size = 10),
+    legend.text = element_text(size = 10),
+    legend.position = 'bottom',
+    legend.margin = margin(t = -0.2, r = 0, b = 0, l = 0, unit = 'cm')
   )
 
 ggsave_base(
   args$output,
   output,
   width = DISPLAY_SETTINGS$supplement_full_width,
-  height = 10.2
+  height = 8.5
 )

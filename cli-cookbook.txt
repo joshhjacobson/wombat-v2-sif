@@ -22,7 +22,7 @@ rsync -azP $(find /data/wombat-v2-workflow/3_inversion/intermediates/sensitiviti
 rsync -azP /data/wombat-v2-workflow/3_inversion/intermediates/samples-LNLGIS.rds 4_inversion/intermediates
 
 # Sync results with local machine
-rsync -azP --exclude archive jj829@hpc.niasra.uow.edu.au:wombat-v2-sif/6_results_sif/figures/ "/Users/joshjacobson/OneDrive - University of Wollongong/Document_Prep/Papers/wombat-v2-sif/figures"
+rsync -azP --exclude archive --exclude 'traceplots-*' jj829@hpc.niasra.uow.edu.au:wombat-v2-sif/6_results_sif/figures/ "/Users/joshjacobson/OneDrive - University of Wollongong/Document_Prep/Papers/wombat-v2-sif-paper/figures"
 
 # Individual targets:
 
@@ -56,7 +56,7 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-sa
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion_targets --dry-run
 
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace RCPP_CACHE_DIR=rcpp-cache make 6_results_sif_targets --dry-run
+MAKEFLAGS+=-j16 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace RCPP_CACHE_DIR=rcpp-cache make 6_results_sif_targets --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/perturbations-augmented.fst --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/intermediates/perturbations-augmented-zonal.fst --dry-run
@@ -74,8 +74,8 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/error-param
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/sif-gpp-average-slope.pdf --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/sif-gpp-map-intercept.pdf --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-true-fluxes.pdf --dry-run
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-metrics-table.tex --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-metrics-table-full.tex --dry-run
 
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 5_results/figures/flux-decomposition-global.pdf --dry-run
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHA0-mixed.pdf --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/flux-global.pdf --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHA0-cross.pdf --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHAV2-FREERESP.pdf --dry-run

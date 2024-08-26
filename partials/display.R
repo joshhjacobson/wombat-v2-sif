@@ -21,18 +21,26 @@ DISPLAY_SETTINGS <- list(
   full_height = 20,
   png_plot_dpi = 320,
   colour_key = c(
-    'FLUXCOM' = '#ddaa33',
-    'SiB4' = 'grey50',
-    'v2.0 posterior' = '#6699cc',
-    'v2.S posterior' = '#228833',
-    'Bottom-up' = 'grey50'
+    'Truth' = 'black',
+    'FLUXCOM' = '#e69f008c',
+    'Bottom-up' = '#a6a6a6',
+    'v2.0 posterior' = '#56B4E98c',
+    'v2.S posterior' = '#009e73',
+    'Without SIF, fixed RLT' = '#56B4E98c',
+    'With SIF, fixed RLT' = '#009e73',
+    'Without SIF, free RLT' = '#56B4E98c',
+    'With SIF, free RLT' = '#009e73'
   ),
   linetype_key = c(
+    'Truth' = 'solid',
     'FLUXCOM' = '1131',
-    'SiB4' = '11',
+    'Bottom-up' = '11',
     'v2.0 posterior' = '41',
     'v2.S posterior' = '41',
-    'Bottom-up' = '11'
+    'Without SIF, fixed RLT' = '41',
+    'With SIF, fixed RLT' = '41',
+    'Without SIF, free RLT' = '41',
+    'With SIF, free RLT' = '41'
   )
 )
 

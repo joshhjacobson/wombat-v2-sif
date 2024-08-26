@@ -4,18 +4,14 @@ library(dplyr, warn.conflicts = FALSE)
 source(Sys.getenv('UTILS_PARTIAL'))
 
 parser <- ArgumentParser()
-parser$add_argument('--flux-samples-alpha0-fixresp-wsif')
 parser$add_argument('--flux-samples-alpha0-fixresp-wosif')
 parser$add_argument('--flux-samples-alpha0-freeresp-wsif')
-parser$add_argument('--flux-samples-alpha0-freeresp-wosif')
-parser$add_argument('--flux-samples-alphav2-fixresp-wsif')
 parser$add_argument('--flux-samples-alphav2-fixresp-wosif')
 parser$add_argument('--flux-samples-alphav2-freeresp-wsif')
-parser$add_argument('--flux-samples-alphav2-freeresp-wosif')
-parser$add_argument('--flux-samples-alphasmall-fixresp-wsif')
-parser$add_argument('--flux-samples-alphasmall-fixresp-wosif')
-parser$add_argument('--flux-samples-alphasmall-freeresp-wsif')
-parser$add_argument('--flux-samples-alphasmall-freeresp-wosif')
+parser$add_argument('--flux-samples-alphap-fixresp-wosif')
+parser$add_argument('--flux-samples-alphap-freeresp-wsif')
+parser$add_argument('--flux-samples-alphan-fixresp-wosif')
+parser$add_argument('--flux-samples-alphan-freeresp-wsif')
 parser$add_argument('--output')
 args <- parser$parse_args()
 
@@ -43,15 +39,15 @@ read_flux_samples <- function(filename, estimates = 'Posterior') {
 log_debug('Loading flux samples')
 flux_aggregates_samples <- bind_rows(
   read_flux_samples(
-    args$flux_samples_alpha0_fixresp_wsif,
+    args$flux_samples_alpha0_freeresp_wsif,
     c('Truth', 'Posterior')
   ) %>%
     mutate(
       truth = 'Bottom-up',
-      resp_term = 'Fixed',
+      resp_term = 'Free',
       estimate = if_else(
         estimate == 'Posterior',
-        'With SIF',
+        'WSIF',
         estimate
       )
     ),
@@ -61,18 +57,18 @@ flux_aggregates_samples <- bind_rows(
     mutate(
       truth = 'Bottom-up',
       resp_term = 'Fixed',
-      estimate = 'Without SIF'
+      estimate = 'WOSIF'
     ),
   read_flux_samples(
-    args$flux_samples_alphav2_fixresp_wsif,
+    args$flux_samples_alphav2_freeresp_wsif,
     c('Truth', 'Posterior')
   ) %>%
     mutate(
-      truth = 'WOMBAT v2',
-      resp_term = 'Fixed',
+      truth = 'v2.0 mean',
+      resp_term = 'Free',
       estimate = if_else(
         estimate == 'Posterior',
-        'With SIF',
+        'WSIF',
         estimate
       )
     ),
@@ -80,97 +76,55 @@ flux_aggregates_samples <- bind_rows(
     args$flux_samples_alphav2_fixresp_wosif,
   ) %>%
     mutate(
-      truth = 'WOMBAT v2',
+      truth = 'v2.0 mean',
       resp_term = 'Fixed',
-      estimate = 'Without SIF'
+      estimate = 'WOSIF'
     ),
   read_flux_samples(
-    args$flux_samples_alphasmall_fixresp_wsif,
+    args$flux_samples_alphap_freeresp_wsif,
     c('Truth', 'Posterior')
   ) %>%
     mutate(
-      truth = 'WOMBAT v2, AS',
+      truth = 'Positive shift',
+      resp_term = 'Free',
+      estimate = if_else(
+        estimate == 'Posterior',
+        'WSIF',
+        estimate
+      )
+    ),
+  read_flux_samples(
+    args$flux_samples_alphap_fixresp_wosif,
+  ) %>%
+    mutate(
+      truth = 'Positive shift',
       resp_term = 'Fixed',
+      estimate = 'WOSIF'
+    ),
+  read_flux_samples(
+    args$flux_samples_alphan_freeresp_wsif,
+    c('Truth', 'Posterior')
+  ) %>%
+    mutate(
+      truth = 'Negative shift',
+      resp_term = 'Free',
       estimate = if_else(
         estimate == 'Posterior',
-        'With SIF',
+        'WSIF',
         estimate
       )
     ),
   read_flux_samples(
-    args$flux_samples_alphasmall_fixresp_wosif,
+    args$flux_samples_alphan_fixresp_wosif,
   ) %>%
     mutate(
-      truth = 'WOMBAT v2, AS',
+      truth = 'Negative shift',
       resp_term = 'Fixed',
-      estimate = 'Without SIF'
-    ),
-  read_flux_samples(
-    args$flux_samples_alpha0_freeresp_wsif,
-    c('Truth', 'Posterior')
-  ) %>%
-    mutate(
-      truth = 'Bottom-up',
-      resp_term = 'Free',
-      estimate = if_else(
-        estimate == 'Posterior',
-        'With SIF',
-        estimate
-      )
-    ),
-  read_flux_samples(
-    args$flux_samples_alpha0_freeresp_wosif,
-  ) %>%
-    mutate(
-      truth = 'Bottom-up',
-      resp_term = 'Free',
-      estimate = 'Without SIF'
-    ),
-  read_flux_samples(
-    args$flux_samples_alphav2_freeresp_wsif,
-    c('Truth', 'Posterior')
-  ) %>%
-    mutate(
-      truth = 'WOMBAT v2',
-      resp_term = 'Free',
-      estimate = if_else(
-        estimate == 'Posterior',
-        'With SIF',
-        estimate
-      )
-    ),
-  read_flux_samples(
-    args$flux_samples_alphav2_freeresp_wosif,
-  ) %>%
-    mutate(
-      truth = 'WOMBAT v2',
-      resp_term = 'Free',
-      estimate = 'Without SIF'
-    ),
-  read_flux_samples(
-    args$flux_samples_alphasmall_freeresp_wsif,
-    c('Truth', 'Posterior')
-  ) %>%
-    mutate(
-      truth = 'WOMBAT v2, AS',
-      resp_term = 'Free',
-      estimate = if_else(
-        estimate == 'Posterior',
-        'With SIF',
-        estimate
-      )
-    ),
-  read_flux_samples(
-    args$flux_samples_alphasmall_freeresp_wosif,
-  ) %>%
-    mutate(
-      truth = 'WOMBAT v2, AS',
-      resp_term = 'Free',
-      estimate = 'Without SIF'
+      estimate = 'WOSIF'
     )
 ) %>%
   filter(
-    inventory %in% c('GPP', 'Respiration', 'NEE', 'Ocean'),
+    inventory %in% c('GPP', 'Respiration', 'NEE'),
   )
 
 log_debug('Computing metrics')
@@ -179,73 +133,69 @@ osse_fluxes <- flux_aggregates_samples %>%
   left_join(
     flux_aggregates_samples %>%
       filter(estimate == 'Truth') %>%
-      select(resp_term, inventory, truth, region, time, flux_truth = flux_mean),
-    by = c('resp_term', 'inventory', 'truth', 'region', 'time')
+      distinct(inventory, truth, region, time, flux_truth = flux_mean),
+    by = c('inventory', 'truth', 'region', 'time')
   ) %>%
   mutate(
-    resp_term = factor(resp_term, levels = c('Fixed', 'Free')),
-    truth = factor(truth, levels = c('Bottom-up', 'WOMBAT v2', 'WOMBAT v2, AS')),
-    estimate = factor(estimate, levels = c('Without SIF', 'With SIF'))
+    truth = factor(truth, levels = c('Bottom-up', 'v2.0 mean', 'Positive shift', 'Negative shift')),
+    wombat_version = factor(
+      c(
+        'Fixed.WOSIF' = 'v2.0',
+        'Free.WSIF' = 'v2.S'
+      )[interaction(resp_term, estimate, drop = TRUE)],
+      levels = c('v2.0', 'v2.S')
+    )
   )
 
 metrics <- osse_fluxes %>%
-  group_by(resp_term, inventory, truth, estimate) %>%
+  group_by(inventory, truth, wombat_version) %>%
   summarise(
     rmse = sqrt(mean((flux_mean - flux_truth)^2)),
     mcrps = mean(scoringRules::crps_sample(flux_truth, flux_samples)),
     .groups = 'drop'
   ) %>%
-  arrange(resp_term, inventory, truth, estimate)
+  arrange(inventory, truth, wombat_version)
 
-resp_terms <- levels(metrics$resp_term)
-inventories <-  c('GPP', 'Respiration', 'NEE', 'Ocean')
+inventories <-  c('GPP', 'Respiration', 'NEE')
 truth_cases <- levels(metrics$truth)
-estimates <- levels(metrics$estimate)
+wombat_versions <- levels(metrics$wombat_version)
 
 log_debug('Writing table to {args$output}')
 # '\\begin{tabular}{@{}lll%s@{}}\n\\toprule\n',
+# paste0(
+#   rep(collapse0(rep('c', length(wombat_versions))), 2),
+#   collapse = '|'
+# )
 sink(args$output)
 printf(
-  '\\begin{tabular}{lll%s}\n\\toprule\n',
-  paste0(
-    rep(collapse0(rep('r', length(estimates))), 2),
-    collapse = '|'
-  )
+  '\\begin{tabularx}{0.85\\textwidth}{ll*{%d}{C}}\n\\toprule\n',
+  2 * length(wombat_versions)
 )
-cat('RLT & Component & True Flux & \\multicolumn{2}{c|}{RMSE [PgC/month]} & \\multicolumn{2}{c}{CRPS} \\\\\n')
-cat('\\cmidrule(lr){4-5} \\cmidrule(lr){6-7}\n')
+cat('Component & True Flux & \\multicolumn{2}{c}{RMSE [PgC/month]} & \\multicolumn{2}{c}{CRPS} \\\\\n')
+cat('\\cmidrule(lr){3-4} \\cmidrule(l){5-6}\n')
 printf(
-  '& & & %s \\\\\n\\midrule\n',
-  paste_columns(rep(paste_columns(estimates), 2))
+  '& & %s \\\\\n\\midrule\n',
+  paste_columns(rep(paste_columns(wombat_versions), 2))
 )
-for (resp_term_k in resp_terms) {
-  for (inventory_i in inventories) {
-    for (truth_j in truth_cases) {
-      metrics_ijk <- metrics %>%
-        filter(
-          resp_term == resp_term_k,
-          inventory == inventory_i,
-          truth == truth_j
-        )
-      rmse_vector <- metrics_ijk %>% pull(rmse)
-      mcrps_vector <- metrics_ijk %>% pull(mcrps)
-      printf(
-        '%s & %s & %s & %s & %s \\\\\n',
-        ifelse(
-          inventory_i == inventories[1] & truth_j == truth_cases[1],
-          resp_term_k,
-          ''
-        ),
-        ifelse(truth_j == truth_cases[1], inventory_i, ''),
-        truth_j,
-        paste_columns_min_bold(rmse_vector),
-        paste_columns_min_bold(mcrps_vector)
+for (inventory_i in inventories) {
+  for (truth_j in truth_cases) {
+    metrics_ij <- metrics %>%
+      filter(
+        inventory == inventory_i,
+        truth == truth_j
       )
-    }
+    rmse_vector <- metrics_ij %>% pull(rmse)
+    mcrps_vector <- metrics_ij %>% pull(mcrps)
+    printf(
+      '%s & %s & %s & %s \\\\\n',
+      ifelse(truth_j == truth_cases[1], inventory_i, ''),
+      truth_j,
+      paste_columns_min_bold(rmse_vector),
+      paste_columns_min_bold(mcrps_vector)
+    )
   }
-  if (resp_term_k != tail(resp_terms, 1)) cat('\\midrule\n')
 }
-cat('\\bottomrule\n\\end{tabular}\n')
+cat('\\bottomrule\n\\end{tabularx}\n')
 sink(NULL)
 
 log_debug('Done')

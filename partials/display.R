@@ -24,23 +24,29 @@ DISPLAY_SETTINGS <- list(
     'Truth' = 'black',
     'FLUXCOM' = '#e69f008c',
     'Bottom-up' = '#a6a6a6',
+    'SiB4' = '#a6a6a6',
     'v2.0 posterior' = '#56B4E98c',
     'v2.S posterior' = '#009e73',
-    'Without SIF, fixed RLT' = '#56B4E98c',
+    'Without SIF, fixed RLT' = '#d55e00',
     'With SIF, fixed RLT' = '#009e73',
-    'Without SIF, free RLT' = '#56B4E98c',
-    'With SIF, free RLT' = '#009e73'
+    'Without SIF, free RLT' = '#d55e00',
+    'With SIF, free RLT' = '#009e73',
+    'Without SIF' = '#d55e00',
+    'With SIF' = '#009e73'
   ),
   linetype_key = c(
     'Truth' = 'solid',
     'FLUXCOM' = '1131',
     'Bottom-up' = '11',
+    'SiB4' = '11',
     'v2.0 posterior' = '41',
     'v2.S posterior' = '41',
     'Without SIF, fixed RLT' = '41',
     'With SIF, fixed RLT' = '41',
     'Without SIF, free RLT' = '41',
-    'With SIF, free RLT' = '41'
+    'With SIF, free RLT' = '41',
+    'Without SIF' = '41',
+    'With SIF' = '41'
   )
 )
 
@@ -266,6 +272,76 @@ plot_map <- function(
     ) +
     theme(
       panel.border = element_blank()
+    ) +
+    labs(x = NULL, y = NULL)
+}
+
+plot_map_slides <- function(
+  df,
+  variable,
+  breaks,
+  limits,
+  palette,
+  show_excess = TRUE,
+  label_precision = 0,
+  drop_second_labels = FALSE,
+  symmetric = FALSE,
+  reverse = FALSE,
+  trim_colours = FALSE,
+  bar_width = 11
+) {
+  base_labels <- sprintf(paste0('%.', label_precision, 'f'), breaks)
+  labels <- if (show_excess) {
+    ifelse(
+      abs(breaks) == max(abs(breaks)),
+      sprintf(
+        paste0('%s%.', label_precision, 'f'),
+        ifelse(breaks < 0, '< -', '> '),
+        max(abs(breaks))
+      ),
+      base_labels
+    )
+  } else {
+    base_labels
+  }
+  if (drop_second_labels) {
+    labels[seq(2, length(breaks), by = 2)] <- ''
+  }
+  worldmap <- sf::st_wrap_dateline(sf::st_as_sf(
+    rnaturalearth::ne_coastline(110, returnclass = 'sf')
+  ))
+  ggplot() +
+    geom_sf(data = earth_bbox_sf, fill = '#dddddd', colour = NA) +
+    geom_stars(
+      data = df,
+      aes(fill = {{ variable }})
+    ) +
+    geom_sf(data = worldmap, fill = NA, colour = '#555555', linewidth = 0.1) +
+    coord_sf(
+      crs = sf::st_crs('ESRI:54012'),
+      default_crs = sf::st_crs('WGS84')
+    ) +
+    scale_fill_binned_custom(
+      palette,
+      breaks = breaks,
+      limits = limits,
+      labels = labels,
+      symmetric = symmetric,
+      reverse = reverse,
+      trim_colours = trim_colours,
+      guide = guide_coloursteps(
+        title.position = 'top',
+        title.hjust = 0.5,
+        label.theme = element_text(
+          size = 9,
+          margin = margin(0.1, 0, 0, 0, unit = 'cm')
+        ),
+        frame.colour = '#999999',
+        barwidth = bar_width,
+        barheight = 1,
+        even.steps = TRUE
+      ),
+      na.value = NA
     ) +
     labs(x = NULL, y = NULL)
 }

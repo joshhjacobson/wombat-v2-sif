@@ -79,3 +79,8 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-metric
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/flux-global.pdf --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHA0-cross.pdf --dry-run
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 6_results_sif/figures/osse-flux-decomposition-global_ALPHAV2-FREERESP.pdf --dry-run
+
+
+# Slides:
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-monthly-sif-assim-2x25.nc --dry-run
+

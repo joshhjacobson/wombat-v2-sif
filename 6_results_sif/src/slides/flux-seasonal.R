@@ -68,7 +68,7 @@ prior_emissions_seasonal <- perturbations_seasonal %>%
   group_by(inventory_month, inventory, month) %>%
   summarise(value = sum(value), .groups = 'drop') %>%
   select(-inventory_month) %>%
-  mutate(estimate = 'Bottom-up')
+  mutate(estimate = 'SiB4')
 
 posterior_emissions_seasonal_LNLGIS <- compute_posterior(
   prior_emissions_seasonal,
@@ -121,7 +121,7 @@ emissions_seasonal <- bind_rows(
     )),
     estimate = factor(
       estimate,
-      levels = c('FLUXCOM', 'Bottom-up', 'v2.0 posterior', 'v2.S posterior')
+      levels = c('FLUXCOM', 'SiB4', 'v2.0 posterior', 'v2.S posterior')
     )
   )
 
@@ -143,7 +143,7 @@ output <- emissions_seasonal %>%
     ),
     linewidth = 0.6
   ) +
-  facet_wrap(vars(inventory), scales = 'free_y', nrow = 1) +
+  facet_wrap(vars(inventory), scales = 'free_y', ncol = 1) +
   scale_x_continuous(
     breaks = seq(1, 11, 2),
     labels = month.abb[c(TRUE, FALSE)]
@@ -160,13 +160,20 @@ output <- emissions_seasonal %>%
     axis.text.y = element_text(size = 7, colour = '#23373b'),
     axis.title.y = element_text(size = 10, colour = '#23373b'),
     legend.text = element_text(size = 9),
-    legend.position = 'bottom',
-    legend.margin = margin(t = -0.2, r = 0, b = 0, l = 0, unit = 'cm')
+    legend.position = 'right',
+    legend.margin = margin(t = 0, r = 0, b = 0, l = 0, unit = 'cm')
   )
+
+# ggsave_base(
+#   args$output,
+#   output,
+#   width = 16.5,
+#   height = 4.5
+# )
 
 ggsave_base(
   args$output,
   output,
-  width = 16.5,
-  height = 4.5
+  width = 9.5,
+  height = 8.5
 )

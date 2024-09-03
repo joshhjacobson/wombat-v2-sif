@@ -337,6 +337,7 @@ plot_map_slides <- function(
           margin = margin(0.1, 0, 0, 0, unit = 'cm')
         ),
         frame.colour = '#999999',
+        frame.linewidth = 0.15,
         barwidth = bar_width,
         barheight = 1,
         even.steps = TRUE

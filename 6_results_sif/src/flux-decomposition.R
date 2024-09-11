@@ -73,8 +73,8 @@ posterior_emissions <- lapply(list_samples, function(samples_i) {
   samples <- readRDS(samples_i$path)
   # TODO: remove once we have full LNLGISSIF samples
   samples$alpha_df$value_samples <- samples$alpha_df$value_samples[
-    , 
-    1:400
+    ,
+    1:100
   ]
   compute_posterior(prior_emissions, X_region, samples, samples_i$name)
 }) %>% bind_rows()

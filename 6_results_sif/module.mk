@@ -320,15 +320,17 @@ $(6_RESULTS_SIF_FIGURES_DIR)/seasonal-latitude-profile.pdf: \
 		--xbase-monthly-2x25 $(XBASE_MONTHLY_2x25) \
 		--output $@
 
+# $(SAMPLES_WOMBAT_V2) \
+
 $(6_RESULTS_SIF_FIGURES_DIR)/flux-decomposition-%.pdf: \
 	$(6_RESULTS_SIF_SRC_DIR)/flux-decomposition.R \
 	$(PERTURBATIONS_AUGMENTED_SIF) \
-	$(SAMPLES_WOMBAT_V2) \
+	$(SAMPLES_LNLGIS) \
 	$(SAMPLES_LNLGISSIF) \
 	$(DISPLAY_PARTIAL)
 	Rscript $< \
 		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
-		--samples-LNLGIS $(SAMPLES_WOMBAT_V2) \
+		--samples-LNLGIS $(SAMPLES_LNLGIS) \
 		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
 		--region $* \
 		--output $@

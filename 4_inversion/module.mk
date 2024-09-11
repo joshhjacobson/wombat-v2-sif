@@ -296,6 +296,66 @@ $(SAMPLES_LNLGIS): \
 			$(H_IS) \
 		--output $@
 
+
+4_inversion/intermediates/samples-LNLGIS-rho-zero.rds: \
+	4_inversion/src/samples-rho-bio-zero.R \
+	$(ALPHA_PRECISION_PARTIAL) \
+	$(OBSERVATIONS) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	$(H_LNLG) \
+	$(H_IS)
+	Rscript $< \
+		--observations $(OBSERVATIONS) \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
+		--constraints $(CONSTRAINTS) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--overall-observation-mode LN LG IS \
+		--control \
+		    2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+		    2_matching/intermediates/runs/base/oco2-hourly.fst \
+		--component-name LNLG IS \
+		--component-parts "LN|LG" IS \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_IS) \
+		--output $@
+
+4_inversion/intermediates/samples-LNLGIS-fixed-hyperparams.rds: \
+	4_inversion/src/samples-fixed-hyperparams.R \
+	$(ALPHA_PRECISION_PARTIAL) \
+	$(OBSERVATIONS) \
+	$(BASIS_VECTORS) \
+	$(HYPERPARAMETER_ESTIMATES) \
+	$(CONSTRAINTS) \
+	$(PRIOR) \
+	2_matching/intermediates/runs/base/oco2-hourly.fst \
+	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+	$(H_LNLG) \
+	$(H_IS)
+	Rscript $< \
+		--observations $(OBSERVATIONS) \
+		--basis-vectors $(BASIS_VECTORS) \
+		--prior $(PRIOR) \
+		--constraints $(CONSTRAINTS) \
+		--hyperparameter-estimates $(HYPERPARAMETER_ESTIMATES) \
+		--overall-observation-mode LN LG IS \
+		--control \
+		    2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
+		    2_matching/intermediates/runs/base/oco2-hourly.fst \
+		--component-name LNLG IS \
+		--component-parts "LN|LG" IS \
+		--component-transport-matrix \
+			$(H_LNLG) \
+			$(H_IS) \
+		--output $@
+
+
 # NOTE(jhj): In the inversion with SIF data, we fix the respiration linear component
 # for Region03 only; in other inversions, the default is to fix it for all land regions.
 $(SAMPLES_LNLGISSIF): \

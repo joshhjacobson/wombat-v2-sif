@@ -175,7 +175,7 @@ Q <- get_alpha_prior_precision(
 n_samples <- 10000
 
 get_intercept_mean <- function(region_name) {
-  log_trace('Computing intercept offset for {region_name}')
+  log_trace('Computing offsets for bio intercepts in {region_name}')
   parts <- get_emissions_parts(region_name)
   middle_bio_assim <- which(
     parts$prior_emissions$inventory == 'bio_assim'
@@ -239,7 +239,7 @@ get_region_intercept_indices <- function(region_name) {
   )
 }
 
-log_debug('Updating intercept prior mean')
+log_debug('Updating prior mean for bio intercepts')
 for (region_i in seq_len(ncol(intercept_regional))) {
   region_name <- colnames(intercept_regional)[region_i]
   bio_intercept_indices_i <- get_region_intercept_indices(region_name)

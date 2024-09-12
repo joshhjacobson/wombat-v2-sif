@@ -28,7 +28,7 @@ perturbations_augmented <- perturbations_augmented %>%
 flux_aggregators <- perturbations_augmented %>%
   group_by(inventory_region_time, basis_vector) %>%
   summarise(
-    value = KG_M2_S_TO_PGC_MONTH * sum(area * value),
+    value = KG_M2_S_TO_PGC_YEAR * sum(area * value),
     .groups = 'drop'
   ) %>%
   left_join(

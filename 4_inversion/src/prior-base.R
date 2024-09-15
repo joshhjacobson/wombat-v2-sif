@@ -121,15 +121,6 @@ L_inv_X_ocean_constraint <- sparseMatrix(
 ocean_constraint_Xt_Q_X <- as.matrix(crossprod(L_inv_X_ocean_constraint))
 alpha_precision_final <- alpha_precision + ocean_constraint_Xt_Q_X
 
-# Lower the precision of the ocean inventory
-alpha_precision_final[
-  is_ocean_inventory,
-  is_ocean_inventory
-] <- 0.1 * alpha_precision_final[
-  is_ocean_inventory,
-  is_ocean_inventory
-]
-
 # Exclude some regions
 alpha_to_exclude <- (
   (is_small_bio_region & is_climatology)

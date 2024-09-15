@@ -37,6 +37,7 @@ OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sib4-hourly-r
 OMP_NUM_THREADS=64 WOMBAT_LOG_LEVEL=trace make 3_sif/intermediates/sensitivities-oco2-hourly-sif.fst --dry-run
 
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/constraints.rds --dry-run
+OMP_NUM_THREADS=112 WOMBAT_LOG_LEVEL=trace RCPP_CACHE_DIR=rcpp-cache make 4_inversion/intermediates/prior-base.rds --dry-run
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace RCPP_CACHE_DIR=rcpp-cache make 4_inversion/intermediates/prior.rds --dry-run
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/observations.fst --dry-run
 OMP_NUM_THREADS=32 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/H-SIF.mat.lz4 --dry-run
@@ -50,7 +51,7 @@ OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/alpha-w
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-alpha-positive.fst --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace RCPP_CACHE_DIR=rcpp-cache make 4_inversion/intermediates/osse-observations-ALPHAP.fst --dry-run
-OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace RCPP_CACHE_DIR=rcpp-cache make 4_inversion/intermediates/osse-samples-ALPHAN-FREERESP-WSIF.rds --dry-run
+OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace RCPP_CACHE_DIR=rcpp-cache make 4_inversion/intermediates/osse-samples-ALPHAV2-FIXRESP-WOSIF.rds --dry-run
 
 OMP_NUM_THREADS=16 WOMBAT_LOG_LEVEL=trace make 4_inversion/intermediates/osse-samples-ALPHAP-WOSIF.rds |& tee osse-samples-ALPHAP-WOSIF.txt
 

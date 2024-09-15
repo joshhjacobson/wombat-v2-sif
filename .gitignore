@@ -20,7 +20,7 @@ rcpp-cache
 cli-cookbook.txt
 */*.R
 */*.sh
-4_inversion/run-osse-*
+4_inversion/archive/
 
 data/downloaded_20211217
 data/FLUXCOM_RS

@@ -98,7 +98,7 @@ dmvnorm <- function(x, mean, covariance, precision, log = FALSE) {
 
 parser <- ArgumentParser()
 parser$add_argument('--fix-resp-linear', nargs = '+', default = sprintf('Region%02d', 1:11))
-parser$add_argument('--bio-clim-slice-w', type = 'double', default = 0.1)
+parser$add_argument('--bio-season-slice-w', type = 'double', default = 0.1)
 parser$add_argument('--n-samples', type = 'integer', default = N_MCMC_SAMPLES)
 parser$add_argument('--n-warm-up', type = 'integer', default = N_MCMC_WARM_UP)
 parser$add_argument('--basis-vectors')

@@ -68,7 +68,7 @@ OSSE_CASES = ALPHA0-FIXRESP-WSIF \
 	ALPHAN-FIXRESP-WOSIF \
 	ALPHAN-FREERESP-WSIF \
 	ALPHAN-FREERESP-WOSIF
-OSSE_FLAGS_ALPHA0 = --seed 0 --bio-clim-slice-w 1
+OSSE_FLAGS_ALPHA0 = --seed 0 --bio-season-slice-w 1
 OSSE_FLAGS_ALPHAV2 = --seed 1 --true-alpha $(ALPHA_WOMBAT_V2)
 OSSE_FLAGS_ALPHAP = --seed 2 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-positive.fst
 OSSE_FLAGS_ALPHAN = --seed 3 --true-alpha $(ALPHA_ADJUSTMENT_BASE)-negative.fst

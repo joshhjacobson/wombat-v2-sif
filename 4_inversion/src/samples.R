@@ -380,49 +380,17 @@ yt_Q_epsilon_y_parts <- lapply(hyperparameter_group_indices, function(i) {
   }
 })
 
-log_pdf_climatology_bio <- function(rho, w) {
+log_pdf_seasonal_bio <- function(rho, w) {
   if (rho < -1 || rho > 1) return(-Inf)
   if (any(w < 0)) return(-Inf)
-  Q_pair <- solve(rbind(
-    c(1 / w[1], rho / sqrt(prod(w))),
-    c(rho / sqrt(prod(w)), 1 / w[2])
-  ))
-
-  if (resp_bio_all_fixed) {
-    log_pdf_linear <- sum(dnorm(
-      alpha_current[bio_indices$bio_assim_linear_indices$bio_assim],
-      alpha_prior_mean[bio_indices$bio_assim_linear_indices$bio_assim],
-      sd = 1 / sqrt(w[1]),
-      log = TRUE
-    ))
-  } else {
-    linear_indices <- as.vector(do.call(rbind, bio_indices$bio_linear_indices))
-    Q_linear <- kronecker(
-      diag(length(linear_indices) / 2),
-      Q_pair
-    )
-    log_pdf_linear <- dmvnorm(
-      alpha_current[linear_indices],
-      alpha_prior_mean[linear_indices],
-      precision = Q_linear,
-      log = TRUE
-    )
-  }
-  if (!resp_bio_all_fixed && !resp_bio_all_free) {
-    log_pdf_linear <- log_pdf_linear + sum(dnorm(
-      alpha_current[bio_indices$bio_assim_linear_indices$bio_assim],
-      alpha_prior_mean[bio_indices$bio_assim_linear_indices$bio_assim],
-      sd = 1 / sqrt(w[1]),
-      log = TRUE
-    ))
-  }
 
   non_linear_indices <- as.vector(do.call(rbind, bio_indices$bio_non_linear_indices))
+  Q_pair <- get_Q_block(rho, w)
   Q_non_linear <- kronecker(
     diag(length(non_linear_indices) / 2),
     Q_pair
   )
-  log_pdf_linear + dmvnorm(
+  dmvnorm(
     alpha_current[non_linear_indices],
     alpha_prior_mean[non_linear_indices],
     precision = Q_non_linear,
@@ -435,22 +403,19 @@ log_pdf_climatology_bio <- function(rho, w) {
   ))
 }
 
-log_pdf_residual_bio <- function(kappa, rho, w, alpha) {
+log_pdf_residual_bio <- function(kappa, rho, w) {
   if (kappa < 0 | kappa > 1) return(-Inf)
   if (rho < -1 | rho > 1) return(-Inf)
   if (any(w < 0)) return(-Inf)
 
   Q_ar <- ar1_Q(bio_indices$n_times, kappa, sparse = FALSE)
-  Q_cross <- solve(rbind(
-    c(1 / w[1], rho / sqrt(prod(w))),
-    c(rho / sqrt(prod(w)), 1 / w[2])
-  ))
-  Q <- kronecker(Q_ar, Q_cross)
+  Q_pair <- get_Q_block(rho, w)
+  Q_prod <- kronecker(Q_ar, Q_pair)
   log_likelihoods <- sapply(seq_along(bio_regions), function(i) {
     dmvnorm(
       alpha_current[bio_indices$bio_residual_indices_i[[i]]],
       alpha_prior_mean[bio_indices$bio_residual_indices_i[[i]]],
-      precision = Q,
+      precision = Q_prod,
       log = TRUE
     )
   })
@@ -475,8 +440,8 @@ if (!is.null(args$constraints)) {
 n_hyperparameter_groups <- nrow(hyperparameter_groups)
 
 alpha_samples <- matrix(NA, nrow = args$n_samples, ncol = n_alpha)
-rho_bio_clim_samples <- rep(NA, args$n_samples)
-w_bio_clim_samples <- matrix(NA, nrow = args$n_samples, ncol = 2)
+rho_bio_season_samples <- rep(NA, args$n_samples)
+w_bio_season_samples <- matrix(NA, nrow = args$n_samples, ncol = 2)
 kappa_bio_resid_samples <- rep(NA, args$n_samples)
 rho_bio_resid_samples <- rep(NA, args$n_samples)
 w_bio_resid_samples <- matrix(NA, nrow = args$n_samples, ncol = 2)
@@ -484,27 +449,27 @@ gamma_samples <- matrix(NA, nrow = args$n_samples, ncol = n_hyperparameter_group
 
 # NOTE(mgnb): this starting value satisfies the initial condition
 alpha_current <- rep(0, n_alpha)
-rho_bio_clim_current <- 0
-w_bio_clim_current <- c(1, 1)
+rho_bio_season_current <- 0
+w_bio_season_current <- c(1, 1)
 kappa_bio_resid_current <- 0
 rho_bio_resid_current <- 0
 w_bio_resid_current <- c(1, 1)
 gamma_current <- rep(1,  n_hyperparameter_groups)
 
 alpha_samples[1, ] <- alpha_current
-rho_bio_clim_samples[1] <- rho_bio_clim_current
-w_bio_clim_samples[1, ] <- w_bio_clim_current
+rho_bio_season_samples[1] <- rho_bio_season_current
+w_bio_season_samples[1, ] <- w_bio_season_current
 kappa_bio_resid_samples[1] <- kappa_bio_resid_current
 rho_bio_resid_samples[1] <- rho_bio_resid_current
 w_bio_resid_samples[1, ] <- w_bio_resid_current
 gamma_samples[1, ] <- gamma_current
 
-rho_bio_clim_slice <- slice(0.1, max_evaluations = 1000)
+rho_bio_season_slice <- slice(0.1, max_evaluations = 1000)
 # HACK(jhj): increasing the width of slice can be necessary when the truth
 # is very close to prior in the OSSE (i.e., true alpha is zero)
-w_bio_clim_slice <- list(
-  slice(args$bio_clim_slice_w, max_evaluations = 5000),
-  slice(args$bio_clim_slice_w, max_evaluations = 5000)
+w_bio_season_slice <- list(
+  slice(args$bio_season_slice_w, max_evaluations = 5000),
+  slice(args$bio_season_slice_w, max_evaluations = 5000)
 )
 kappa_bio_resid_slice <- slice(0.1, max_evaluations = 1000)
 rho_bio_resid_slice <- slice(0.1, max_evaluations = 1000)
@@ -517,8 +482,8 @@ log_debug('Starting MCMC')
 for (iteration in 2 : args$n_samples) {
   log_trace('[{iteration} / {args$n_samples}] Sampling alpha')
   alpha_prior_precision_current <- get_alpha_prior_precision(
-    rho_bio_clim_current,
-    w_bio_clim_current,
+    rho_bio_season_current,
+    w_bio_season_current,
     kappa_bio_resid_current,
     rho_bio_resid_current,
     w_bio_resid_current,
@@ -557,28 +522,28 @@ for (iteration in 2 : args$n_samples) {
     )
   }
 
-  log_trace('[{iteration} / {args$n_samples}] Sampling rho_bio_clim (current = {format(rho_bio_clim_current)})')
-  rho_bio_clim_current <- rho_bio_clim_slice(rho_bio_clim_current, function(rho) {
-    log_pdf_climatology_bio(rho, w_bio_clim_current)
+  log_trace('[{iteration} / {args$n_samples}] Sampling rho_bio_season (current = {format(rho_bio_season_current)})')
+  rho_bio_season_current <- rho_bio_season_slice(rho_bio_season_current, function(rho) {
+    log_pdf_seasonal_bio(rho, w_bio_season_current)
   }, learn = iteration <= args$n_warm_up)
 
-  log_trace('[{iteration} / {args$n_samples}] Sampling w_bio_clim (current = {paste0(format(w_bio_clim_current), collapse = ", ")})')
+  log_trace('[{iteration} / {args$n_samples}] Sampling w_bio_season (current = {paste0(format(w_bio_season_current), collapse = ", ")})')
   for (i in c(1, 2)) {
-    w_bio_clim_current[i] <- w_bio_clim_slice[[i]](w_bio_clim_current[i], function(w_i) {
-      w <- w_bio_clim_current
+    w_bio_season_current[i] <- w_bio_season_slice[[i]](w_bio_season_current[i], function(w_i) {
+      w <- w_bio_season_current
       w[i] <- w_i
-      log_pdf_climatology_bio(rho_bio_clim_current, w)
+      log_pdf_seasonal_bio(rho_bio_season_current, w)
     }, learn = iteration <= args$n_warm_up)
   }
 
   log_trace('[{iteration} / {args$n_samples}] Sampling kappa_bio_resid (current = {format(kappa_bio_resid_current)})')
   kappa_bio_resid_current <- kappa_bio_resid_slice(kappa_bio_resid_current, function(kappa) {
-    log_pdf_residual_bio(kappa, rho_bio_resid_current, w_bio_resid_current, alpha_current)
+    log_pdf_residual_bio(kappa, rho_bio_resid_current, w_bio_resid_current)
   }, learn = iteration <= args$n_warm_up)
 
   log_trace('[{iteration} / {args$n_samples}] Sampling rho_bio_resid (current = {format(rho_bio_resid_current)})')
   rho_bio_resid_current <- rho_bio_resid_slice(rho_bio_resid_current, function(rho) {
-    log_pdf_residual_bio(kappa_bio_resid_current, rho, w_bio_resid_current, alpha_current)
+    log_pdf_residual_bio(kappa_bio_resid_current, rho, w_bio_resid_current)
   }, learn = iteration <= args$n_warm_up)
 
   log_trace('[{iteration} / {args$n_samples}] Sampling w_bio_resid (current = {paste0(format(w_bio_resid_current), collapse = ", ")})')
@@ -586,7 +551,7 @@ for (iteration in 2 : args$n_samples) {
     w_bio_resid_current[i] <- w_bio_resid_slice[[i]](w_bio_resid_current[i], function(w_i) {
       w <- w_bio_resid_current
       w[i] <- w_i
-      log_pdf_residual_bio(kappa_bio_resid_current, rho_bio_resid_current, w, alpha_current)
+      log_pdf_residual_bio(kappa_bio_resid_current, rho_bio_resid_current, w)
     }, learn = iteration <= args$n_warm_up)
   }
 
@@ -604,8 +569,8 @@ for (iteration in 2 : args$n_samples) {
   }
 
   alpha_samples[iteration, ] <- alpha_current
-  rho_bio_clim_samples[iteration] <- rho_bio_clim_current
-  w_bio_clim_samples[iteration, ] <- w_bio_clim_current
+  rho_bio_season_samples[iteration] <- rho_bio_season_current
+  w_bio_season_samples[iteration, ] <- w_bio_season_current
   kappa_bio_resid_samples[iteration] <- kappa_bio_resid_current
   rho_bio_resid_samples[iteration] <- rho_bio_resid_current
   w_bio_resid_samples[iteration, ] <- w_bio_resid_current
@@ -613,7 +578,7 @@ for (iteration in 2 : args$n_samples) {
 }
 
 colnames(alpha_samples) <- basis_vectors[alpha_to_include, ]$basis_vector_str
-colnames(w_bio_clim_samples) <- bio_inventories
+colnames(w_bio_season_samples) <- bio_inventories
 colnames(w_bio_resid_samples) <- bio_inventories
 colnames(gamma_samples) <- hyperparameter_groups$hyperparameter_group
 
@@ -629,8 +594,8 @@ alpha_df$value_samples <- t(tail(alpha_samples, args$n_samples - args$n_warm_up)
 output <- list(
   alpha = alpha_samples,
   alpha_df = alpha_df,
-  rho_bio_clim = rho_bio_clim_samples,
-  w_bio_clim = w_bio_clim_samples,
+  rho_bio_season = rho_bio_season_samples,
+  w_bio_season = w_bio_season_samples,
   kappa_bio_resid = kappa_bio_resid_samples,
   rho_bio_resid = rho_bio_resid_samples,
   w_bio_resid = w_bio_resid_samples,

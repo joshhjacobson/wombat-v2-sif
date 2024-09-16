@@ -346,7 +346,6 @@ $(HYPERPARAMETER_ESTIMATES): \
 ## Inversions (1st stage) to get a residual for hyperparameter estimates
 $(RESIDUAL_1ST_STAGE): \
 	4_inversion/src/residual.R \
-	$(ALPHA_PRECISION_PARTIAL) \
 	2_matching/intermediates/runs/base/oco2-hourly.fst \
 	2_matching/intermediates/runs/base/obspack-hourly-assim-1.fst \
 	3_sif/intermediates/oco2-hourly-sif.fst \
@@ -491,7 +490,6 @@ $(PRIOR): \
 	$(CONTROL_EMISSIONS) \
 	$(PERTURBATIONS)
 	Rscript $< \
-		--fix-resp-linear Region03 \
 		--prior-base $(PRIOR_BASE) \
 		--constraints $(CONSTRAINTS) \
 		--basis-vectors $(BASIS_VECTORS) \

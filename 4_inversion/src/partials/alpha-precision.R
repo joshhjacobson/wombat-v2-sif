@@ -40,6 +40,15 @@ ar1_Q <- function(n_times, rho, sparse = TRUE) {
   }
 }
 
+get_Q_block <- function(rho, w) {
+  stopifnot(length(rho) == 1)
+  stopifnot(length(w) == 2)
+  solve(rbind(
+    c(1 / w[1], rho / sqrt(prod(w))),
+    c(rho / sqrt(prod(w)), 1 / w[2])
+  ))
+}
+
 get_diagonal_pairs <- function(indices_list) {
   cbind(
     # NOTE(mgnb): if resp is present, the rbind cause these to alternate between assim/resp
@@ -55,50 +64,6 @@ get_off_diagonal_pairs <- function(indices_list) {
 }
 
 get_bio_indices <- function(basis_vectors) {
-  bio_assim_linear_indices <- NULL
-  bio_linear_indices <- NULL
-  bio_assim_linear_diagonals <- NULL
-  bio_linear_diagonals <- NULL
-  bio_linear_off_diagonals <- NULL
-
-  # Linear components
-  if (resp_bio_all_fixed) {
-    bio_assim_linear_indices <- with(basis_vectors, list(
-      bio_assim = which(inventory == 'bio_assim' & component %in% c('intercept', 'trend'))
-    ))
-    bio_assim_linear_diagonals <- get_diagonal_pairs(bio_assim_linear_indices)
-  } else if (resp_bio_all_free) {
-    bio_linear_indices <- with(basis_vectors, list(
-      bio_assim = which(inventory == 'bio_assim' & component %in% c('intercept', 'trend')),
-      bio_resp_tot = which(inventory == 'bio_resp_tot' & component %in% c('intercept', 'trend'))
-    ))
-    bio_linear_diagonals <- get_diagonal_pairs(bio_linear_indices)
-    bio_linear_off_diagonals <- get_off_diagonal_pairs(bio_linear_indices)
-  } else {
-    bio_assim_linear_indices <- with(basis_vectors, list(
-      bio_assim = which(
-        inventory == 'bio_assim' &
-          component %in% c('intercept', 'trend') &
-          region %in% args$fix_resp_linear
-      )
-    ))
-    bio_linear_indices <- with(basis_vectors, list(
-      bio_assim = which(
-        inventory == 'bio_assim' &
-          component %in% c('intercept', 'trend') &
-          !(region %in% args$fix_resp_linear)
-      ),
-      bio_resp_tot = which(
-        inventory == 'bio_resp_tot' &
-          component %in% c('intercept', 'trend') &
-          !(region %in% args$fix_resp_linear)
-      )
-    ))
-    bio_assim_linear_diagonals <- get_diagonal_pairs(bio_assim_linear_indices)
-    bio_linear_diagonals <- get_diagonal_pairs(bio_linear_indices)
-    bio_linear_off_diagonals <- get_off_diagonal_pairs(bio_linear_indices)
-  }
-
   # Seasonal components
   bio_non_linear_indices <- with(basis_vectors, list(
     bio_assim = which(inventory == 'bio_assim' & !(component %in% c('intercept', 'trend', 'residual'))),
@@ -117,11 +82,6 @@ get_bio_indices <- function(basis_vectors) {
   n_times <- length(bio_residual_indices_i[[1]]) / 2
 
   list(
-    bio_assim_linear_indices = bio_assim_linear_indices,
-    bio_assim_linear_diagonals = bio_assim_linear_diagonals,
-    bio_linear_indices = bio_linear_indices,
-    bio_linear_diagonals = bio_linear_diagonals,
-    bio_linear_off_diagonals = bio_linear_off_diagonals,
     bio_non_linear_indices = bio_non_linear_indices,
     bio_non_linear_diagonals = bio_non_linear_diagonals,
     bio_non_linear_off_diagonals = bio_non_linear_off_diagonals,
@@ -131,8 +91,8 @@ get_bio_indices <- function(basis_vectors) {
 }
 
 get_alpha_prior_precision <- function(
-  rho_bio_clim,
-  w_bio_clim,
+  rho_bio_season,
+  w_bio_season,
   kappa_bio_resid,
   rho_bio_resid,
   w_bio_resid,
@@ -141,34 +101,18 @@ get_alpha_prior_precision <- function(
 ) {
   output <- alpha_prior_precision_base
 
-  # Bio climatology process
-  Q_pair <- solve(rbind(
-    c(1 / w_bio_clim[1], rho_bio_clim / sqrt(prod(w_bio_clim))),
-    c(rho_bio_clim / sqrt(prod(w_bio_clim)), 1 / w_bio_clim[2])
-  ))
-  if (resp_bio_all_fixed) {
-    output[bio_indices$bio_assim_linear_diagonals] <- w_bio_clim[1]
-  } else if (resp_bio_all_free) {
-    output[bio_indices$bio_linear_diagonals] <- diag(Q_pair)
-    output[bio_indices$bio_linear_off_diagonals] <- Q_pair[1, 2]
-  } else {
-    output[bio_indices$bio_assim_linear_diagonals] <- w_bio_clim[1]
-    output[bio_indices$bio_linear_diagonals] <- diag(Q_pair)
-    output[bio_indices$bio_linear_off_diagonals] <- Q_pair[1, 2]
-  }
+  # Bio seasonal process
+  Q_pair <- get_Q_block(rho_bio_season, w_bio_season)
   output[bio_indices$bio_non_linear_diagonals] <- diag(Q_pair)
   output[bio_indices$bio_non_linear_off_diagonals] <- Q_pair[1, 2]
 
-  # Residual process
+  # Bio residual process
   Q_ar <- ar1_Q(bio_indices$n_times, kappa_bio_resid, sparse = FALSE)
-  Q_cross <- solve(rbind(
-    c(1 / w_bio_resid[1], rho_bio_resid / sqrt(prod(w_bio_resid))),
-    c(rho_bio_resid / sqrt(prod(w_bio_resid)), 1 / w_bio_resid[2])
-  ))
-  Q <- kronecker(Q_ar, Q_cross)
+  Q_cross <- get_Q_block(rho_bio_resid, w_bio_resid)
+  Q_prod <- kronecker(Q_ar, Q_cross)
   for (i in seq_along(bio_regions)) {
     indices <- bio_indices$bio_residual_indices_i[[i]]
-    output[indices, indices] <- Q
+    output[indices, indices] <- Q_prod
   }
 
   output

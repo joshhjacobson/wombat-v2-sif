@@ -65,7 +65,7 @@ bio_regions <- sort(unique(basis_vectors$region))[1 : 11]
 bio_indices <- get_bio_indices(basis_vectors[alpha_to_include, ])
 
 F_constraint <- rbind(
-  constraints$F_sign, 
+  constraints$F_sign,
   constraints$F_residual
 )[, alpha_to_include]
 g_constraint <- c(constraints$g_sign, constraints$g_residual)
@@ -197,7 +197,7 @@ Q_base <- get_alpha_prior_precision(
 )
 
 trend_indices <- which(with(basis_vectors[alpha_to_include, ], component == 'trend'))
-Q_base[cbind(trend_indices, trend_indices)] <- 1e-2
+Q_base[cbind(trend_indices, trend_indices)] <- 1e-4
 Q <- as.matrix(solve(t(R_transform), t(solve(t(R_transform), Q_base))))
 
 n_samples <- 10000

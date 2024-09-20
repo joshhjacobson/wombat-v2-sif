@@ -21,8 +21,8 @@ library(patchwork)
 # )
 
 args <- list(
-  samples = '4_inversion/intermediates/samples-LNLGISSIF.rds',
-  output_base = '6_results_sif/figures/traceplots-LNLGISSIF'
+  samples = '4_inversion/intermediates/samples-LNLGIS.rds',
+  output_base = '6_results_sif/figures/traceplots-LNLGIS'
 )
 
 
@@ -96,10 +96,10 @@ scale_natural_inventory <- scale_colour_manual(
 
 # Hyperparameters
 traces_hyperparameters <- wrap_plots(
-  plot_traces(samples$w_bio_clim, to_bio_labels(samples$w_bio_clim)) +
+  plot_traces(samples$w_bio_season, to_bio_labels(samples$w_bio_season)) +
     ggtitle(expression(tau[c]^beta)) +
     scale_bio_inventory,
-  plot_traces(samples$rho_bio_clim) +
+  plot_traces(samples$rho_bio_season) +
     ggtitle(expression(rho['gpp,resp']^beta)),
   plot_traces(samples$w_bio_resid, to_bio_labels(samples$w_bio_resid)) +
     ggtitle(expression(tau[c]^epsilon)) +

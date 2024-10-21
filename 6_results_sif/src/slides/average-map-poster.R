@@ -68,7 +68,7 @@ plot_map_poster <- function(
         title.hjust = 0.5,
         label.theme = element_text(
           size = 28,
-          margin = margin(0.75, 0, 0, 0, unit = 'cm')
+          margin = margin(0.5, 0, 0, 0, unit = 'cm')
         ),
         frame.colour = '#999999',
         frame.linewidth = 0.15,
@@ -159,7 +159,7 @@ average_posterior_sd_wombat <- six_year_average_stars %>%
       legend.margin = margin(t = -0.4, r = 0, b = 0, l = 0, unit = 'cm'),
       legend.title = element_text(
         size = 28,
-        margin = margin(-0.5, 0, 0.05, 0, unit = 'cm')
+        margin = margin(-0.25, 0, 0.05, 0, unit = 'cm')
       )
     )
 

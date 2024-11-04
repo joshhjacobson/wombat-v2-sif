@@ -380,7 +380,7 @@ yt_Q_epsilon_y_parts <- lapply(hyperparameter_group_indices, function(i) {
   }
 })
 
-log_pdf_seasonal_bio <- function(rho, w) {
+log_pdf_seasonal_bio <- function(rho, w, alpha) {
   if (rho < -1 || rho > 1) return(-Inf)
   if (any(w < 0)) return(-Inf)
 
@@ -391,7 +391,7 @@ log_pdf_seasonal_bio <- function(rho, w) {
     Q_pair
   )
   dmvnorm(
-    alpha_current[non_linear_indices],
+    alpha[non_linear_indices],
     alpha_prior_mean[non_linear_indices],
     precision = Q_non_linear,
     log = TRUE
@@ -403,7 +403,7 @@ log_pdf_seasonal_bio <- function(rho, w) {
   ))
 }
 
-log_pdf_residual_bio <- function(kappa, rho, w) {
+log_pdf_residual_bio <- function(kappa, rho, w, alpha) {
   if (kappa < 0 | kappa > 1) return(-Inf)
   if (rho < -1 | rho > 1) return(-Inf)
   if (any(w < 0)) return(-Inf)
@@ -413,7 +413,7 @@ log_pdf_residual_bio <- function(kappa, rho, w) {
   Q_prod <- kronecker(Q_ar, Q_pair)
   log_likelihoods <- sapply(seq_along(bio_regions), function(i) {
     dmvnorm(
-      alpha_current[bio_indices$bio_residual_indices_i[[i]]],
+      alpha[bio_indices$bio_residual_indices_i[[i]]],
       alpha_prior_mean[bio_indices$bio_residual_indices_i[[i]]],
       precision = Q_prod,
       log = TRUE
@@ -524,7 +524,7 @@ for (iteration in 2 : args$n_samples) {
 
   log_trace('[{iteration} / {args$n_samples}] Sampling rho_bio_season (current = {format(rho_bio_season_current)})')
   rho_bio_season_current <- rho_bio_season_slice(rho_bio_season_current, function(rho) {
-    log_pdf_seasonal_bio(rho, w_bio_season_current)
+    log_pdf_seasonal_bio(rho, w_bio_season_current, alpha_current)
   }, learn = iteration <= args$n_warm_up)
 
   log_trace('[{iteration} / {args$n_samples}] Sampling w_bio_season (current = {paste0(format(w_bio_season_current), collapse = ", ")})')
@@ -532,18 +532,18 @@ for (iteration in 2 : args$n_samples) {
     w_bio_season_current[i] <- w_bio_season_slice[[i]](w_bio_season_current[i], function(w_i) {
       w <- w_bio_season_current
       w[i] <- w_i
-      log_pdf_seasonal_bio(rho_bio_season_current, w)
+      log_pdf_seasonal_bio(rho_bio_season_current, w, alpha_current)
     }, learn = iteration <= args$n_warm_up)
   }
 
   log_trace('[{iteration} / {args$n_samples}] Sampling kappa_bio_resid (current = {format(kappa_bio_resid_current)})')
   kappa_bio_resid_current <- kappa_bio_resid_slice(kappa_bio_resid_current, function(kappa) {
-    log_pdf_residual_bio(kappa, rho_bio_resid_current, w_bio_resid_current)
+    log_pdf_residual_bio(kappa, rho_bio_resid_current, w_bio_resid_current, alpha_current)
   }, learn = iteration <= args$n_warm_up)
 
   log_trace('[{iteration} / {args$n_samples}] Sampling rho_bio_resid (current = {format(rho_bio_resid_current)})')
   rho_bio_resid_current <- rho_bio_resid_slice(rho_bio_resid_current, function(rho) {
-    log_pdf_residual_bio(kappa_bio_resid_current, rho, w_bio_resid_current)
+    log_pdf_residual_bio(kappa_bio_resid_current, rho, w_bio_resid_current, alpha_current)
   }, learn = iteration <= args$n_warm_up)
 
   log_trace('[{iteration} / {args$n_samples}] Sampling w_bio_resid (current = {paste0(format(w_bio_resid_current), collapse = ", ")})')
@@ -551,7 +551,7 @@ for (iteration in 2 : args$n_samples) {
     w_bio_resid_current[i] <- w_bio_resid_slice[[i]](w_bio_resid_current[i], function(w_i) {
       w <- w_bio_resid_current
       w[i] <- w_i
-      log_pdf_residual_bio(kappa_bio_resid_current, rho_bio_resid_current, w)
+      log_pdf_residual_bio(kappa_bio_resid_current, rho_bio_resid_current, w, alpha_current)
     }, learn = iteration <= args$n_warm_up)
   }
 

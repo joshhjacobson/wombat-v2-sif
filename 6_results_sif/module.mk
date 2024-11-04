@@ -54,6 +54,7 @@ XBASE_MONTHLY_2x25_ZONAL = $(6_RESULTS_SIF_INTERMEDIATES_DIR)/xbase-monthly-2x25
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-true-fluxes.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table-rmse.tex \
 	$(6_RESULTS_SIF_FIGURES_DIR)/osse-metrics-table-crps.tex \
+	$(6_RESULTS_SIF_FIGURES_DIR)/flux-annual-average-table.csv \
 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-global.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/flux-net-zonal.pdf \
 	$(6_RESULTS_SIF_FIGURES_DIR)/seasonal-cycle-zonal.pdf \
@@ -257,6 +258,19 @@ $(6_RESULTS_SIF_FIGURES_DIR)/sif-gpp-map-%.pdf: \
 		--model-sif-assim $(MODEL_SIF_ASSIM) \
 		--region-sf $(REGION_SF_SIF) \
 		--term $* \
+		--output $@
+
+$(6_RESULTS_SIF_FIGURES_DIR)/flux-annual-average-table.csv \
+	$(6_RESULTS_SIF_SRC_DIR)/flux-annual-average.R \
+	$(PERTURBATIONS_AUGMENTED_SIF) \
+	$(SAMPLES_WOMBAT_V2) \
+	$(SAMPLES_LNLGISSIF) \
+	$(XBASE_MONTHLY_2x25)
+	Rscript $< \
+		--perturbations-augmented $(PERTURBATIONS_AUGMENTED_SIF) \
+		--samples-LNLGIS $(SAMPLES_WOMBAT_V2) \
+		--samples-LNLGISSIF $(SAMPLES_LNLGISSIF) \
+		--xbase-monthly-2x25 $(XBASE_MONTHLY_2x25) \
 		--output $@
 
 $(6_RESULTS_SIF_FIGURES_DIR)/flux-global.pdf: \

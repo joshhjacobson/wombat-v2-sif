@@ -1,4 +1,5 @@
 Remaining TODOs:
+-[] transfer code to new repo
 -[] rerun full OSSE with 200 samples in each case
 -[] rerun main inversion with 200 samples
 -[] double check all results
